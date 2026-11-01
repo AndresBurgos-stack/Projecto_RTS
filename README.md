@@ -246,6 +246,75 @@ Limitaciones actuales: no hay rotación de edificios, UI de construcción ni des
 7. [ ] Economía mínima (madera, trabajador y costes de construcción).
 8. [ ] Buff de formación (falange).
 
+## Paso 5 rediseñado: spawner unico y avance grupal
+
+El paso 5 deja de repartir romanos por toda la escena. Ahora hay **un solo Spawn Point** en `(0, 0, 22)`, un aviso previo de 4 segundos y una escuadra que entra agrupada y marcha hacia el Panteon.
+
+### `Assets/_Project/Scripts/Waves/RomanSpawner.cs`
+
+- Mantiene la lista `squad` (`unit`, `count`, `delay`) y un unico `spawnPoint`.
+- `BeginWave(WaveDefinition)` rellena la escuadra desde `wave.Groups` y arranca la secuencia.
+- Antes de aparecer pinta un marcador pulsante en el suelo: un cilindro achatado con material creado en runtime (`Universal Render Pipeline/Unlit`, con fallback a `Unlit/Color` y `Sprites/Default`).
+- Las unidades aparecen en formacion con `formationSpacing = 1.5` y `spawnStagger = 0.15`, no una a una por intervalos largos.
+- Cada unidad recibe `MoveTo(destination)` al spawnear; el spawner repite la orden cada `repathInterval = 0.5` segundos **solo si la unidad no tiene objetivo de combate**.
+- La IA (`EnemyAiController`) sigue activa con la patrulla desactivada: los romanos atacan casas, muros, torres y hoplitas que se crucen y retoman la marcha cuando el objetivo muere.
+- Dispara `SquadArrived` cuando la escuadra termina la marcha o es eliminada.
+
+### `Assets/_Project/Scripts/Waves/WaveManager.cs`
+
+- Ya no instancia unidades ni usa `spawnPoints`: solo calendario, aviso y estados.
+- Referencias: `calendar`, `objective` y `romanSpawner`.
+- `WaveWarning` se emite una sola vez cuando la siguiente oleada es la de manana y quedan menos de `warningLeadTime` segundos de dia.
+- `BeginWave` delega en `romanSpawner.BeginWave(wave)` y emite `WaveStarted`.
+- `WaveCleared` llega desde `RomanSpawner.SquadArrived`; `GameOver` desde `PantheonObjective.Destroyed`, que tambien pausa el calendario.
+
+### `Assets/_Project/Scripts/Waves/DayNightCalendar.cs`
+
+- Expone `DayLength` para que `WaveManager` calcule el tiempo restante de dia sin duplicar la constante.
+
+### `Assets/_Project/Scripts/Waves/EnemyAiController.cs`
+
+- Nuevo `patrolEnabled` (por defecto `true`) y `SetPatrolEnabled(bool)`.
+- `HandlePatrol()` sale de inmediato si la patrulla esta desactivada, pero la deteccion y el ataque siguen funcionando.
+
+### Como probarlo en `PlacementDemo`
+
+1. Abre la escena `PlacementDemo`. En la jerarquia debe haber un unico `Roman Spawner` con un solo hijo `Spawn Point` en `(0, 0, 22)`.
+2. Entra en Play. El **dia 1 queda libre** para construir y reclutar.
+3. Al final del dia 1 aparece el aviso de texto de la oleada del dia 2 y, en el suelo del spawn, un marcador rojo pulsante durante 4 segundos.
+4. La escuadra de 4 legionarios aparece agrupada y avanza junta hacia el Panteon. Si le sale al paso una casa, un muro o un hoplita, lo ataca y luego retoma la marcha.
+5. El dia 3 llegan 7 romanos y el dia 4 llegan 11.
+6. Si el Panteon llega a 0 aparece `El Panteon ha caido. Derrota.` y el calendario se detiene.
+
+Las oleadas no cambian: dia 2 = 4, dia 3 = 7, dia 4 = 11, todas con `spawnInterval = 2` y `restAfterWave = 20`.
+
+## Camara RTS y mapa ampliado
+
+La camara de `PlacementDemo` ya no es estatica: ahora es un rig RTS controlable con el mouse, montado sobre Cinemachine 3.1.7. El mapa paso de 52x52 a 104x104 y los romanos aparecen mas lejos del Panteon.
+
+### `Assets/_Project/Scripts/Camera/RtsCameraController.cs`
+
+- No mueve el Transform de la camara directamente. Mueve un `Camera Target` en el plano del suelo y cambia el `FollowOffset` del `CinemachineFollow` para el zoom; el `CinemachineBrain` de la `Main Camera` aplica el resultado.
+- Paneo con **borde de pantalla**, **clic central + arrastre** y **WASD / flechas**.
+- Zoom con la **rueda del mouse**, entre `minDistance = 10` y `maxDistance = 46`, suavizado.
+- Limites de movimiento configurables con `SetLimits(min, max)`; el builder los fija a `-52..52` en X y Z, que es el borde del mapa de 104x104.
+- API publica: `TargetPosition`, `CurrentDistance`, `MinDistance`, `MaxDistance`, `SetLimits`, `SetEdgeScrollEnabled` y `FocusOn`.
+
+### Cambios en `PlacementDemoBuilder.cs`
+
+- La `Main Camera` lleva ahora un `CinemachineBrain`.
+- Nuevo rig `Camera Rig` con `Camera Target` y `Cinemachine Camera` (`CinemachineFollow` con offset `(0, 34, -30)`), creado por el helper `CreateRtsCamera(MapHalfSize)`.
+- Constantes de mapa: `MapSize = 104`, `MapHalfSize = 52`, `GroundScale = 11.7`.
+- El suelo mide `117x117` (escala `11.7` sobre el plano de 10x10) y el grid de construccion es `104x104` con origen `(-52, 0, -52)`.
+- El `Spawn Point` de los romanos pasa de `(0, 0, 22)` a `(0, 0, 46)`, casi en el borde sur: la distancia al Panteon en `(0, 0, 0)` pasa de 22 a 46 unidades.
+
+### Como probarlo
+
+1. Regenera la escena desde el menu `ProjectoRTS > Setup > Create Placement Demo Scene` para que el rig de camara, el mapa nuevo y el spawn lejano existan.
+2. Entra en Play y mueve el mouse al borde de la pantalla: la camara panea. Manten pulsado el boton central y arrastra: paneo manual. Rueda del mouse: zoom.
+3. Comprueba que no puedes salirte del mapa: la camara se detiene en `-52..52` en ambos ejes.
+4. Los romanos entran desde `(0, 0, 46)` y tardan bastante mas en llegar al Panteon, lo que deja mas tiempo de reaccion.
+
 ## Optimización y limpieza
 
 - `UnitRegistry` sustituye las búsquedas de unidades por toda la escena (`FindObjectsByType`) en selección, targeting y barras de vida.

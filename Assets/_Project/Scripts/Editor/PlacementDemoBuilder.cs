@@ -3,7 +3,10 @@ using System.IO;
 using System.Linq;
 using ProjectoRTS.Buildings;
 using ProjectoRTS.Units;
+using ProjectoRTS.Waves;
+using ProjectoRTS.CameraControl;
 using Unity.AI.Navigation;
+using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -27,6 +30,9 @@ namespace ProjectoRTS.EditorTools
         private const string NavMeshFolder = "Assets/_Project/Data/NavMesh";
         private const string MaterialFolder = "Assets/_Project/Materials";
         private const string ScenePath = "Assets/Scenes/PlacementDemo.unity";
+        private const int MapSize = 104;
+        private const float MapHalfSize = MapSize * 0.5f;
+        private const float GroundScale = 11.7f;
 
         [MenuItem("ProjectoRTS/Setup/Create Placement Demo Scene")]
         public static void CreateDemoScene()
@@ -73,7 +79,7 @@ namespace ProjectoRTS.EditorTools
                 new Color(0.2f, 0.65f, 0.55f, 1f));
             Material romanMaterial = GetOrCreateMaterial(
                 "Roman",
-                new Color(0.72f, 0.18f, 0.14f, 1f));
+                new Color(0.42f, 0.43f, 0.45f, 1f));
             Material selectionMaterial = GetOrCreateMaterial(
                 "Selection",
                 new Color(0.25f, 0.9f, 1f, 1f));
@@ -146,7 +152,7 @@ namespace ProjectoRTS.EditorTools
                 new UnitConfig
                 {
                     AssetName = "RomanLegionary",
-                    DisplayName = "Legionario romano",
+                    DisplayName = "Soldado auxiliar",
                     Faction = Faction.Roman,
                     Role = UnitRole.Infantry,
                     Size = new Vector3(0.8f, 1.8f, 0.8f),
@@ -249,7 +255,7 @@ namespace ProjectoRTS.EditorTools
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
             ground.transform.position = Vector3.zero;
-            ground.transform.localScale = new Vector3(5f, 1f, 5f);
+            ground.transform.localScale = new Vector3(GroundScale, 1f, GroundScale);
             MeshRenderer groundRenderer = ground.GetComponent<MeshRenderer>();
             if (groundRenderer != null && groundMaterial != null)
             {
@@ -277,6 +283,13 @@ namespace ProjectoRTS.EditorTools
                 cameraObject.AddComponent<UniversalAdditionalCameraData>();
             }
 
+            if (cameraObject.GetComponent<CinemachineBrain>() == null)
+            {
+                cameraObject.AddComponent<CinemachineBrain>();
+            }
+
+            RtsCameraController cameraController = CreateRtsCamera(MapHalfSize);
+
             GameObject lightObject = new GameObject("Directional Light");
             Light light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
@@ -285,11 +298,19 @@ namespace ProjectoRTS.EditorTools
             light.shadows = LightShadows.Soft;
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
+            GameObject calendarObject = new GameObject("DayNight Calendar");
+            DayNightCalendar calendar = calendarObject.AddComponent<DayNightCalendar>();
+            SetObjectReference(calendar, "sun", light);
+            SerializedObject calendarSerialized = new SerializedObject(calendar);
+            calendarSerialized.FindProperty("dayLength").floatValue = 60f;
+            calendarSerialized.FindProperty("startTimeOfDay").floatValue = 0.05f;
+            calendarSerialized.ApplyModifiedPropertiesWithoutUndo();
+
             GameObject buildingsRoot = new GameObject("Buildings");
 
             GameObject gridObject = new GameObject("BuildGrid");
             BuildGrid grid = gridObject.AddComponent<BuildGrid>();
-            ConfigureGrid(grid, 40, 40, 1f, new Vector3(-20f, 0f, -20f));
+            ConfigureGrid(grid, MapSize, MapSize, 1f, new Vector3(-MapHalfSize, 0f, -MapHalfSize));
 
             GameObject placementObject = new GameObject("Placement");
             BuildingPlacementController placement = placementObject.AddComponent<BuildingPlacementController>();
@@ -300,7 +321,59 @@ namespace ProjectoRTS.EditorTools
             SetObjectReference(placement, "invalidPreviewMaterial", invalidPreviewMaterial);
 
             GameObject unitsRoot = new GameObject("Units");
-            SpawnRomanTestSquad(legionary, unitsRoot.transform);
+
+            RomanSpawner romanSpawner = CreateRomanSpawner(legionary, unitsRoot.transform);
+
+            Material marbleMaterial = GetOrCreateMaterial(
+                "PantheonMarble",
+                new Color(0.9f, 0.88f, 0.82f, 1f));
+            Material terracottaMaterial = GetOrCreateMaterial(
+                "PantheonTerracotta",
+                new Color(0.72f, 0.36f, 0.22f, 1f));
+            PantheonObjective objective = CreatePantheon(
+                Vector3.zero,
+                marbleMaterial,
+                terracottaMaterial);
+
+            SetObjectReference(cameraController, "initialFocus", objective.transform);
+
+            WaveDefinition waveDay1 = CreateWaveDefinition(
+                "WaveDay1",
+                "Dia 2 - Auxiliares",
+                2,
+                2f,
+                20f,
+                (legionary, 4, 0f));
+            WaveDefinition waveDay2 = CreateWaveDefinition(
+                "WaveDay2",
+                "Dia 3 - Refuerzos",
+                3,
+                2f,
+                20f,
+                (legionary, 7, 0f));
+            WaveDefinition waveDay3 = CreateWaveDefinition(
+                "WaveDay3",
+                "Dia 4 - Asalto",
+                4,
+                2f,
+                20f,
+                (legionary, 11, 0f));
+
+            GameObject waveManagerObject = new GameObject("Wave Manager");
+            WaveManager waveManager = waveManagerObject.AddComponent<WaveManager>();
+            SetObjectReference(waveManager, "calendar", calendar);
+            SetObjectReference(waveManager, "objective", objective);
+            SetObjectReference(waveManager, "romanSpawner", romanSpawner);
+
+            SerializedObject waveManagerSerialized = new SerializedObject(waveManager);
+            SerializedProperty wavesProperty = waveManagerSerialized.FindProperty("waves");
+            wavesProperty.arraySize = 3;
+            wavesProperty.GetArrayElementAtIndex(0).objectReferenceValue = waveDay1;
+            wavesProperty.GetArrayElementAtIndex(1).objectReferenceValue = waveDay2;
+            wavesProperty.GetArrayElementAtIndex(2).objectReferenceValue = waveDay3;
+            waveManagerSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            CreateWaveHud(waveManager, calendar, objective);
 
             RecruitmentPanel recruitmentPanel = CreateRecruitmentUI();
             GameObject recruitmentObject = new GameObject("Recruitment");
@@ -372,6 +445,36 @@ namespace ProjectoRTS.EditorTools
             AssetDatabase.SaveAssets();
             surface.navMeshData = AssetDatabase.LoadAssetAtPath<NavMeshData>(path);
             EditorUtility.SetDirty(surface);
+        }
+
+        private static RtsCameraController CreateRtsCamera(float halfSize)
+        {
+            GameObject rigObject = new GameObject("Camera Rig");
+
+            GameObject targetObject = new GameObject("Camera Target");
+            targetObject.transform.SetParent(rigObject.transform, false);
+            targetObject.transform.position = Vector3.zero;
+
+            GameObject virtualObject = new GameObject("Cinemachine Camera");
+            virtualObject.transform.SetParent(rigObject.transform, false);
+
+            CinemachineCamera virtualCamera = virtualObject.AddComponent<CinemachineCamera>();
+            virtualCamera.Follow = targetObject.transform;
+            virtualCamera.LookAt = targetObject.transform;
+            virtualCamera.Priority = 100;
+
+            CinemachineFollow follow = virtualObject.AddComponent<CinemachineFollow>();
+            follow.FollowOffset = new Vector3(0f, 35.3f, -18.8f);
+
+            RtsCameraController controller = rigObject.AddComponent<RtsCameraController>();
+            SetObjectReference(controller, "virtualCamera", virtualCamera);
+            SetObjectReference(controller, "follow", follow);
+            SetObjectReference(controller, "followTarget", targetObject.transform);
+            controller.SetLimits(
+                new Vector2(-halfSize, -halfSize),
+                new Vector2(halfSize, halfSize));
+
+            return controller;
         }
 
         private static void ConfigureGrid(BuildGrid grid, int width, int height, float cellSize, Vector3 origin)
