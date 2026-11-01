@@ -317,34 +317,35 @@ La camara de `PlacementDemo` ya no es estatica: ahora es un rig RTS controlable 
 
 ## Camara angulada con pitch
 
-La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Diplomacy is Not an Option*: se ve tanto el terreno como las fachadas de los edificios. La unica rotacion controlable es la **inclinacion vertical (pitch)**; no hay giro horizontal, asi que la camara nunca orbita de izquierda a derecha.
+La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Diplomacy is Not an Option*: se ve tanto el terreno como las fachadas de los edificios. Ahora tiene **rotacion libre en los dos ejes**: inclinacion vertical (pitch) y giro horizontal (yaw), ambos controlables a la vez.
 
 ### Controles
 
-- **Paneo:** borde de pantalla, clic central + arrastre, o `WASD` / flechas. Limitado a `-52..52` en X y Z, el borde del mapa de `104x104`.
-- **Pitch:** **clic derecho + arrastre vertical**, o **PageDown / PageUp**. El eje Y del raton inclina la camara; el eje X se ignora.
+- **Paneo:** borde de pantalla, clic central + arrastre, o `WASD` / flechas. El paneo es relativo al giro actual, asi que `W` siempre aleja la vista del jugador. Limitado a `-52..52` en X y Z, el borde del mapa de `104x104`.
+- **Rotacion:** **clic derecho + arrastre**. Arrastrar en horizontal gira la vista (yaw) y en vertical la inclina (pitch), de forma simultanea e independiente.
+- **Rotacion con teclado:** `Q` / `E` para yaw, `PageDown` / `PageUp` para pitch.
 - **Zoom:** rueda del raton, entre `14` y `70` de distancia.
 
 ### Limites
 
 - **Pitch** acotado entre `25` y `85` grados: no puede volcarse boca abajo ni quedar mirando al cielo. El valor inicial es `50`, dentro del rango isometrico elevado de 45-60.
-- **Yaw** no existe: `offset.x` siempre vale `0`, de modo que la vista no gira en horizontal.
+- **Yaw** sin limites: giro completo de 360 grados, con envoltura a `-180..180` para que el angulo no crezca sin fin.
 
 ### Implementacion con Cinemachine
 
 - El script no toca el Transform de la `Camera`. Coloca un `Camera Target` en el plano del suelo y escribe el `FollowOffset` del `CinemachineFollow`.
-- El offset se calcula en espacio de mundo solo con el pitch: `y = d * sin(pitch)` para la altura y `z = -d * cos(pitch)` para el fondo, con `offset.x = 0`.
-- El pitch esta suavizado (`pitchSmoothing`) y el zoom tambien (`zoomSmoothing`).
-- API publica: `SetPitch`, `SetLimits`, `SetEdgeScrollEnabled`, `FocusOn`, `CurrentPitch`, `CurrentDistance`, `MinDistance`, `MaxDistance`.
-- El `Pantheon` solo se usa una vez al arrancar (`initialFocus`) para fijar la posicion y el angulo iniciales. No es un `LookAt` dinamico ni un pivote de orbita: el jugador inclina la camara libremente despues.
+- El offset se calcula en espacio de mundo: `y = d * sin(pitch)` para la altura, y `x = h * sin(yaw)`, `z = -h * cos(yaw)` para girar el eje inclinado alrededor del objetivo, con `h = d * cos(pitch)`.
+- Pitch y yaw estan suavizados por separado (`rotationSmoothing`) y el zoom tambien (`zoomSmoothing`).
+- API publica: `SetPitch`, `SetYaw`, `SetLimits`, `SetEdgeScrollEnabled`, `FocusOn`, `CurrentPitch`, `CurrentYaw`, `CurrentDistance`, `MinDistance`, `MaxDistance`.
+- El `Pantheon` solo se usa una vez al arrancar (`initialFocus`) para fijar la posicion y el angulo iniciales. No es un `LookAt` dinamico ni un pivote de orbita.
 
 ### Como probarlo
 
 1. Regenera la escena con `ProjectoRTS > Setup > Create Placement Demo Scene`.
 2. Entra en Play: la camara arranca a 50 grados mirando al `Pantheon` desde 38 de distancia.
-3. Manten pulsado el boton derecho y arrastra en vertical para inclinar la vista arriba/abajo. Arrastrar en horizontal no debe girar nada.
-4. Usa `PageUp` / `PageDown` como alternativa de teclado al arrastre.
-5. `WASD` o los bordes de pantalla mueven la camara; la rueda hace zoom.
+3. Manten pulsado el boton derecho: arrastra en horizontal para girar la vista y en vertical para inclinarla. Ambos ejes responden a la vez.
+4. Suelta el boton y usa `WASD`: el movimiento sigue la direccion en la que mira la camara.
+5. `Q` / `E` giran la vista y `PageUp` / `PageDown` la inclinan. La rueda hace zoom.
 3. Suelta el boton y usa `WASD`: el movimiento sigue la direccion en la que mira la camara.
 4. Rueda del raton para acercar y alejar. Comprueba que la camara no puede ponerse boca abajo ni salirse de `-52..52`.
 
