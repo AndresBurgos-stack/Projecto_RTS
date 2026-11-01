@@ -315,6 +315,37 @@ La camara de `PlacementDemo` ya no es estatica: ahora es un rig RTS controlable 
 3. Comprueba que no puedes salirte del mapa: la camara se detiene en `-52..52` en ambos ejes.
 4. Los romanos entran desde `(0, 0, 46)` y tardan bastante mas en llegar al Panteon, lo que deja mas tiempo de reaccion.
 
+## Camara libre: pitch y yaw
+
+La camara RTS pasa de solo inclinacion vertical a orbita libre tipo city-builder (estilo *Diplomacy is Not an Option*): se puede inclinar y girar a la vez, sin limites de giro horizontal.
+
+### Controles
+
+- **Paneo:** borde de pantalla, clic central + arrastre, o `WASD` / flechas. El paneo es relativo al giro actual: `W` siempre aleja la vista del jugador.
+- **Rotacion:** clic derecho + arrastre. El eje X del raton gira en horizontal (yaw) y el eje Y inclina (pitch), de forma simultanea e independiente.
+- **Zoom:** rueda del raton, entre `14` y `70` de distancia.
+
+### Limites
+
+- **Pitch** acotado entre `25` y `85` grados: la camara no puede volcarse boca abajo ni mirar al cielo.
+- **Yaw** sin limites: giro completo de 360 grados, con envoltura a `-180..180` para que no crezca sin fin.
+- **Posicion** acotada a `-52..52` en X y Z, el borde del mapa de `104x104`.
+
+### Implementacion con Cinemachine
+
+- El script no toca el Transform de la `Camera`. Coloca un `Camera Target` en el plano del suelo y escribe el `FollowOffset` del `CinemachineFollow`.
+- El offset se calcula en espacio de mundo: `y = d * sin(pitch)` para la altura, y `x = h * sin(yaw)`, `z = -h * cos(yaw)` para girar el eje inclinado alrededor del objetivo, con `h = d * cos(pitch)`.
+- La rotacion esta suavizada por separado (`rotationSmoothing`) y el zoom tambien (`zoomSmoothing`).
+- API publica: `SetPitch`, `SetYaw`, `SetLimits`, `SetEdgeScrollEnabled`, `FocusOn`, `CurrentPitch`, `CurrentYaw`, `CurrentDistance`.
+- El `Pantheon` solo se usa una vez al arrancar (`initialFocus`) para decidir hacia donde nace mirando la camara. No es un `LookAt` dinamico ni un pivote de orbita.
+
+### Como probarlo
+
+1. Regenera la escena con `ProjectoRTS > Setup > Create Placement Demo Scene`.
+2. Entra en Play y manten pulsado el boton derecho: arrastra en horizontal para girar la vista y en vertical para inclinarla. Ambos ejes responden a la vez.
+3. Suelta el boton y usa `WASD`: el movimiento sigue la direccion en la que mira la camara.
+4. Rueda del raton para acercar y alejar. Comprueba que la camara no puede ponerse boca abajo ni salirse de `-52..52`.
+
 ## Optimización y limpieza
 
 - `UnitRegistry` sustituye las búsquedas de unidades por toda la escena (`FindObjectsByType`) en selección, targeting y barras de vida.

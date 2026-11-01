@@ -4,15 +4,15 @@ using UnityEngine;
 namespace ProjectoRTS.CameraControl
 {
     /// <summary>
-    /// RTS camera rig driven through Cinemachine. The script never moves the
-    /// Camera transform directly: it moves a follow target on the ground plane
-    /// and changes the FollowOffset of the CinemachineFollow component to zoom
-    /// and to tilt the view from flat to almost top-down.
-    /// There is no horizontal yaw control: the only rotation the player can
-    /// drive is the vertical pitch.
-    /// The camera starts looking toward the Pantheon, but the Pantheon is only
-    /// used to place the follow point once at startup. It is not a dynamic
-    /// Look At target and it does not act as an orbit pivot.
+    /// Free city-builder style RTS camera driven through Cinemachine.
+    /// The script never moves the Camera transform directly: it places a
+    /// follow target on the ground plane and writes the FollowOffset of the
+    /// CinemachineFollow component to apply zoom, pitch and yaw.
+    /// Pitch is clamped so the view cannot flip upside down or stare at the
+    /// sky; yaw is unbounded and can spin a full 360 degrees.
+    /// Panning: edge scroll, middle mouse drag or WASD.
+    /// Rotation: right mouse drag, both axes at the same time.
+    /// Zoom: mouse wheel.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RtsCameraController : MonoBehaviour
@@ -34,18 +34,19 @@ namespace ProjectoRTS.CameraControl
         [Header("Zoom")]
         [SerializeField, Min(0.1f)] private float zoomStep = 4f;
         [SerializeField, Min(0.1f)] private float minDistance = 14f;
-        [SerializeField, Min(0.1f)] private float maxDistance = 65f;
+        [SerializeField, Min(0.1f)] private float maxDistance = 70f;
         [SerializeField, Min(0f)] private float zoomSmoothing = 12f;
-        [SerializeField, Min(0.1f)] private float startDistance = 34f;
+        [SerializeField, Min(0.1f)] private float startDistance = 38f;
 
-        [Header("Tilt")]
-        [SerializeField, Range(15f, 89f)] private float startPitch = 55f;
-        [SerializeField, Range(15f, 89f)] private float minPitch = 25f;
-        [SerializeField, Range(15f, 89f)] private float maxPitch = 89f;
-        [SerializeField, Min(0f)] private float keyboardTiltSpeed = 55f;
-        [SerializeField, Min(0f)] private float dragTiltSpeed = 0.28f;
-        [SerializeField, Min(0f)] private float tiltSmoothing = 10f;
-        [SerializeField] private bool rightDragTiltEnabled = true;
+        [Header("Rotation")]
+        [SerializeField, Range(15f, 89f)] private float startPitch = 52f;
+        [SerializeField, Range(10f, 89f)] private float minPitch = 25f;
+        [SerializeField, Range(10f, 89f)] private float maxPitch = 85f;
+        [SerializeField] private float startYaw = 0f;
+        [SerializeField] private bool rightDragRotateEnabled = true;
+        [SerializeField, Min(0f)] private float mouseRotationSpeed = 220f;
+        [SerializeField, Min(0f)] private float keyboardRotationSpeed = 90f;
+        [SerializeField, Min(0f)] private float rotationSmoothing = 14f;
         [SerializeField, Min(0f)] private float targetHeight = 2f;
 
         [Header("Limits")]
@@ -57,9 +58,11 @@ namespace ProjectoRTS.CameraControl
         private float _currentDistance;
         private float _pitch;
         private float _targetPitch;
+        private float _yaw;
+        private float _targetYaw;
         private Vector3 _dragOrigin;
         private bool _dragging;
-        private bool _tilting;
+        private bool _rotating;
 
         /// <summary>Current follow point on the ground plane.</summary>
         public Vector3 TargetPosition => _targetPosition;
@@ -75,6 +78,9 @@ namespace ProjectoRTS.CameraControl
 
         /// <summary>Current vertical tilt in degrees. Higher values look more top-down.</summary>
         public float CurrentPitch => _pitch;
+
+        /// <summary>Current horizontal angle in degrees, wrapped to -180..180.</summary>
+        public float CurrentYaw => _yaw;
 
         private void Awake()
         {
@@ -93,9 +99,8 @@ namespace ProjectoRTS.CameraControl
                 followTarget = virtualCamera.Follow;
             }
 
-            // The follow point is the only thing the camera tracks. The Pantheon
-            // is used once here to decide where the camera starts looking, and
-            // is then ignored so panning and tilting stay independent.
+            // The Pantheon is only used once to decide where the camera starts
+            // looking. It is not a tracked target and it is not an orbit pivot.
             if (initialFocus != null)
             {
                 _targetPosition = initialFocus.position;
@@ -114,6 +119,8 @@ namespace ProjectoRTS.CameraControl
             _currentDistance = _targetDistance;
             _pitch = Mathf.Clamp(startPitch, minPitch, maxPitch);
             _targetPitch = _pitch;
+            _yaw = WrapAngle(startYaw);
+            _targetYaw = _yaw;
 
             if (virtualCamera != null && followTarget != null)
             {
@@ -155,6 +162,17 @@ namespace ProjectoRTS.CameraControl
         }
 
         /// <summary>
+        /// Sets the horizontal angle in degrees. Yaw is unbounded and wraps
+        /// around a full circle.
+        /// </summary>
+        public void SetYaw(float degrees)
+        {
+            _targetYaw = WrapAngle(degrees);
+            _yaw = _targetYaw;
+            ApplyDistance(_currentDistance);
+        }
+
+        /// <summary>
         /// Moves the camera to look at the given world position, clamped to the
         /// map limits. This is a one time placement, not a tracked target.
         /// </summary>
@@ -189,9 +207,9 @@ namespace ProjectoRTS.CameraControl
             }
 
             ReadZoom();
-            ReadTilt();
+            ReadRotation();
             SmoothZoom();
-            SmoothTilt();
+            SmoothRotation();
 
             ApplyPosition(_targetPosition);
             ApplyDistance(_currentDistance);
@@ -222,7 +240,18 @@ namespace ProjectoRTS.CameraControl
                 z += 1f;
             }
 
-            Vector3 input = new Vector3(x, 0f, z);
+            if (x == 0f && z == 0f)
+            {
+                return Vector3.zero;
+            }
+
+            // Pan relative to the current yaw so W always moves away from the
+            // camera regardless of where the view is pointing.
+            float yawRadians = _yaw * Mathf.Deg2Rad;
+            Vector3 forward = new Vector3(Mathf.Sin(yawRadians), 0f, Mathf.Cos(yawRadians));
+            Vector3 right = new Vector3(forward.z, 0f, -forward.x);
+            Vector3 input = forward * z + right * x;
+
             if (input.sqrMagnitude > 1f)
             {
                 input.Normalize();
@@ -260,7 +289,16 @@ namespace ProjectoRTS.CameraControl
                 z += 1f;
             }
 
-            Vector3 input = new Vector3(x, 0f, z);
+            if (x == 0f && z == 0f)
+            {
+                return Vector3.zero;
+            }
+
+            float yawRadians = _yaw * Mathf.Deg2Rad;
+            Vector3 forward = new Vector3(Mathf.Sin(yawRadians), 0f, Mathf.Cos(yawRadians));
+            Vector3 right = new Vector3(forward.z, 0f, -forward.x);
+            Vector3 input = forward * z + right * x;
+
             if (input.sqrMagnitude > 1f)
             {
                 input.Normalize();
@@ -309,52 +347,40 @@ namespace ProjectoRTS.CameraControl
                 maxDistance);
         }
 
-        private void ReadTilt()
+        private void ReadRotation()
         {
-            float keyboard = 0f;
-            if (Input.GetKey(KeyCode.Q))
-            {
-                keyboard -= 1f;
-            }
-
-            if (Input.GetKey(KeyCode.E))
-            {
-                keyboard += 1f;
-            }
-
-            if (Mathf.Abs(keyboard) > 0f)
-            {
-                _targetPitch = Mathf.Clamp(
-                    _targetPitch + keyboard * keyboardTiltSpeed * Time.deltaTime,
-                    minPitch,
-                    maxPitch);
-            }
-
-            if (!rightDragTiltEnabled)
+            if (!rightDragRotateEnabled)
             {
                 return;
             }
 
             if (Input.GetMouseButtonDown(1))
             {
-                _tilting = true;
+                _rotating = true;
             }
 
             if (Input.GetMouseButtonUp(1))
             {
-                _tilting = false;
+                _rotating = false;
             }
 
-            if (!_tilting)
+            if (!_rotating)
             {
                 return;
             }
 
+            float mouseX = Input.GetAxis("Mouse X");
             float mouseY = Input.GetAxis("Mouse Y");
+
+            if (Mathf.Abs(mouseX) > 0.001f)
+            {
+                _targetYaw = WrapAngle(_targetYaw + mouseX * mouseRotationSpeed * Time.deltaTime);
+            }
+
             if (Mathf.Abs(mouseY) > 0.001f)
             {
                 _targetPitch = Mathf.Clamp(
-                    _targetPitch + mouseY * dragTiltSpeed * 60f * Time.deltaTime,
+                    _targetPitch - mouseY * mouseRotationSpeed * 0.6f * Time.deltaTime,
                     minPitch,
                     maxPitch);
             }
@@ -375,18 +401,18 @@ namespace ProjectoRTS.CameraControl
             }
         }
 
-        private void SmoothTilt()
+        private void SmoothRotation()
         {
-            if (tiltSmoothing > 0f)
+            if (rotationSmoothing > 0f)
             {
-                _pitch = Mathf.Lerp(
-                    _pitch,
-                    _targetPitch,
-                    1f - Mathf.Exp(-tiltSmoothing * Time.deltaTime));
+                float t = 1f - Mathf.Exp(-rotationSmoothing * Time.deltaTime);
+                _pitch = Mathf.Lerp(_pitch, _targetPitch, t);
+                _yaw = Mathf.LerpAngle(_yaw, _targetYaw, t);
             }
             else
             {
                 _pitch = _targetPitch;
+                _yaw = _targetYaw;
             }
         }
 
@@ -407,18 +433,24 @@ namespace ProjectoRTS.CameraControl
                 return;
             }
 
-            // No yaw is applied: the camera only changes how much it looks down.
-            // The horizontal component stays on the same world axis, so the view
-            // never rotates left or right on its own.
+            // The offset is expressed in world space: pitch decides the height
+            // and yaw spins that inclined axis around the target. Pitch is
+            // clamped, yaw is free and wraps.
             float pitchRadians = _pitch * Mathf.Deg2Rad;
+            float yawRadians = _yaw * Mathf.Deg2Rad;
             float safeDistance = Mathf.Max(0.1f, Mathf.Abs(distance));
             float horizontal = safeDistance * Mathf.Cos(pitchRadians);
 
             Vector3 offset = follow.FollowOffset;
-            offset.x = 0f;
             offset.y = safeDistance * Mathf.Sin(pitchRadians);
-            offset.z = -horizontal;
+            offset.x = horizontal * Mathf.Sin(yawRadians);
+            offset.z = -horizontal * Mathf.Cos(yawRadians);
             follow.FollowOffset = offset;
+        }
+
+        private static float WrapAngle(float degrees)
+        {
+            return Mathf.Repeat(degrees + 180f, 360f) - 180f;
         }
 
         private Vector3 ClampToLimits(Vector3 position)
