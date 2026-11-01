@@ -315,7 +315,7 @@ La camara de `PlacementDemo` ya no es estatica: ahora es un rig RTS controlable 
 3. Comprueba que no puedes salirte del mapa: la camara se detiene en `-52..52` en ambos ejes.
 4. Los romanos entran desde `(0, 0, 46)` y tardan bastante mas en llegar al Panteon, lo que deja mas tiempo de reaccion.
 
-## Camara libre: pitch y yaw
+## Camara angulada con pitch
 
 La camara RTS pasa de solo inclinacion vertical a orbita libre tipo city-builder (estilo *Diplomacy is Not an Option*): se puede inclinar y girar a la vez, sin limites de giro horizontal.
 
