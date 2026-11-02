@@ -69,6 +69,7 @@ namespace ProjectoRTS.Waves
             public UnitRuntime runtime;
             public UnitMovement movement;
             public UnitCombat combat;
+            public EnemyAiController ai;
         }
 
         private void Start()
@@ -177,6 +178,11 @@ namespace ProjectoRTS.Waves
                 bool inCombat = entry.combat != null && entry.combat.HasTarget;
                 if (!inCombat)
                 {
+                    if (entry.ai != null && entry.runtime != null)
+                    {
+                        entry.ai.SetHome(entry.runtime.transform.position, 5f);
+                    }
+
                     entry.movement.MoveTo(_destination);
                 }
             }
@@ -341,7 +347,8 @@ namespace ProjectoRTS.Waves
                 {
                     runtime = runtime,
                     movement = movement,
-                    combat = combat
+                    combat = combat,
+                    ai = ai
                 });
             }
         }

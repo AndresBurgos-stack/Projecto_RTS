@@ -71,6 +71,9 @@ namespace ProjectoRTS.EditorTools
             Material barracksMaterial = GetOrCreateMaterial(
                 "Barracks",
                 new Color(0.55f, 0.45f, 0.32f, 1f));
+            Material storageMaterial = GetOrCreateMaterial(
+                "Storage",
+                new Color(0.42f, 0.3f, 0.16f, 1f));
             Material hopliteMaterial = GetOrCreateMaterial(
                 "Hoplite",
                 new Color(0.2f, 0.35f, 0.75f, 1f));
@@ -163,7 +166,7 @@ namespace ProjectoRTS.EditorTools
                     Material = psiloiMaterial,
                     MaxHealth = 70f,
                     AttackDamage = 8f,
-                    AttackRange = 7f,
+                    AttackRange = 9f,
                     AttackInterval = 1.8f,
                     DamageReduction = 0f,
                     MoveSpeed = 3.8f,
@@ -213,11 +216,12 @@ namespace ProjectoRTS.EditorTools
                 "Greek Wall",
                 BuildingCategory.Wall,
                 new Vector2Int(1, 1),
-                new Vector3(0.9f, 1.2f, 0.9f),
+                new Vector3(0.96f, 1.25f, 0.96f),
                 wallMaterial,
                 woodCost: 10,
                 bronzeCost: 5,
                 maxHealth: 200f,
+                configurePrefab: root => ConfigureWallMountPrefab(root),
                 palette: palette);
 
             BuildingDefinition gate = CreateBuildingDefinition(
@@ -243,7 +247,8 @@ namespace ProjectoRTS.EditorTools
                 bronzeCost: 40,
                 maxHealth: 350f,
                 attackDamage: 10f,
-                attackRange: 8f,
+                attackRange: 9f,
+                configurePrefab: root => ConfigureTowerPrefab(root),
                 palette: palette);
 
             BuildingDefinition house = CreateBuildingDefinition(
@@ -256,6 +261,19 @@ namespace ProjectoRTS.EditorTools
                 woodCost: 50,
                 bronzeCost: 20,
                 maxHealth: 150f,
+                palette: palette);
+
+            BuildingDefinition storage = CreateBuildingDefinition(
+                "GreekStorage",
+                "Almacen",
+                BuildingCategory.Economy,
+                new Vector2Int(2, 2),
+                new Vector3(1.8f, 1.1f, 1.8f),
+                storageMaterial,
+                woodCost: 75,
+                bronzeCost: 10,
+                maxHealth: 250f,
+                configurePrefab: root => ConfigureStoragePrefab(root),
                 palette: palette);
 
             BuildingDefinition barracks = CreateBuildingDefinition(
@@ -284,7 +302,7 @@ namespace ProjectoRTS.EditorTools
                 configurePrefab: root => ConfigureBarracksPrefab(root, trabajador),
                 palette: palette);
 
-            if (wall == null || gate == null || tower == null || house == null || barracks == null || townCenter == null)
+            if (wall == null || gate == null || tower == null || house == null || storage == null || barracks == null || townCenter == null)
             {
                 Debug.LogError("Could not create the placement demo building definitions.");
                 return;
@@ -466,13 +484,14 @@ namespace ProjectoRTS.EditorTools
             SetObjectReference(hotkeys, "placement", placement);
             SerializedObject hotkeysSerialized = new SerializedObject(hotkeys);
             SerializedProperty definitions = hotkeysSerialized.FindProperty("definitions");
-            definitions.arraySize = 6;
+            definitions.arraySize = 7;
             definitions.GetArrayElementAtIndex(0).objectReferenceValue = wall;
             definitions.GetArrayElementAtIndex(1).objectReferenceValue = gate;
             definitions.GetArrayElementAtIndex(2).objectReferenceValue = tower;
             definitions.GetArrayElementAtIndex(3).objectReferenceValue = house;
             definitions.GetArrayElementAtIndex(4).objectReferenceValue = barracks;
             definitions.GetArrayElementAtIndex(5).objectReferenceValue = townCenter;
+            definitions.GetArrayElementAtIndex(6).objectReferenceValue = storage;
             hotkeysSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))

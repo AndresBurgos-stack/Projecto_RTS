@@ -30,7 +30,6 @@ namespace ProjectoRTS.Waves
 
             GameObject host = new GameObject("Pantheon HUD");
             host.AddComponent<PantheonHud>();
-            Debug.Log("[PantheonHud] Installed");
         }
 
         private void Start()
@@ -50,7 +49,6 @@ namespace ProjectoRTS.Waves
             Refresh();
 
             objective.HealthChanged += HandleHealthChanged;
-            Debug.Log("[PantheonHud] Watching " + objective.gameObject.name);
         }
 
         private void OnDestroy()
@@ -190,8 +188,6 @@ namespace ProjectoRTS.Waves
             _label.color = new Color(1f, 0.93f, 0.78f);
             _label.text = "Panteon 100%";
             _label.raycastTarget = false;
-
-            Debug.Log("[PantheonHud] Bar built at " + position);
         }
 
         private void Refresh()

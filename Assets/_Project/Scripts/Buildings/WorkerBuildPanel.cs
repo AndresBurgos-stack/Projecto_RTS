@@ -1,37 +1,30 @@
 using System.Collections.Generic;
 using ProjectoRTS.Economy;
-using ProjectoRTS.Units;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ProjectoRTS.Buildings
 {
     /// <summary>
-    /// Build menu that appears when a worker is selected. It lists every
-    /// building definition bound to the number keys and starts the normal
-    /// placement flow, so the worker builds with the same preview, grid checks
-    /// and drag painting the hotkeys already use.
-    /// The panel builds its own UI at runtime and polls the selection, because
-    /// UnitSelectionController exposes SelectedUnits without a change event.
+    /// Permanent construction menu on the bottom-left corner. It lists every
+    /// building definition bound to the number keys in a grid of three
+    /// columns and starts the normal placement flow, so buildings can be
+    /// placed without selecting a worker first.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WorkerBuildPanel : MonoBehaviour
     {
-        private const string WorkerName = "Trabajador";
+        private const int Columns = 3;
 
         private static WorkerBuildPanel _instance;
 
-        private UnitSelectionController _selection;
         private BuildingPlacementController _placement;
         private BuildingPlacementHotkeys _hotkeys;
+        private RecruitmentManager _recruitment;
         private GameObject _root;
         private RectTransform _buttonRow;
         private readonly List<GameObject> _buttons = new List<GameObject>();
-        private bool _workerSelected;
         private float _nextRefresh;
-
-        /// <summary>True while the build menu is visible.</summary>
-        public bool IsOpen => _root != null && _root.activeSelf;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -41,7 +34,7 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            GameObject host = new GameObject("Worker Build Panel");
+            GameObject host = new GameObject("Build Panel");
             host.AddComponent<WorkerBuildPanel>();
         }
 
@@ -49,7 +42,7 @@ namespace ProjectoRTS.Buildings
         {
             _instance = this;
             BuildUi();
-            Hide();
+            RefreshButtons();
         }
 
         private void OnDestroy()
@@ -60,34 +53,8 @@ namespace ProjectoRTS.Buildings
             }
         }
 
-        /// <summary>Shows the build menu and refreshes its buttons.</summary>
-        public void Show()
-        {
-            if (_root == null)
-            {
-                return;
-            }
-
-            RefreshButtons();
-            _root.SetActive(true);
-        }
-
-        /// <summary>Hides the build menu.</summary>
-        public void Hide()
-        {
-            if (_root != null)
-            {
-                _root.SetActive(false);
-            }
-        }
-
         private void LateUpdate()
         {
-            if (_selection == null)
-            {
-                _selection = FindFirstObjectByType<UnitSelectionController>();
-            }
-
             if (_placement == null)
             {
                 _placement = FindFirstObjectByType<BuildingPlacementController>();
@@ -98,68 +65,43 @@ namespace ProjectoRTS.Buildings
                 _hotkeys = FindFirstObjectByType<BuildingPlacementHotkeys>();
             }
 
-            if (_selection == null)
+            if (_recruitment == null)
+            {
+                _recruitment = FindFirstObjectByType<RecruitmentManager>();
+            }
+
+            // While a barracks or the town hall is selected the recruitment
+            // panel takes this corner, so the build menu steps aside.
+            bool barracksSelected = _recruitment != null && _recruitment.ActiveBarracks != null;
+
+            if (_root != null && _root.activeSelf == barracksSelected)
+            {
+                _root.SetActive(!barracksSelected);
+            }
+
+            if (_hotkeys == null || barracksSelected)
             {
                 return;
             }
 
-            bool worker = IsWorkerSelected();
-            if (worker == _workerSelected)
+            if (Time.time >= _nextRefresh)
             {
-                if (worker && IsOpen && Time.time >= _nextRefresh)
-                {
-                    _nextRefresh = Time.time + 0.5f;
-                    RefreshButtons();
-                }
-
-                return;
+                _nextRefresh = Time.time + 0.5f;
+                RefreshButtons();
             }
-
-            _workerSelected = worker;
-
-            if (worker)
-            {
-                Show();
-            }
-            else
-            {
-                Hide();
-            }
-        }
-
-        private bool IsWorkerSelected()
-        {
-            IReadOnlyList<UnitMovement> selected = _selection.SelectedUnits;
-            if (selected == null || selected.Count == 0)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < selected.Count; i++)
-            {
-                UnitMovement unit = selected[i];
-                if (unit == null)
-                {
-                    continue;
-                }
-
-                if (!unit.gameObject.name.Contains(WorkerName))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         private void RefreshButtons()
         {
-            if (_hotkeys == null || _buttonRow == null)
+            if (_buttonRow == null)
             {
                 return;
             }
 
-            BuildingDefinition[] definitions = _hotkeys.Definitions;
+            BuildingDefinition[] definitions = _hotkeys != null
+                ? _hotkeys.Definitions
+                : null;
+
             if (definitions == null)
             {
                 return;
@@ -212,12 +154,11 @@ namespace ProjectoRTS.Buildings
             }
 
             _placement.BeginPlacement(definition);
-            Hide();
         }
 
         private void BuildUi()
         {
-            GameObject canvasObject = new GameObject("Worker Build Canvas");
+            GameObject canvasObject = new GameObject("Build Canvas");
             canvasObject.transform.SetParent(transform, false);
 
             Canvas canvas = canvasObject.AddComponent<Canvas>();
@@ -234,11 +175,11 @@ namespace ProjectoRTS.Buildings
             _root.transform.SetParent(canvasObject.transform, false);
 
             RectTransform rect = _root.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.anchoredPosition = new Vector2(0f, 24f);
-            rect.sizeDelta = new Vector2(660f, 96f);
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 0f);
+            rect.pivot = new Vector2(0f, 0f);
+            rect.anchoredPosition = new Vector2(20f, 20f);
+            rect.sizeDelta = new Vector2(500f, 180f);
 
             Image background = _root.AddComponent<Image>();
             background.color = new Color(0.08f, 0.09f, 0.12f, 0.9f);
@@ -251,11 +192,11 @@ namespace ProjectoRTS.Buildings
             row.transform.SetParent(_root.transform, false);
 
             _buttonRow = row.AddComponent<RectTransform>();
-            _buttonRow.anchorMin = new Vector2(0.5f, 0f);
-            _buttonRow.anchorMax = new Vector2(0.5f, 0f);
-            _buttonRow.pivot = new Vector2(0.5f, 0f);
-            _buttonRow.anchoredPosition = new Vector2(0f, 10f);
-            _buttonRow.sizeDelta = new Vector2(640f, 40f);
+            _buttonRow.anchorMin = new Vector2(0f, 1f);
+            _buttonRow.anchorMax = new Vector2(0f, 1f);
+            _buttonRow.pivot = new Vector2(0f, 1f);
+            _buttonRow.anchoredPosition = new Vector2(0f, -32f);
+            _buttonRow.sizeDelta = new Vector2(480f, 140f);
         }
 
         private GameObject CreateButton(int index)
@@ -263,12 +204,15 @@ namespace ProjectoRTS.Buildings
             GameObject go = new GameObject("Build " + index);
             go.transform.SetParent(_buttonRow, false);
 
+            int column = index % Columns;
+            int rowIndex = index / Columns;
+
             RectTransform rect = go.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0.5f);
-            rect.anchorMax = new Vector2(0f, 0.5f);
-            rect.pivot = new Vector2(0f, 0.5f);
-            rect.anchoredPosition = new Vector2(index * 104f, 0f);
-            rect.sizeDelta = new Vector2(98f, 34f);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(10f + column * 160f, -10f - rowIndex * 44f);
+            rect.sizeDelta = new Vector2(150f, 38f);
 
             Image image = go.AddComponent<Image>();
             image.color = new Color(0.24f, 0.3f, 0.38f, 1f);
@@ -317,7 +261,7 @@ namespace ProjectoRTS.Buildings
             rect.anchorMax = new Vector2(0.5f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);
             rect.anchoredPosition = new Vector2(0f, -6f);
-            rect.sizeDelta = new Vector2(640f, 22f);
+            rect.sizeDelta = new Vector2(470f, 22f);
 
             Text label = go.AddComponent<Text>();
             label.font = font;

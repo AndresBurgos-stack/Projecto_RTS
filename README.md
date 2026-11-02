@@ -12,13 +12,18 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Input: **Input System 1.20.1**.
 - Cámara: **Cinemachine 3.1.7** (con Splines 2.8.1 como dependencia).
 - Timeline: pendiente de añadir si se necesita para cinemáticas.
-- Colocación de edificios: **implementada** con preview, raycast, snap al grid y validación de celdas.
+- Colocación de edificios: **implementada** con preview, raycast, snap al grid, validación de celdas y rotación con `R` (edificios de huella cuadrada).
 - Escena de prueba: `Assets/Scenes/PlacementDemo.unity`.
-- Paso 1 del roadmap: **completado** (terreno, grid y colocación de muro, puerta, torre, casa y cuartel griego).
-- Paso 2 del roadmap: **completado** (unidades Hoplita arcadio y Psiloi, cuartel con reclutamiento y panel uGUI).
+- Paso 1 del roadmap: **completado** (terreno, grid y colocación de muro, puerta, torre, casa, cuartel y almacén griegos).
+- Paso 2 del roadmap: **completado** (unidades Hoplita arcadio, Psiloi y Trabajador, cuartel con reclutamiento y panel uGUI).
 - Paso 3 del roadmap: **completado** (NavMesh horneado, selección con clic/arrastre y movimiento con clic derecho).
 - Paso 4 del roadmap: **completado** (combate automático y por orden, barras de vida, feedback de daño y muerte).
-- Los edificios del jugador son griegos; los romanos llegan como escuadra de prueba y se convertirán en oleadas enemigas.
+- Paso 5 del roadmap: **completado** (oleadas romanas con spawner en el borde del mapa, avance hacia el Panteón e IA con prioridad soldados → edificios → Panteón).
+- Economía: **implementada** (madera y bronce, costes en construcción y reclutamiento, botones deshabilitados sin recursos y HUD de recursos).
+- Recursos: **implementados** (nodos de madera y bronce repartidos por el mapa, recolección por trabajadores y depósito en Ayuntamiento, cuartel o almacén).
+- Trabajadores: **implementados** (construcción de 1 trabajador por obra, recolección con prioridad Madera/Bronce asignable desde el panel derecho, huida de enemigos).
+- Muros y arqueros: **implementados** (toxotes montables sobre muros con clic derecho, traslado entre tramos conectados, torres con ataque a distancia, almenas y rampa con rotación).
+- Mapa ampliado a 300x300 con cámara RTS ajustada para recorrerlo.
 
 La primera importación puede tardar varios minutos porque UPM extrae URP, Shader Graph y sus dependencias. Las siguientes aperturas son mucho más rápidas.
 
@@ -364,10 +369,63 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 - AI Navigation se copió a `Packages/com.unity.ai.navigation` y se referencia como paquete local (`file:`) para que la resolución no dependa de la red.
 - Las carpetas de respaldo antiguas (`Library_old`, `Library_partial`, `Temp_old`) ya se eliminaron.
 
-## Siguiente paso: 5. IA enemiga + spawn de romanos
+## Estado actual: economía, recursos, trabajadores y muros
 
-1. Dar a los legionarios un comportamiento de patrulla y detección de unidades griegas cercanas.
-2. Hacer que persigan y ataquen objetivos dentro de un radio de agresión.
-3. Añadir un spawner de romanos con puntos de aparición y límite de unidades.
-4. Conectar la IA con el sistema de oleadas del paso 6.
-5. Mantener el combate actual como base para la falange del paso 8.
+### Controles
+
+- Clic izquierdo: seleccionar unidad (individual o arrastre).
+- Clic derecho: mover la selección; sobre un enemigo, atacar; sobre un **muro terminado**, subir los toxotes.
+- `Escape`: cancelar selección o colocación.
+- Teclas `1` a `7`: iniciar colocación del edificio correspondiente (muro, puerta, torre, casa, cuartel, ayuntamiento, almacén).
+- `R` durante la colocación: rotar la vista previa 90° (solo huella cuadrada; útil para orientar la rampa del muro).
+- `Shift` + arrastre: pintar una línea de edificios.
+
+### Economía
+
+- El jugador griego empieza con 500 de madera y 300 de bronce (`PlayerEconomy`).
+- Construir y reclutar descuentan recursos; los botones se deshabilitan si no alcanza.
+- Costes visibles en los paneles como `M` (madera) y `B` (bronce).
+- El HUD arriba a la izquierda muestra madera, bronce, trabajadores y cuántos priorizan cada mineral.
+
+### Recursos
+
+- `ResourceNode`: nodos finitos de madera (árboles) y bronce (rocas) repartidos en clusters por el mapa de 300x300. Se ocultan al agotarse.
+- `ResourceDropOff`: puntos de depósito en Ayuntamiento, cuartel y almacén. Los trabajadores entregan en el más cercano.
+- Cada trabajador carga 10 recursos y tarda 2 segundos en recolectar.
+
+### Trabajadores
+
+- Salen **sin prioridad** y se quedan quietos; lo único que se auto-asignan es construir (**1 trabajador por obra**).
+- Selecciona trabajadores y elige **Madera** o **Bronce** en el panel derecho para que empiecen a recolectar ese mineral (verde = activo).
+- Cambiar la prioridad cancela la recolección actual al instante (si no llevan carga).
+- Huyen de enemigos cercanos y vuelven a su tarea cuando el área queda despejada.
+
+### Muros, torres y arqueros
+
+- El muro tiene rampa y almenas; la rotación con `R` permite dejar la rampa mirando hacia la base.
+- `WallMountPoint`: cada tramo admite 2 toxotes. Clic derecho sobre un muro terminado con toxotes seleccionados los sube; clic derecho sobre otro tramo cercano los traslada por arriba de la muralla.
+- Montados ganan +2 de alcance; clic derecho en suelo o enemigo los desmonta.
+- `BuildingRangedAttack`: las torres disparan flechas visibles a enemigos en rango (10 de daño, alcance 9). El muro en sí no dispara.
+- Los toxotes (psiloi) tienen alcance 9.
+
+### Edificios
+
+| Edificio | Tecla | Coste | Notas |
+|---|---|---|---|
+| Muro | 1 | 10M 5B | 2 puestos de toxotes, rampa |
+| Puerta | 2 | 30M 20B | huella 2x1, no rota |
+| Torre | 3 | 30M 40B | ataque a distancia automático |
+| Casa | 4 | 50M 20B | decorativa |
+| Cuartel | 5 | 100M 50B | recluta hoplitas y toxotes |
+| Ayuntamiento | 6 | 125M 75B | recluta trabajadores, depósito |
+| Almacén | 7 | 75M 10B | depósito de recursos |
+
+### Regenerar la escena
+
+Tras cambios en el generador, corre el menú `ProjectoRTS > Setup > Create Placement Demo Scene`. Esto regenera terreno, NavMesh, cámara, edificios, nodos de recursos y oleadas; las UI de runtime (HUD, panel de construcción, panel de prioridad) se crean solas al entrar en Play.
+
+## Siguiente paso
+
+1. Equilibrar oleadas y economía (población, límites, velocidades).
+2. Falange (paso 8 del roadmap) y mejoras de combate.
+3. Movimiento verdaderamente libre de arqueros sobre muros (pasarelas + pathfinding propio).

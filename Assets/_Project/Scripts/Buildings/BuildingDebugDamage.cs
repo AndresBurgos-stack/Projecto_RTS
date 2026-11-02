@@ -25,7 +25,6 @@ namespace ProjectoRTS.Buildings
 
             GameObject host = new GameObject("Building Debug Damage");
             host.AddComponent<BuildingDebugDamage>();
-            Debug.Log("[BuildingDebugDamage] Ready: point at a building and press K");
         }
 
         private void Update()

@@ -1090,7 +1090,51 @@ namespace ProjectoRTS.EditorTools
                 case "GreekBarracks":
                     CreateBarracksDetails(parent, size, stone, marble, terracotta, wood, bronze, accent);
                     break;
+                case "GreekStorage":
+                    CreateStorageDetails(parent, size, stone, terracotta, wood, bronze);
+                    break;
             }
+        }
+
+        private static void CreateStorageDetails(
+            Transform parent,
+            Vector3 size,
+            Material stone,
+            Material terracotta,
+            Material wood,
+            Material bronze)
+        {
+            CreatePart(
+                PrimitiveType.Cube,
+                "Roof",
+                parent,
+                new Vector3(0f, size.y + 0.06f, 0f),
+                new Vector3(size.x + 0.24f, 0.12f, size.z + 0.24f),
+                terracotta);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Door",
+                parent,
+                new Vector3(0f, 0.42f, size.z * 0.5f + 0.01f),
+                new Vector3(0.52f, 0.84f, 0.06f),
+                wood);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Door Band",
+                parent,
+                new Vector3(0f, 0.62f, size.z * 0.5f + 0.02f),
+                new Vector3(0.54f, 0.08f, 0.05f),
+                bronze);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Side Beam",
+                parent,
+                new Vector3(size.x * 0.5f - 0.1f, 0.62f, 0f),
+                new Vector3(0.1f, 0.08f, size.z + 0.04f),
+                wood);
         }
 
         private static void CreateWallDetails(
@@ -1102,38 +1146,39 @@ namespace ProjectoRTS.EditorTools
         {
             CreatePart(
                 PrimitiveType.Cube,
-                "Stone Band",
+                "Cap",
                 parent,
-                new Vector3(0f, 0.72f, 0f),
+                new Vector3(0f, size.y - 0.03f, 0f),
                 new Vector3(size.x + 0.04f, 0.08f, size.z + 0.04f),
-                stone);
-            CreatePart(
-                PrimitiveType.Cube,
-                "Cornice",
-                parent,
-                new Vector3(0f, size.y - 0.02f, 0f),
-                new Vector3(size.x + 0.06f, 0.08f, size.z + 0.06f),
                 marble);
 
-            for (int i = -1; i <= 1; i++)
+            CreatePart(
+                PrimitiveType.Cube,
+                "Groove",
+                parent,
+                new Vector3(0f, 0.5f, 0f),
+                new Vector3(size.x + 0.005f, 0.04f, size.z + 0.005f),
+                stone);
+
+            for (int side = -1; side <= 1; side += 2)
             {
                 CreatePart(
                     PrimitiveType.Cube,
                     "Merlon",
                     parent,
-                    new Vector3(i * 0.28f, size.y + 0.14f, 0f),
-                    new Vector3(0.18f, 0.28f, size.z),
+                    new Vector3(0f, size.y + 0.07f, side * (size.z * 0.5f - 0.08f)),
+                    new Vector3(size.x - 0.1f, 0.16f, 0.14f),
                     stone);
             }
 
             CreatePart(
-                PrimitiveType.Cylinder,
-                "Emblem",
+                PrimitiveType.Cube,
+                "Stairs",
                 parent,
-                new Vector3(0f, 0.92f, size.z * 0.5f + 0.01f),
-                new Vector3(0.18f, 0.02f, 0.18f),
-                Quaternion.Euler(90f, 0f, 0f),
-                bronze);
+                new Vector3(-0.34f, 0.55f, size.z * 0.5f + 0.32f),
+                new Vector3(0.55f, 0.07f, 1.15f),
+                Quaternion.Euler(42f, 0f, 0f),
+                stone);
         }
 
         private static void CreateGateDetails(
@@ -1321,6 +1366,44 @@ namespace ProjectoRTS.EditorTools
             }
 
             return quad;
+        }
+
+        private static void ConfigureWallMountPrefab(GameObject root)
+        {
+            WallMountPoint mount = root.GetComponent<WallMountPoint>();
+            if (mount == null)
+            {
+                mount = root.AddComponent<WallMountPoint>();
+            }
+
+            SerializedObject serialized = new SerializedObject(mount);
+            serialized.FindProperty("capacity").intValue = 2;
+            serialized.FindProperty("topHeight").floatValue = 1.35f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ConfigureTowerPrefab(GameObject root)
+        {
+            BuildingRangedAttack attack = root.GetComponent<BuildingRangedAttack>();
+            if (attack == null)
+            {
+                attack = root.AddComponent<BuildingRangedAttack>();
+            }
+
+            SerializedObject serialized = new SerializedObject(attack);
+            serialized.FindProperty("attackDamage").floatValue = 10f;
+            serialized.FindProperty("attackRange").floatValue = 9f;
+            serialized.FindProperty("attackInterval").floatValue = 1.2f;
+            serialized.FindProperty("muzzleHeight").floatValue = 2.7f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ConfigureStoragePrefab(GameObject root)
+        {
+            if (root.GetComponent<ResourceDropOff>() == null)
+            {
+                root.AddComponent<ResourceDropOff>();
+            }
         }
 
         private static void ConfigureBarracksPrefab(GameObject root, params UnitDefinition[] units)

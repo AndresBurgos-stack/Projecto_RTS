@@ -22,4 +22,4 @@ MonoBehaviour:
   goldCost: 0
   maxHealth: 350
   attackDamage: 10
-  attackRange: 8
+  attackRange: 9

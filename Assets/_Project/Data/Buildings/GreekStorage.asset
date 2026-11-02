@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04294eb3a4fc9a249aae4764250c2bd7, type: 3}
+  m_Name: GreekStorage
+  m_EditorClassIdentifier: 
+  displayName: Almacen
+  category: 3
+  prefab: {fileID: 4421880188815874129, guid: 9738e3cefb178d340ae1eb451a058873, type: 3}
+  width: 2
+  depth: 2
+  woodCost: 75
+  bronzeCost: 10
+  goldCost: 0
+  maxHealth: 250
+  attackDamage: 0
+  attackRange: 0

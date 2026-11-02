@@ -186,6 +186,12 @@ namespace ProjectoRTS.Units
                     continue;
                 }
 
+                WallArcher archer = unit.GetComponent<WallArcher>();
+                if (archer != null)
+                {
+                    archer.Dismount();
+                }
+
                 UnitCombat combat = unit.GetComponent<UnitCombat>();
                 if (combat != null)
                 {
@@ -223,6 +229,12 @@ namespace ProjectoRTS.Units
                 return;
             }
 
+            if (TryGetWallMount(screenPosition, out WallMountPoint wall))
+            {
+                MountSelected(wall);
+                return;
+            }
+
             if (TryGetGroundPoint(screenPosition, out Vector3 destination))
             {
                 MoveSelectedTo(destination);
@@ -239,11 +251,64 @@ namespace ProjectoRTS.Units
                     continue;
                 }
 
+                WallArcher archer = unit.GetComponent<WallArcher>();
+                if (archer != null)
+                {
+                    archer.Dismount();
+                }
+
                 UnitCombat combat = unit.GetComponent<UnitCombat>();
                 if (combat != null)
                 {
                     combat.CommandAttack(enemy);
                 }
+            }
+        }
+
+        private bool TryGetWallMount(Vector2 screenPosition, out WallMountPoint wall)
+        {
+            wall = null;
+            if (!TryGetNearestHit(screenPosition, out RaycastHit hit))
+            {
+                return false;
+            }
+
+            wall = hit.collider.GetComponentInParent<WallMountPoint>();
+            return wall != null;
+        }
+
+        private void MountSelected(WallMountPoint wall)
+        {
+            if (wall == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _selected.Count; i++)
+            {
+                UnitMovement unit = _selected[i];
+                if (unit == null || !unit.IsAlive)
+                {
+                    continue;
+                }
+
+                WallArcher archer = unit.GetComponent<WallArcher>();
+                if (archer != null)
+                {
+                    archer.RequestMoveTo(wall);
+                    continue;
+                }
+
+                UnitRuntime runtime = unit.Runtime != null
+                    ? unit.Runtime
+                    : unit.GetComponent<UnitRuntime>();
+
+                if (runtime == null || runtime.Role != UnitRole.Ranged)
+                {
+                    continue;
+                }
+
+                wall.RequestMount(unit);
             }
         }
 

@@ -53,6 +53,7 @@ namespace ProjectoRTS.Buildings
         private Vector2Int _originCell;
         private bool _canPlace;
         private int _startFrame;
+        private float _placementRotation;
 
         /// <summary>Raised after a building is successfully placed.</summary>
         public event Action<GameObject, BuildingDefinition> BuildingPlaced;
@@ -164,13 +165,28 @@ namespace ProjectoRTS.Buildings
             _definition = null;
             _canPlace = false;
             _dragging = false;
+            _placementRotation = 0f;
             _dragCells.Clear();
             ClearDragPreviews();
         }
 
+        private bool CanRotate()
+        {
+            return _definition != null &&
+                _definition.Footprint.x == _definition.Footprint.y;
+        }
+
+        private Quaternion PlacementRotation =>
+            CanRotate() ? Quaternion.Euler(0f, _placementRotation, 0f) : Quaternion.identity;
+
         private void HandleInput()
         {
             bool shiftHeld = Keyboard.current != null && Keyboard.current.shiftKey.isPressed;
+
+            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && CanRotate())
+            {
+                _placementRotation = (_placementRotation + 90f) % 360f;
+            }
 
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
             {
@@ -266,8 +282,8 @@ namespace ProjectoRTS.Buildings
             position.y = grid.Origin.y + _bottomOffset;
 
             GameObject instance = buildingParent != null
-                ? Instantiate(definition.Prefab, position, Quaternion.identity, buildingParent)
-                : Instantiate(definition.Prefab, position, Quaternion.identity);
+                ? Instantiate(definition.Prefab, position, PlacementRotation, buildingParent)
+                : Instantiate(definition.Prefab, position, PlacementRotation);
 
             instance.name = definition.DisplayName;
 
@@ -299,7 +315,7 @@ namespace ProjectoRTS.Buildings
 
             Vector3 position = grid.FootprintCenterWorld(originCell, footprint);
             position.y = grid.Origin.y + _bottomOffset;
-            _preview.transform.SetPositionAndRotation(position, Quaternion.identity);
+            _preview.transform.SetPositionAndRotation(position, PlacementRotation);
 
             _ghost.SetMaterial(_canPlace ? _validMaterial : _invalidMaterial);
         }
@@ -514,7 +530,7 @@ namespace ProjectoRTS.Buildings
                     PlayerEconomy.CanAfford(_definition.WoodCost, _definition.BronzeCost);
                 Vector3 position = grid.FootprintCenterWorld(origin, footprint);
                 position.y = grid.Origin.y + _bottomOffset;
-                ghost.transform.SetPositionAndRotation(position, Quaternion.identity);
+                ghost.transform.SetPositionAndRotation(position, PlacementRotation);
 
                 PreviewGhost preview = ghost.GetComponent<PreviewGhost>();
                 if (preview != null)

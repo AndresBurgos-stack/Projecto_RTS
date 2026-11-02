@@ -1,4 +1,5 @@
 using ProjectoRTS.Buildings;
+using ProjectoRTS.Resources;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -75,7 +76,13 @@ namespace ProjectoRTS.Economy
             _label.text =
                 "Madera: " + PlayerEconomy.Wood +
                 "\nBronce: " + PlayerEconomy.Bronze +
-                "\nTrabajadores: " + WorkerBuilder.Count;
+                "\nTrabajadores: " + WorkerBuilder.Count +
+                "\nPriorizan madera: " + WorkerBuilder.CountPreferred(ResourceType.Wood) +
+                "\nPriorizan bronce: " + WorkerBuilder.CountPreferred(ResourceType.Bronze) +
+                "\nSin prioridad: " + (
+                    WorkerBuilder.Count -
+                    WorkerBuilder.CountPreferred(ResourceType.Wood) -
+                    WorkerBuilder.CountPreferred(ResourceType.Bronze));
         }
 
         private void BuildUi()
@@ -99,7 +106,7 @@ namespace ProjectoRTS.Economy
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
             rect.anchoredPosition = new Vector2(24f, -80f);
-            rect.sizeDelta = new Vector2(230f, 104f);
+            rect.sizeDelta = new Vector2(250f, 172f);
 
             Image background = panel.AddComponent<Image>();
             background.color = new Color(0.08f, 0.09f, 0.12f, 0.9f);

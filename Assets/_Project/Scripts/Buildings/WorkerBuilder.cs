@@ -10,10 +10,10 @@ namespace ProjectoRTS.Buildings
 {
     /// <summary>
     /// Lets a worker build construction sites and harvest resource nodes.
-    /// Workers spread themselves between active sites, run from enemies and
-    /// return to their current job once the area is safe again. Construction
-    /// always wins while the worker is empty-handed; a loaded worker first
-    /// delivers the cargo to the nearest drop-off.
+    /// Construction follows a one-to-one rule: each site gets at most one
+    /// worker, so two sites mean two builders. Workers without a site gather
+    /// their preferred resource. Workers run from enemies and return to their
+    /// current job once the area is safe again.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NavMeshAgent))]
@@ -28,7 +28,6 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(0.1f)] private float workMultiplier = 1f;
         [SerializeField, Min(0f)] private float approachDistance = 2f;
         [SerializeField, Min(0.1f)] private float repathInterval = 0.5f;
-        [SerializeField, Min(0.1f)] private float reassignInterval = 0.75f;
 
         [Header("Gather")]
         [SerializeField, Min(1)] private int carryCapacity = 10;
@@ -50,7 +49,6 @@ namespace ProjectoRTS.Buildings
         private ConstructionSite _site;
         private bool _stoppedAtSite;
         private float _repathTimer;
-        private float _reassignTimer;
         private float _baseSpeed;
         private bool _fleeing;
         private UnitRuntime _fleeEnemy;
@@ -63,6 +61,7 @@ namespace ProjectoRTS.Buildings
         private ResourceType _cargoType;
         private int _cargoAmount;
         private ResourceType _nextGatherType = ResourceType.Wood;
+        private ResourceType _preferredResource = ResourceType.None;
         private bool _atNode;
         private float _gatherTimer;
         private float _resourceRepathTimer;
@@ -72,6 +71,35 @@ namespace ProjectoRTS.Buildings
 
         /// <summary>True while the worker carries harvested resources.</summary>
         public bool HasCargo => _cargoAmount > 0;
+
+        /// <summary>
+        /// Resource the worker must collect, or None while the worker has no
+        /// gathering job (it stays idle). Changing it cancels the current
+        /// gathering job immediately (unless the worker is carrying cargo) so
+        /// the worker switches resources right away.
+        /// </summary>
+        public ResourceType PreferredResource
+        {
+            get => _preferredResource;
+            set
+            {
+                if (_preferredResource == value)
+                {
+                    return;
+                }
+
+                _preferredResource = value;
+                _nextGatherType = value;
+
+                if (_cargoAmount <= 0)
+                {
+                    _resourceNode = null;
+                    _atNode = false;
+                    _gatherTimer = 0f;
+                    _resourceRepathTimer = 0f;
+                }
+            }
+        }
 
         /// <summary>Number of living workers in the scene.</summary>
         public static int Count
@@ -92,6 +120,26 @@ namespace ProjectoRTS.Buildings
 
                 return count;
             }
+        }
+
+        /// <summary>Number of living workers that prioritize a resource type.</summary>
+        public static int CountPreferred(ResourceType type)
+        {
+            int count = 0;
+
+            for (int i = 0; i < Workers.Count; i++)
+            {
+                WorkerBuilder worker = Workers[i];
+
+                if (worker != null &&
+                    (worker._runtime == null || worker._runtime.IsAlive) &&
+                    worker._preferredResource == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         /// <summary>True when the worker is close enough to be building.</summary>
@@ -134,7 +182,6 @@ namespace ProjectoRTS.Buildings
             _site = site;
             _stoppedAtSite = false;
             _repathTimer = 0f;
-            _reassignTimer = 0f;
             CancelGathering();
 
             if (_site == null)
@@ -210,8 +257,6 @@ namespace ProjectoRTS.Buildings
             {
                 return;
             }
-
-            TryReassign();
 
             if (!IsInRange())
             {
@@ -368,40 +413,24 @@ namespace ProjectoRTS.Buildings
 
         private void CompleteDeposit()
         {
-            ResourceType delivered = _cargoType;
             _cargoAmount = 0;
             _dropOff = null;
             _resourceRepathTimer = 0f;
-            _nextGatherType = delivered == ResourceType.Wood
-                ? ResourceType.Bronze
-                : ResourceType.Wood;
+            _nextGatherType = _preferredResource;
             Resume();
         }
 
         private ResourceNode FindGatherNode()
         {
-            ResourceNode node = ResourceNode.FindNearest(
+            if (_preferredResource == ResourceType.None)
+            {
+                return null;
+            }
+
+            return ResourceNode.FindNearest(
                 transform.position,
-                _nextGatherType,
+                _preferredResource,
                 AutoAssignRange);
-
-            if (node != null)
-            {
-                return node;
-            }
-
-            ResourceType fallback = _nextGatherType == ResourceType.Wood
-                ? ResourceType.Bronze
-                : ResourceType.Wood;
-
-            node = ResourceNode.FindNearest(transform.position, fallback, AutoAssignRange);
-
-            if (node != null)
-            {
-                _nextGatherType = fallback;
-            }
-
-            return node;
         }
 
         private void WalkToResource()
@@ -658,49 +687,6 @@ namespace ProjectoRTS.Buildings
             return delta.sqrMagnitude <= 4f;
         }
 
-        /// <summary>
-        /// Sends surplus workers to another site so they do not all pile up on
-        /// the same building. A worker only leaves when its current site has at
-        /// least two more workers than the best alternative.
-        /// </summary>
-        private void TryReassign()
-        {
-            _reassignTimer -= Time.deltaTime;
-
-            if (_reassignTimer > 0f)
-            {
-                return;
-            }
-
-            _reassignTimer = reassignInterval;
-
-            if (_site == null || _site.IsComplete)
-            {
-                return;
-            }
-
-            int currentCount = CountAssigned(_site);
-
-            if (currentCount < 2)
-            {
-                return;
-            }
-
-            ConstructionSite candidate = FindBestSite(transform.position, AutoAssignRange, _site);
-
-            if (candidate == null)
-            {
-                return;
-            }
-
-            if (currentCount <= CountAssigned(candidate) + 1)
-            {
-                return;
-            }
-
-            AssignSite(candidate);
-        }
-
         private void WalkToSite()
         {
             if (_site == null || _agent == null || !_agent.isOnNavMesh)
@@ -777,8 +763,9 @@ namespace ProjectoRTS.Buildings
         }
 
         /// <summary>
-        /// Picks the active site with the fewest assigned workers, using
-        /// distance only to break ties. The optional site is ignored.
+        /// Picks the nearest active site that has no worker assigned yet. With
+        /// this one-to-one rule a site never piles up workers, so one site gets
+        /// one builder and two sites get two.
         /// </summary>
         private static ConstructionSite FindBestSite(
             Vector3 position,
@@ -786,7 +773,6 @@ namespace ProjectoRTS.Buildings
             ConstructionSite avoid)
         {
             ConstructionSite best = null;
-            int bestCount = int.MaxValue;
             float bestSqr = float.MaxValue;
             float maxSqr = maxDistance * maxDistance;
             IReadOnlyList<ConstructionSite> sites = ConstructionSite.Active;
@@ -800,6 +786,11 @@ namespace ProjectoRTS.Buildings
                     continue;
                 }
 
+                if (CountAssigned(site) > 0)
+                {
+                    continue;
+                }
+
                 float sqr = (site.transform.position - position).sqrMagnitude;
 
                 if (sqr > maxSqr)
@@ -807,12 +798,9 @@ namespace ProjectoRTS.Buildings
                     continue;
                 }
 
-                int count = CountAssigned(site);
-
-                if (count < bestCount || (count == bestCount && sqr < bestSqr))
+                if (sqr < bestSqr)
                 {
                     best = site;
-                    bestCount = count;
                     bestSqr = sqr;
                 }
             }

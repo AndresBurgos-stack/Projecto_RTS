@@ -42,6 +42,7 @@ namespace ProjectoRTS.Combat
         private float _attackRange;
         private float _attackDamage;
         private float _attackInterval;
+        private float _rangeBonus;
 
         public UnitRuntime Target => _target;
         public PantheonObjective ObjectiveTarget => _objectiveTarget;
@@ -139,6 +140,12 @@ namespace ProjectoRTS.Combat
             }
         }
 
+        /// <summary>Adds a flat range bonus, used while standing on a wall.</summary>
+        public void SetRangeBonus(float bonus)
+        {
+            _rangeBonus = Mathf.Max(0f, bonus);
+        }
+
         /// <summary>Orders this unit to chase and attack a specific enemy.</summary>
         public void CommandAttack(UnitRuntime target)
         {
@@ -152,14 +159,21 @@ namespace ProjectoRTS.Combat
                 return;
             }
 
+            bool sameTarget = _target == target;
+
             _target = target;
             _objectiveTarget = null;
             _buildingTarget = null;
             _manualTarget = true;
             _autoTarget = false;
             _chasing = false;
-            _nextAttackTime = 0f;
             _nextRetargetTime = 0f;
+
+            if (!sameTarget)
+            {
+                _nextAttackTime = 0f;
+            }
+
             _nextChaseTime = 0f;
             _lastChasePosition = target.transform.position;
         }
@@ -172,14 +186,21 @@ namespace ProjectoRTS.Combat
                 return;
             }
 
+            bool sameTarget = _objectiveTarget == target;
+
             _target = null;
             _objectiveTarget = target;
             _buildingTarget = null;
             _manualTarget = true;
             _autoTarget = false;
             _chasing = false;
-            _nextAttackTime = 0f;
             _nextRetargetTime = 0f;
+
+            if (!sameTarget)
+            {
+                _nextAttackTime = 0f;
+            }
+
             _nextChaseTime = 0f;
             _lastChasePosition = target.transform.position;
         }
@@ -192,13 +213,21 @@ namespace ProjectoRTS.Combat
                 return;
             }
 
+            bool sameTarget = _buildingTarget == target;
+
             _target = null;
             _objectiveTarget = null;
             _buildingTarget = target;
             _manualTarget = true;
+            _autoTarget = false;
             _chasing = false;
-            _nextAttackTime = 0f;
             _nextRetargetTime = 0f;
+
+            if (!sameTarget)
+            {
+                _nextAttackTime = 0f;
+            }
+
             _nextChaseTime = 0f;
             _lastChasePosition = target.transform.position;
         }
@@ -250,7 +279,7 @@ namespace ProjectoRTS.Combat
 
                 if (movement == null || !movement.IsMoving)
                 {
-                    float radius = Mathf.Max(aggroRadius, _attackRange + rangePadding);
+                    float radius = Mathf.Max(aggroRadius, _attackRange + _rangeBonus + rangePadding);
                     _target = UnitRegistry.FindNearestEnemy(
                         transform.position,
                         runtime.Faction,
@@ -283,7 +312,7 @@ namespace ProjectoRTS.Combat
             Vector3 delta = _target.transform.position - transform.position;
             delta.y = 0f;
             float distance = delta.magnitude;
-            float attackDistance = _attackRange + rangePadding;
+            float attackDistance = _attackRange + _rangeBonus + rangePadding;
 
             if (distance > attackDistance)
             {
