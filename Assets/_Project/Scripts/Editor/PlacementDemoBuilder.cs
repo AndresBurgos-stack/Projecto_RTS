@@ -30,9 +30,9 @@ namespace ProjectoRTS.EditorTools
         private const string NavMeshFolder = "Assets/_Project/Data/NavMesh";
         private const string MaterialFolder = "Assets/_Project/Materials";
         private const string ScenePath = "Assets/Scenes/PlacementDemo.unity";
-        private const int MapSize = 104;
+        private const int MapSize = 300;
         private const float MapHalfSize = MapSize * 0.5f;
-        private const float GroundScale = 11.7f;
+        private const float GroundScale = MapSize * 0.1f + 2f;
 
         [MenuItem("ProjectoRTS/Setup/Create Placement Demo Scene")]
         public static void CreateDemoScene()
@@ -115,7 +115,8 @@ namespace ProjectoRTS.EditorTools
                     AttackInterval = 1.2f,
                     DamageReduction = 0.2f,
                     MoveSpeed = 3.2f,
-                    Cost = 50,
+                    WoodCost = 20,
+                    BronzeCost = 30,
                     TrainTime = 4f,
                     PopulationCost = 1
                 },
@@ -123,6 +124,33 @@ namespace ProjectoRTS.EditorTools
                 healthBarBackgroundMaterial,
                 healthBarFillMaterial,
                 palette);
+
+            UnitDefinition trabajador = CreateUnitDefinition(
+                new UnitConfig
+                {
+                    AssetName = "Trabajador",
+                    DisplayName = "Trabajador",
+                    Faction = Faction.Greek,
+                    Role = UnitRole.Infantry,
+                    Size = new Vector3(0.75f, 1.7f, 0.75f),
+                    Material = psiloiMaterial,
+                    MaxHealth = 60f,
+                    AttackDamage = 0f,
+                    AttackRange = 0f,
+                    AttackInterval = 1f,
+                    DamageReduction = 0f,
+                    MoveSpeed = 4.5f,
+                    WoodCost = 25,
+                    BronzeCost = 0,
+                    TrainTime = 4f,
+                    PopulationCost = 1
+                },
+                selectionMaterial,
+                healthBarBackgroundMaterial,
+                healthBarFillMaterial,
+                palette);
+
+            RebuildWorkerVisual(trabajador);
 
             UnitDefinition psiloi = CreateUnitDefinition(
                 new UnitConfig
@@ -139,7 +167,8 @@ namespace ProjectoRTS.EditorTools
                     AttackInterval = 1.8f,
                     DamageReduction = 0f,
                     MoveSpeed = 3.8f,
-                    Cost = 35,
+                    WoodCost = 20,
+                    BronzeCost = 15,
                     TrainTime = 3f,
                     PopulationCost = 1
                 },
@@ -163,7 +192,8 @@ namespace ProjectoRTS.EditorTools
                     AttackInterval = 1.3f,
                     DamageReduction = 0.15f,
                     MoveSpeed = 2.9f,
-                    Cost = 0,
+                    WoodCost = 0,
+                    BronzeCost = 0,
                     TrainTime = 0f,
                     PopulationCost = 1
                 },
@@ -186,7 +216,7 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0.9f, 1.2f, 0.9f),
                 wallMaterial,
                 woodCost: 10,
-                stoneCost: 5,
+                bronzeCost: 5,
                 maxHealth: 200f,
                 palette: palette);
 
@@ -198,7 +228,7 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(1.8f, 1.5f, 0.9f),
                 gateMaterial,
                 woodCost: 30,
-                stoneCost: 20,
+                bronzeCost: 20,
                 maxHealth: 300f,
                 palette: palette);
 
@@ -210,7 +240,7 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0.9f, 2.6f, 0.9f),
                 towerMaterial,
                 woodCost: 30,
-                stoneCost: 40,
+                bronzeCost: 40,
                 maxHealth: 350f,
                 attackDamage: 10f,
                 attackRange: 8f,
@@ -224,7 +254,7 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0.9f, 1f, 0.9f),
                 buildingMaterial,
                 woodCost: 50,
-                stoneCost: 20,
+                bronzeCost: 20,
                 maxHealth: 150f,
                 palette: palette);
 
@@ -236,12 +266,25 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(1.8f, 1.5f, 1.8f),
                 barracksMaterial,
                 woodCost: 100,
-                stoneCost: 50,
+                bronzeCost: 50,
                 maxHealth: 300f,
                 configurePrefab: root => ConfigureBarracksPrefab(root, hoplite, psiloi),
                 palette: palette);
 
-            if (wall == null || gate == null || tower == null || house == null || barracks == null)
+            BuildingDefinition townCenter = CreateBuildingDefinition(
+                "GreekTownCenter",
+                "Ayuntamiento",
+                BuildingCategory.Production,
+                new Vector2Int(3, 3),
+                new Vector3(2.6f, 2.0f, 2.6f),
+                barracksMaterial,
+                woodCost: 125,
+                bronzeCost: 75,
+                maxHealth: 400f,
+                configurePrefab: root => ConfigureBarracksPrefab(root, trabajador),
+                palette: palette);
+
+            if (wall == null || gate == null || tower == null || house == null || barracks == null || townCenter == null)
             {
                 Debug.LogError("Could not create the placement demo building definitions.");
                 return;
@@ -312,6 +355,31 @@ namespace ProjectoRTS.EditorTools
             BuildGrid grid = gridObject.AddComponent<BuildGrid>();
             ConfigureGrid(grid, MapSize, MapSize, 1f, new Vector3(-MapHalfSize, 0f, -MapHalfSize));
 
+            // Starter town centre, placed away from the Pantheon so the player
+            // has room to expand around it without covering the temple.
+            if (townCenter != null && townCenter.Prefab != null)
+            {
+                Vector2Int townHallCell = new Vector2Int(MapSize / 2 - 16, MapSize / 2 - 13);
+                Vector3 townHallPosition = grid.FootprintCenterWorld(townHallCell, townCenter.Footprint);
+                GameObject townHall = Object.Instantiate(
+                    townCenter.Prefab,
+                    townHallPosition,
+                    Quaternion.identity,
+                    buildingsRoot.transform);
+                townHall.name = townCenter.DisplayName;
+
+                BuildingRuntime townHallRuntime = townHall.AddComponent<BuildingRuntime>();
+                townHallRuntime.Configure(townCenter.MaxHealth);
+
+                if (townHall.GetComponent<StructureHealthBar>() == null)
+                {
+                    townHall.AddComponent<StructureHealthBar>();
+                }
+                grid.TryPlace(townCenter, townHallCell);
+            }
+
+            CreateResourceNodes(palette);
+
             GameObject placementObject = new GameObject("Placement");
             BuildingPlacementController placement = placementObject.AddComponent<BuildingPlacementController>();
             SetObjectReference(placement, "grid", grid);
@@ -335,7 +403,7 @@ namespace ProjectoRTS.EditorTools
                 marbleMaterial,
                 terracottaMaterial);
 
-            SetObjectReference(cameraController, "initialFocus", objective.transform);
+            SetObjectReference(cameraController, "lookTarget", objective.transform);
 
             WaveDefinition waveDay1 = CreateWaveDefinition(
                 "WaveDay1",
@@ -373,7 +441,7 @@ namespace ProjectoRTS.EditorTools
             wavesProperty.GetArrayElementAtIndex(2).objectReferenceValue = waveDay3;
             waveManagerSerialized.ApplyModifiedPropertiesWithoutUndo();
 
-            CreateWaveHud(waveManager, calendar, objective);
+            CreateWaveHud(waveManager, calendar);
 
             RecruitmentPanel recruitmentPanel = CreateRecruitmentUI();
             GameObject recruitmentObject = new GameObject("Recruitment");
@@ -398,12 +466,13 @@ namespace ProjectoRTS.EditorTools
             SetObjectReference(hotkeys, "placement", placement);
             SerializedObject hotkeysSerialized = new SerializedObject(hotkeys);
             SerializedProperty definitions = hotkeysSerialized.FindProperty("definitions");
-            definitions.arraySize = 5;
+            definitions.arraySize = 6;
             definitions.GetArrayElementAtIndex(0).objectReferenceValue = wall;
             definitions.GetArrayElementAtIndex(1).objectReferenceValue = gate;
             definitions.GetArrayElementAtIndex(2).objectReferenceValue = tower;
             definitions.GetArrayElementAtIndex(3).objectReferenceValue = house;
             definitions.GetArrayElementAtIndex(4).objectReferenceValue = barracks;
+            definitions.GetArrayElementAtIndex(5).objectReferenceValue = townCenter;
             hotkeysSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
@@ -459,22 +528,228 @@ namespace ProjectoRTS.EditorTools
             virtualObject.transform.SetParent(rigObject.transform, false);
 
             CinemachineCamera virtualCamera = virtualObject.AddComponent<CinemachineCamera>();
-            virtualCamera.Follow = targetObject.transform;
-            virtualCamera.LookAt = targetObject.transform;
+            virtualCamera.Follow = null;
+            virtualCamera.LookAt = null;
             virtualCamera.Priority = 100;
+            virtualObject.transform.position = new Vector3(0f, 39.94f, -36f);
 
-            CinemachineFollow follow = virtualObject.AddComponent<CinemachineFollow>();
-            follow.FollowOffset = new Vector3(0f, 35.3f, -18.8f);
+            CinemachinePanTilt panTilt = virtualObject.AddComponent<CinemachinePanTilt>();
+            panTilt.PanAxis.Value = 0f;
+            panTilt.PanAxis.Range = new Vector2(0f, 360f);
+            panTilt.PanAxis.Wrap = true;
+            panTilt.TiltAxis.Value = 46.528f;
+            panTilt.TiltAxis.Range = new Vector2(10f, 85f);
 
             RtsCameraController controller = rigObject.AddComponent<RtsCameraController>();
             SetObjectReference(controller, "virtualCamera", virtualCamera);
-            SetObjectReference(controller, "follow", follow);
-            SetObjectReference(controller, "followTarget", targetObject.transform);
+            SetObjectReference(controller, "panTilt", panTilt);
+            SetObjectReference(controller, "lookTarget", targetObject.transform);
             controller.SetLimits(
                 new Vector2(-halfSize, -halfSize),
                 new Vector2(halfSize, halfSize));
 
+            SerializedObject cameraSerialized = new SerializedObject(controller);
+            cameraSerialized.FindProperty("panSpeed").floatValue = 52f;
+            cameraSerialized.FindProperty("maxHeight").floatValue = 120f;
+            cameraSerialized.FindProperty("startPosition").vector3Value = new Vector3(0f, 55f, -50f);
+            cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
+
             return controller;
+        }
+
+        private static void ConfigureWorkerPrefab(UnitDefinition worker)
+        {
+            if (worker == null || worker.Prefab == null)
+            {
+                return;
+            }
+
+            string path = AssetDatabase.GetAssetPath(worker.Prefab);
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            GameObject contents = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                Transform[] all = contents.GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    string partName = all[i].name;
+                    if (partName == "Spear" || partName == "Spear Tip")
+                    {
+                        Object.DestroyImmediate(all[i].gameObject);
+                    }
+                }
+
+                Material shared = FindFirstMaterial(contents);
+                Transform visuals = contents.transform.Find("Visuals");
+                Transform parent = visuals != null ? visuals : contents.transform;
+
+                CreateHammerPart(
+                    PrimitiveType.Cylinder,
+                    "Hammer Handle",
+                    parent,
+                    new Vector3(0.34f, 1.05f, 0.2f),
+                    new Vector3(0.05f, 0.28f, 0.05f),
+                    shared);
+                CreateHammerPart(
+                    PrimitiveType.Cube,
+                    "Hammer Head",
+                    parent,
+                    new Vector3(0.34f, 1.3f, 0.2f),
+                    new Vector3(0.18f, 0.12f, 0.12f),
+                    shared);
+
+                PrefabUtility.SaveAsPrefabAsset(contents, path);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+
+        private static Material FindFirstMaterial(GameObject root)
+        {
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null && renderers[i].sharedMaterial != null)
+                {
+                    return renderers[i].sharedMaterial;
+                }
+            }
+
+            return null;
+        }
+
+        private static void CreateHammerPart(
+            PrimitiveType type,
+            string partName,
+            Transform parent,
+            Vector3 position,
+            Vector3 scale,
+            Material material)
+        {
+            GameObject part = GameObject.CreatePrimitive(type);
+            part.name = partName;
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = position;
+            part.transform.localRotation = Quaternion.identity;
+            part.transform.localScale = scale;
+
+            Collider collider = part.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Object.DestroyImmediate(collider);
+            }
+
+            Renderer renderer = part.GetComponent<Renderer>();
+            if (renderer != null && material != null)
+            {
+                renderer.sharedMaterial = material;
+            }
+        }
+
+        private static void RebuildWorkerVisual(UnitDefinition worker)
+        {
+            if (worker == null || worker.Prefab == null)
+            {
+                return;
+            }
+
+            string path = AssetDatabase.GetAssetPath(worker.Prefab);
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            GameObject contents = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                Transform visuals = contents.transform.Find("Visuals");
+                if (visuals == null)
+                {
+                    Debug.LogWarning("RebuildWorkerVisual: the worker prefab has no Visuals child.");
+                    return;
+                }
+
+                Material body = FindFirstMaterial(contents);
+
+                for (int i = visuals.childCount - 1; i >= 0; i--)
+                {
+                    Object.DestroyImmediate(visuals.GetChild(i).gameObject);
+                }
+
+                Material cap = CreateOrLoadCapMaterial();
+
+                CreateHammerPart(PrimitiveType.Cylinder, "Leg L", visuals, new Vector3(-0.13f, 0.35f, 0f), new Vector3(0.13f, 0.35f, 0.13f), body);
+                CreateHammerPart(PrimitiveType.Cylinder, "Leg R", visuals, new Vector3(0.13f, 0.35f, 0f), new Vector3(0.13f, 0.35f, 0.13f), body);
+                CreateHammerPart(PrimitiveType.Cube, "Sandal L", visuals, new Vector3(-0.13f, 0.04f, 0.04f), new Vector3(0.18f, 0.08f, 0.28f), body);
+                CreateHammerPart(PrimitiveType.Cube, "Sandal R", visuals, new Vector3(0.13f, 0.04f, 0.04f), new Vector3(0.18f, 0.08f, 0.28f), body);
+                CreateHammerPart(PrimitiveType.Cube, "Tunic", visuals, new Vector3(0f, 1.05f, 0f), new Vector3(0.46f, 0.7f, 0.3f), cap);
+                CreateHammerPart(PrimitiveType.Sphere, "Head", visuals, new Vector3(0f, 1.58f, 0f), new Vector3(0.28f, 0.3f, 0.28f), body);
+                CreateHammerPart(PrimitiveType.Cylinder, "Arm L", visuals, new Vector3(-0.3f, 1.12f, 0f), new Vector3(0.1f, 0.26f, 0.1f), body);
+                CreateHammerPart(PrimitiveType.Cylinder, "Arm R", visuals, new Vector3(0.3f, 1.12f, 0f), new Vector3(0.1f, 0.26f, 0.1f), body);
+
+                CreateHammerPart(PrimitiveType.Sphere, "Cap", visuals, new Vector3(0f, 1.72f, 0f), new Vector3(0.3f, 0.14f, 0.3f), cap);
+                CreateHammerPart(PrimitiveType.Cylinder, "Cap Brim", visuals, new Vector3(0f, 1.66f, 0.08f), new Vector3(0.38f, 0.02f, 0.38f), cap);
+
+                CreateHammerPart(PrimitiveType.Cylinder, "Hammer Handle", visuals, new Vector3(0.36f, 1.05f, 0.18f), new Vector3(0.05f, 0.3f, 0.05f), body);
+                CreateHammerPart(PrimitiveType.Cube, "Hammer Head", visuals, new Vector3(0.36f, 1.3f, 0.18f), new Vector3(0.18f, 0.12f, 0.12f), body);
+
+                if (contents.GetComponent<WorkerBuilder>() == null)
+                {
+                    contents.AddComponent<WorkerBuilder>();
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(contents, path);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+
+        private static Material CreateOrLoadCapMaterial()
+        {
+            const string folder = "Assets/_Project/Materials";
+            const string assetPath = folder + "/WorkerCap.mat";
+
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            if (!AssetDatabase.IsValidFolder(folder))
+            {
+                AssetDatabase.CreateFolder("Assets/_Project", "Materials");
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            Material material = new Material(shader != null ? shader : Shader.Find("Sprites/Default"));
+            material.name = "WorkerCap";
+            Color white = new Color(0.95f, 0.94f, 0.9f, 1f);
+
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", white);
+            }
+
+            if (material.HasProperty("_Color"))
+            {
+                material.SetColor("_Color", white);
+            }
+
+            AssetDatabase.CreateAsset(material, assetPath);
+            return material;
         }
 
         private static void ConfigureGrid(BuildGrid grid, int width, int height, float cellSize, Vector3 origin)

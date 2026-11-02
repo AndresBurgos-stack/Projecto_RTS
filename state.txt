@@ -1,0 +1,6 @@
+﻿?? Assets/_Project/Scripts/Editor/PlacementDemoBuilder.Waves.cs
+?? Assets/_Project/Scripts/Editor/PlacementDemoBuilder.Waves.cs.meta
+?? Assets/_Project/Scripts/Waves.meta
+?? Assets/_Project/Scripts/Waves/
+?? gcm-diagnose.log
+?? state.txt

@@ -24,6 +24,7 @@ MonoBehaviour:
   moveSpeed: 3.8
   turnSpeed: 720
   stoppingDistance: 0.5
-  cost: 35
+  woodCost: 20
+  bronzeCost: 15
   trainTime: 3
   populationCost: 1

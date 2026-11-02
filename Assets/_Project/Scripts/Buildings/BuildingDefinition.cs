@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ProjectoRTS.Buildings
 {
@@ -31,7 +32,8 @@ namespace ProjectoRTS.Buildings
 
         [Header("Economy")]
         [SerializeField, Min(0)] private int woodCost;
-        [SerializeField, Min(0)] private int stoneCost;
+        [FormerlySerializedAs("stoneCost")]
+        [SerializeField, Min(0)] private int bronzeCost;
         [SerializeField, Min(0)] private int goldCost;
 
         [Header("Combat")]
@@ -48,7 +50,7 @@ namespace ProjectoRTS.Buildings
         public Vector2Int Footprint => new Vector2Int(width, depth);
 
         public int WoodCost => woodCost;
-        public int StoneCost => stoneCost;
+        public int BronzeCost => bronzeCost;
         public int GoldCost => goldCost;
 
         public float MaxHealth => maxHealth;

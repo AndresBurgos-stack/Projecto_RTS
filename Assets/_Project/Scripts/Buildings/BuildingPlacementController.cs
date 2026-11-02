@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using ProjectoRTS.Economy;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -31,6 +33,14 @@ namespace ProjectoRTS.Buildings
         [SerializeField] private bool centerOnCursor = true;
         [SerializeField] private bool cancelWithRightClick = true;
         [SerializeField] private bool keepPlacingWithShift = true;
+        [SerializeField] private bool continuousPlacement = false;
+
+        [SerializeField] private bool dragPlacementEnabled = true;
+
+        private readonly List<GameObject> _dragPreviews = new List<GameObject>(16);
+        private readonly List<Vector2Int> _dragCells = new List<Vector2Int>(16);
+        private bool _dragging;
+        private Vector2Int _dragStartCell;
 
         private BuildingDefinition _definition;
         private GameObject _preview;
@@ -48,6 +58,14 @@ namespace ProjectoRTS.Buildings
         public event Action<GameObject, BuildingDefinition> BuildingPlaced;
 
         public bool IsPlacing => _definition != null;
+
+        /// <summary>When enabled, the placement preview stays active after a
+        /// successful placement without needing to hold Shift.</summary>
+        public bool ContinuousPlacement
+        {
+            get => continuousPlacement;
+            set => continuousPlacement = value;
+        }
         public BuildingDefinition CurrentDefinition => _definition;
 
         private void Awake()
@@ -145,16 +163,45 @@ namespace ProjectoRTS.Buildings
             _ghost = null;
             _definition = null;
             _canPlace = false;
+            _dragging = false;
+            _dragCells.Clear();
+            ClearDragPreviews();
         }
 
         private void HandleInput()
         {
+            bool shiftHeld = Keyboard.current != null && Keyboard.current.shiftKey.isPressed;
+
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
             {
                 if (!IsPointerOverUI())
                 {
-                    ConfirmPlacement();
+                    if (dragPlacementEnabled && shiftHeld && TryGetGroundPoint(out Vector3 startPoint))
+                    {
+                        BeginDrag(startPoint);
+                    }
+                    else
+                    {
+                        ConfirmPlacement();
+                    }
                 }
+
+                return;
+            }
+
+            if (_dragging && Mouse.current != null && Mouse.current.leftButton.isPressed)
+            {
+                if (TryGetGroundPoint(out Vector3 groundPoint))
+                {
+                    UpdateDrag(groundPoint);
+                }
+
+                return;
+            }
+
+            if (_dragging && Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
+            {
+                CommitDrag();
                 return;
             }
 
@@ -177,20 +224,30 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            if (!grid.TryPlace(_definition, _originCell))
+            if (!PlayerEconomy.TrySpend(_definition.WoodCost, _definition.BronzeCost))
             {
                 return;
             }
 
-            GameObject instance = SpawnBuilding(_definition, _originCell);
-            if (instance != null)
+            if (!grid.TryPlace(_definition, _originCell))
             {
-                BuildingPlaced?.Invoke(instance, _definition);
+                PlayerEconomy.Refund(_definition.WoodCost, _definition.BronzeCost);
+                return;
             }
 
-            bool keepPlacing = keepPlacingWithShift
-                && Keyboard.current != null
-                && Keyboard.current.shiftKey.isPressed;
+            GameObject instance = SpawnBuilding(_definition, _originCell);
+            if (instance == null)
+            {
+                PlayerEconomy.Refund(_definition.WoodCost, _definition.BronzeCost);
+                return;
+            }
+
+            BuildingPlaced?.Invoke(instance, _definition);
+
+            bool keepPlacing = continuousPlacement
+                || (keepPlacingWithShift
+                    && Keyboard.current != null
+                    && Keyboard.current.shiftKey.isPressed);
 
             if (!keepPlacing)
             {
@@ -213,6 +270,18 @@ namespace ProjectoRTS.Buildings
                 : Instantiate(definition.Prefab, position, Quaternion.identity);
 
             instance.name = definition.DisplayName;
+
+            BuildingRuntime runtime = instance.AddComponent<BuildingRuntime>();
+            runtime.Configure(definition.MaxHealth);
+
+            ConstructionSite site = instance.AddComponent<ConstructionSite>();
+            site.BeginConstruction();
+
+            if (instance.GetComponent<StructureHealthBar>() == null)
+            {
+                instance.AddComponent<StructureHealthBar>();
+            }
+
             return instance;
         }
 
@@ -225,7 +294,8 @@ namespace ProjectoRTS.Buildings
                 : cursorCell;
 
             _originCell = originCell;
-            _canPlace = grid.CanPlace(_definition, originCell);
+            _canPlace = grid.CanPlace(_definition, originCell) &&
+                PlayerEconomy.CanAfford(_definition.WoodCost, _definition.BronzeCost);
 
             Vector3 position = grid.FootprintCenterWorld(originCell, footprint);
             position.y = grid.Origin.y + _bottomOffset;
@@ -376,6 +446,182 @@ namespace ProjectoRTS.Buildings
         private static bool IsPointerOverUI()
         {
             return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        }
+
+        private void BeginDrag(Vector3 groundPoint)
+        {
+            if (_definition == null || grid == null)
+            {
+                return;
+            }
+
+            Vector2Int cursorCell = grid.WorldToCell(groundPoint);
+            Vector2Int footprint = _definition.Footprint;
+            _dragStartCell = centerOnCursor
+                ? grid.FootprintOriginFromCenter(cursorCell, footprint)
+                : cursorCell;
+            _dragging = true;
+            ClearDragPreviews();
+            UpdateDrag(groundPoint);
+        }
+
+        private void UpdateDrag(Vector3 groundPoint)
+        {
+            if (_definition == null || grid == null)
+            {
+                return;
+            }
+
+            Vector2Int cursorCell = grid.WorldToCell(groundPoint);
+            Vector2Int footprint = _definition.Footprint;
+            Vector2Int endCell = centerOnCursor
+                ? grid.FootprintOriginFromCenter(cursorCell, footprint)
+                : cursorCell;
+
+            _dragCells.Clear();
+            CollectLine(_dragStartCell, endCell, _dragCells);
+
+            while (_dragPreviews.Count < _dragCells.Count)
+            {
+                GameObject ghost = Instantiate(_definition.Prefab, Vector3.zero, Quaternion.identity);
+                ghost.name = _definition.DisplayName + " (Drag Preview)";
+                PreviewGhost preview = ghost.AddComponent<PreviewGhost>();
+                preview.Initialize(_validMaterial);
+                ghost.SetActive(false);
+                _dragPreviews.Add(ghost);
+            }
+
+            for (int i = 0; i < _dragPreviews.Count; i++)
+            {
+                GameObject ghost = _dragPreviews[i];
+                if (ghost == null)
+                {
+                    continue;
+                }
+
+                if (i >= _dragCells.Count)
+                {
+                    if (ghost.activeSelf)
+                    {
+                        ghost.SetActive(false);
+                    }
+
+                    continue;
+                }
+
+                Vector2Int origin = _dragCells[i];
+                bool canPlace = grid.CanPlace(_definition, origin) &&
+                    PlayerEconomy.CanAfford(_definition.WoodCost, _definition.BronzeCost);
+                Vector3 position = grid.FootprintCenterWorld(origin, footprint);
+                position.y = grid.Origin.y + _bottomOffset;
+                ghost.transform.SetPositionAndRotation(position, Quaternion.identity);
+
+                PreviewGhost preview = ghost.GetComponent<PreviewGhost>();
+                if (preview != null)
+                {
+                    preview.SetMaterial(canPlace ? _validMaterial : _invalidMaterial);
+                }
+
+                if (!ghost.activeSelf)
+                {
+                    ghost.SetActive(true);
+                }
+            }
+        }
+
+        private void CommitDrag()
+        {
+            _dragging = false;
+            ClearDragPreviews();
+
+            if (_definition == null || grid == null)
+            {
+                CancelPlacement();
+                return;
+            }
+
+            for (int i = 0; i < _dragCells.Count; i++)
+            {
+                Vector2Int origin = _dragCells[i];
+
+                if (!grid.CanPlace(_definition, origin))
+                {
+                    continue;
+                }
+
+                if (!PlayerEconomy.TrySpend(_definition.WoodCost, _definition.BronzeCost))
+                {
+                    break;
+                }
+
+                if (!grid.TryPlace(_definition, origin))
+                {
+                    PlayerEconomy.Refund(_definition.WoodCost, _definition.BronzeCost);
+                    continue;
+                }
+
+                GameObject instance = SpawnBuilding(_definition, origin);
+                if (instance == null)
+                {
+                    PlayerEconomy.Refund(_definition.WoodCost, _definition.BronzeCost);
+                    continue;
+                }
+
+                BuildingPlaced?.Invoke(instance, _definition);
+            }
+
+            _dragCells.Clear();
+            CancelPlacement();
+        }
+
+        private void ClearDragPreviews()
+        {
+            for (int i = 0; i < _dragPreviews.Count; i++)
+            {
+                if (_dragPreviews[i] != null)
+                {
+                    Destroy(_dragPreviews[i]);
+                }
+            }
+
+            _dragPreviews.Clear();
+        }
+
+        private static void CollectLine(Vector2Int start, Vector2Int end, List<Vector2Int> output)
+        {
+            int x0 = start.x;
+            int y0 = start.y;
+            int x1 = end.x;
+            int y1 = end.y;
+
+            int dx = Mathf.Abs(x1 - x0);
+            int dy = Mathf.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+
+            while (true)
+            {
+                output.Add(new Vector2Int(x0, y0));
+
+                if (x0 == x1 && y0 == y1)
+                {
+                    break;
+                }
+
+                int e2 = err * 2;
+                if (e2 > -dy)
+                {
+                    err -= dy;
+                    x0 += sx;
+                }
+
+                if (e2 < dx)
+                {
+                    err += dx;
+                    y0 += sy;
+                }
+            }
         }
 
         private void OnValidate()

@@ -1,0 +1,184 @@
+﻿Diagnose log at 2026-11-01T19:07:30Z
+
+AppPath: C:\Program Files\Git\ucrt64\bin\git-credential-manager.exe
+InstallDir: C:\Program Files\Git\ucrt64\bin\
+Version: 2.9.1+6760f0ef069c994aa2bb1d703fb374986ee82a3e
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: Windows
+OSVersion: 10.0 (build 26200)
+Reading environment variables... OK
+ Variables:
+SystemDrive=C:
+ProgramFiles(x86)=C:\Program Files (x86)
+MSYSTEM=UCRT64
+AGENT=1
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 151 Stepping 2, GenuineIntel
+VBOX_MSI_INSTALL_PATH=C:\Program Files\Oracle\VirtualBox\
+TMP=C:\Users\PANTRU~1\AppData\Local\Temp
+PROCESSOR_ARCHITECTURE=AMD64
+DriverData=C:\Windows\System32\Drivers\DriverData
+Path=C:/Program Files/Git/ucrt64/libexec/git-core;C:\Program Files\Git\ucrt64\bin;C:\Program Files\Git\usr\bin;C:\Users\PANTRUCAS0\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\dotnet\;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Users\PANTRUCAS0\AppData\Local\Muse Hub\lib;C:\Program Files\Git\cmd;C:\Program Files\GitHub CLI\;C:\Program Files (x86)\ZeroTier\One\;C:\Users\PANTRUCAS0\AppData\Local\Microsoft\WindowsApps;C:\Users\PANTRUCAS0\.dotnet\tools;C:\Users\PANTRUCAS0\AppData\Local\Muse Hub\lib;C:\Users\PANTRUCAS0\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\PANTRUCAS0\AppData\Local\Python\bin;C:\Users\PANTRUCAS0\AppData\Local\Unity\bin;C:\Users\PANTRUCAS0\.bun\bin
+WSLENV=WT_SESSION:WT_PROFILE_ID:
+PROCESSOR_REVISION=9702
+TEMP=C:\Users\PANTRU~1\AppData\Local\Temp
+USERPROFILE=C:\Users\PANTRUCAS0
+GIT_TRACE2_PARENT_SID=4258130a-83dc-4965-94aa-326c115d70f6
+LOGONSERVER=\\DESKTOP-7UDNK30
+OPENCODE=1
+USERNAME=PANTRUCAS0
+SystemRoot=C:\WINDOWS
+GIT_EXEC_PATH=C:/Program Files/Git/ucrt64/libexec/git-core
+PLINK_PROTOCOL=ssh
+NO_PROXY=127.0.0.1,localhost,::1
+OneDrive=C:\Users\PANTRUCAS0\OneDrive
+CommonProgramFiles=C:\Program Files\Common Files
+ZES_ENABLE_SYSMAN=1
+ProgramW6432=C:\Program Files
+ProgramData=C:\ProgramData
+LC_CTYPE=C.UTF-8
+HOMEPATH=\Users\PANTRUCAS0
+WT_SESSION=f308e704-3197-4fc3-a310-8507d8d0585f
+OneDriveConsumer=C:\Users\PANTRUCAS0\OneDrive
+COMPUTERNAME=DESKTOP-7UDNK30
+ALLUSERSPROFILE=C:\ProgramData
+CommonProgramW6432=C:\Program Files\Common Files
+TERM=xterm-256color
+WT_PROFILE_ID={61c54bbd-c2c6-5271-96e7-009a87ff44bf}
+SESSIONNAME=Console
+OPENCODE_TERMINAL=1
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+HOMEDRIVE=C:
+windir=C:\WINDOWS
+AI_AGENT=opencode
+NUMBER_OF_PROCESSORS=16
+OS=Windows_NT
+ProgramFiles=C:\Program Files
+ComSpec=C:\WINDOWS\system32\cmd.exe
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL
+HOME=C:\Users\PANTRUCAS0
+PSModulePath=C:\Users\PANTRUCAS0\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
+TMPDIR=C:\Users\PANTRU~1\AppData\Local\Temp
+APPDATA=C:\Users\PANTRUCAS0\AppData\Roaming
+USERDOMAIN=DESKTOP-7UDNK30
+PROCESSOR_LEVEL=6
+LOCALAPPDATA=C:\Users\PANTRUCAS0\AppData\Local
+WoTMPath=C:\Users\PANTRUCAS0\Documents\My Games\Terraria\tModLoader\Dev
+USERDOMAIN_ROAMINGPROFILE=DESKTOP-7UDNK30
+OPENCODE_SESSION_ID=ses_e74e583d8ffezIGnDaKQWXNqJr
+PUBLIC=C:\Users\Public
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is 'C:\Users\PANTRUCAS0\AppData\Local\Temp\'...
+Checking basic file I/O...
+Writing to temporary file 'C:\Users\PANTRUCAS0\AppData\Local\Temp\11a34f75b29cc11aa56f42e7'... OK
+Reading from temporary file 'C:\Users\PANTRUCAS0\AppData\Local\Temp\11a34f75b29cc11aa56f42e7'... OK
+Deleting temporary file 'C:\Users\PANTRUCAS0\AppData\Local\Temp\11a34f75b29cc11aa56f42e7'... OK
+Testing IFileSystem instance...
+UserHomePath: C:\Users\PANTRUCAS0
+UserDataDirectoryPath: C:\Users\PANTRUCAS0\.gcm
+GetCurrentDirectory(): D:\ProjectoRTS
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: True
+Exception: None
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com... OK
+Sending HEAD request to https://example.com... OK
+Acquiring free TCP port... OK
+Testing local HTTP loopback connections...
+Creating new HTTP listener for http://localhost:50038/... OK
+Waiting for loopback connection... OK
+Writing response... OK
+Waiting for response data... OK
+Loopback connection data OK
+
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.56.0.windows.2'
+Locating current repository...Git repository at 'D:/ProjectoRTS/.git'
+ OK
+Listing all Git configuration... OK
+Git configuration:
+file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.required=true
+file:C:/Program Files/Git/etc/gitconfig	http.sslbackend=schannel
+file:C:/Program Files/Git/etc/gitconfig	core.autocrlf=true
+file:C:/Program Files/Git/etc/gitconfig	core.fscache=true
+file:C:/Program Files/Git/etc/gitconfig	core.symlinks=false
+file:C:/Program Files/Git/etc/gitconfig	pull.rebase=false
+file:C:/Program Files/Git/etc/gitconfig	credential.helper=manager
+file:C:/Program Files/Git/etc/gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:C:/Program Files/Git/etc/gitconfig	init.defaultbranch=master
+file:C:/Users/PANTRUCAS0/.gitconfig	url.https://github.com/.insteadof=git@github.com:
+file:C:/Users/PANTRUCAS0/.gitconfig	user.email=firebrand88@yahoo.com
+file:C:/Users/PANTRUCAS0/.gitconfig	user.name=Andres_Burgos
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=false
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.symlinks=false
+file:.git/config	core.ignorecase=true
+file:.git/config	credential.helper=manager
+file:.git/config	remote.origin.url=https://github.com/AndresBurgos-stack/Projecto_RTS.git
+file:.git/config	remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: True
+Exception: None
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential... OK
+Reading test credential... OK
+Deleting test credential... OK
+
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Gathering MSAL token cache data... OK
+CacheDirectory: C:\Users\PANTRUCAS0\AppData\Local\.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: C:\Users\PANTRUCAS0\AppData\Local\.IdentityService\msal.cache
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: True
+Exception: None
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint... OK
+

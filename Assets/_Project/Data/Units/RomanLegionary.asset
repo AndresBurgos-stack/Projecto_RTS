@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66f1b173c0030384b8eff1a04e7dfd22, type: 3}
   m_Name: RomanLegionary
   m_EditorClassIdentifier: 
-  displayName: Legionario romano
+  displayName: Soldado auxiliar
   faction: 2
   role: 0
   prefab: {fileID: 7286954970806266342, guid: 3f7dc23c6fa54244c9a9fde182fc14b6, type: 3}
@@ -24,6 +24,7 @@ MonoBehaviour:
   moveSpeed: 2.9
   turnSpeed: 720
   stoppingDistance: 0.5
-  cost: 0
+  woodCost: 0
+  bronzeCost: 0
   trainTime: 0
   populationCost: 1

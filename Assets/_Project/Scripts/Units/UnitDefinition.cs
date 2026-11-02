@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ProjectoRTS.Units
 {
@@ -45,7 +46,9 @@ namespace ProjectoRTS.Units
         [SerializeField, Min(0f)] private float stoppingDistance = 0.5f;
 
         [Header("Economy")]
-        [SerializeField, Min(0)] private int cost = 50;
+        [FormerlySerializedAs("cost")]
+        [SerializeField, Min(0)] private int woodCost = 50;
+        [SerializeField, Min(0)] private int bronzeCost;
         [SerializeField, Min(0f)] private float trainTime = 5f;
         [SerializeField, Min(1)] private int populationCost = 1;
 
@@ -64,7 +67,8 @@ namespace ProjectoRTS.Units
         public float TurnSpeed => turnSpeed;
         public float StoppingDistance => stoppingDistance;
 
-        public int Cost => cost;
+        public int WoodCost => woodCost;
+        public int BronzeCost => bronzeCost;
         public float TrainTime => trainTime;
         public int PopulationCost => populationCost;
 

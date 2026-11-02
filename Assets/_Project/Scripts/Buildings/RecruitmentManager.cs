@@ -1,4 +1,5 @@
 using ProjectoRTS.Combat;
+using ProjectoRTS.Economy;
 using ProjectoRTS.Units;
 using UnityEngine;
 
@@ -82,6 +83,11 @@ namespace ProjectoRTS.Buildings
         public void Recruit(UnitDefinition unit)
         {
             if (_activeBarracks == null || unit == null || unit.Prefab == null)
+            {
+                return;
+            }
+
+            if (!PlayerEconomy.TrySpend(unit.WoodCost, unit.BronzeCost))
             {
                 return;
             }

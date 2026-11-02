@@ -18,7 +18,7 @@ MonoBehaviour:
   width: 1
   depth: 1
   woodCost: 30
-  stoneCost: 40
+  bronzeCost: 40
   goldCost: 0
   maxHealth: 350
   attackDamage: 10

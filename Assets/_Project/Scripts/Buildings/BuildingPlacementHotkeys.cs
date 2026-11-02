@@ -13,6 +13,9 @@ namespace ProjectoRTS.Buildings
         [SerializeField] private BuildingPlacementController placement;
         [SerializeField] private BuildingDefinition[] definitions;
 
+        /// <summary>Building definitions bound to the number keys, in order.</summary>
+        public BuildingDefinition[] Definitions => definitions;
+
         private void Awake()
         {
             if (placement == null)

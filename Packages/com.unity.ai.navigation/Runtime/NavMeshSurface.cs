@@ -404,12 +404,12 @@ namespace Unity.AI.Navigation
 #if UNITY_2022_2_OR_NEWER
                 if (m_CollectObjects == CollectObjects.All)
                 {
-                    UnityEditor.AI.NavMeshBuilder.CollectSourcesInStage(
+                    UnityEditor.AI.NavMeshEditorHelpers.CollectSourcesInStage(
                         null, m_LayerMask, m_UseGeometry, m_DefaultArea, m_GenerateLinks, markups, false, gameObject.scene, sources);
                 }
                 else if (m_CollectObjects == CollectObjects.Children)
                 {
-                    UnityEditor.AI.NavMeshBuilder.CollectSourcesInStage(
+                    UnityEditor.AI.NavMeshEditorHelpers.CollectSourcesInStage(
                         transform, m_LayerMask, m_UseGeometry, m_DefaultArea, m_GenerateLinks, markups, false, gameObject.scene, sources);
                 }
                 else if (m_CollectObjects == CollectObjects.Volume)
@@ -417,12 +417,12 @@ namespace Unity.AI.Navigation
                     Matrix4x4 localToWorld = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one);
                     var worldBounds = GetWorldBounds(localToWorld, GetInflatedBounds());
 
-                    UnityEditor.AI.NavMeshBuilder.CollectSourcesInStage(
+                    UnityEditor.AI.NavMeshEditorHelpers.CollectSourcesInStage(
                         worldBounds, m_LayerMask, m_UseGeometry, m_DefaultArea, m_GenerateLinks, markups, false, gameObject.scene, sources);
                 }
                 else if (m_CollectObjects == CollectObjects.MarkedWithModifier)
                 {
-                    UnityEditor.AI.NavMeshBuilder.CollectSourcesInStage(
+                    UnityEditor.AI.NavMeshEditorHelpers.CollectSourcesInStage(
                         null, m_LayerMask, m_UseGeometry, m_DefaultArea, m_GenerateLinks, markups, true, gameObject.scene, sources);                    
                 }
 #else

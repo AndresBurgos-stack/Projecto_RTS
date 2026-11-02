@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ProjectoRTS.Economy;
 using ProjectoRTS.Units;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,12 +21,23 @@ namespace ProjectoRTS.Buildings
         [SerializeField] private RecruitmentManager manager;
 
         private readonly List<GameObject> _buttons = new List<GameObject>();
+        private readonly List<UnitDefinition> _buttonUnits = new List<UnitDefinition>();
         private bool _initialized;
 
         private void Awake()
         {
             EnsureInitialized();
             Hide();
+        }
+
+        private void OnEnable()
+        {
+            PlayerEconomy.Changed += RefreshAffordability;
+        }
+
+        private void OnDisable()
+        {
+            PlayerEconomy.Changed -= RefreshAffordability;
         }
 
         /// <summary>Shows the panel and builds one button per recruitable unit.</summary>
@@ -57,12 +69,15 @@ namespace ProjectoRTS.Buildings
                     Text label = button.GetComponentInChildren<Text>(true);
                     if (label != null)
                     {
-                        label.text = $"Reclutar {unit.DisplayName}";
+                        label.fontSize = 14;
+                        label.text =
+                            $"Reclutar {unit.DisplayName} ({unit.WoodCost}M {unit.BronzeCost}B)";
                     }
 
                     UnitDefinition captured = unit;
                     button.onClick.AddListener(() => manager.Recruit(captured));
                     _buttons.Add(button.gameObject);
+                    _buttonUnits.Add(unit);
                 }
             }
 
@@ -70,6 +85,8 @@ namespace ProjectoRTS.Buildings
             {
                 panelRoot.SetActive(true);
             }
+
+            RefreshAffordability();
         }
 
         public void Hide()
@@ -82,6 +99,27 @@ namespace ProjectoRTS.Buildings
             }
 
             ClearButtons();
+        }
+
+        private void RefreshAffordability()
+        {
+            for (int i = 0; i < _buttons.Count && i < _buttonUnits.Count; i++)
+            {
+                if (_buttons[i] == null)
+                {
+                    continue;
+                }
+
+                Button button = _buttons[i].GetComponent<Button>();
+                if (button == null)
+                {
+                    continue;
+                }
+
+                UnitDefinition unit = _buttonUnits[i];
+                button.interactable = unit != null &&
+                    PlayerEconomy.CanAfford(unit.WoodCost, unit.BronzeCost);
+            }
         }
 
         private void EnsureInitialized()
@@ -120,6 +158,7 @@ namespace ProjectoRTS.Buildings
             }
 
             _buttons.Clear();
+            _buttonUnits.Clear();
         }
     }
 }

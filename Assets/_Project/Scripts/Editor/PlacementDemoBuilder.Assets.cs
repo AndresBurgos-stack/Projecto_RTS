@@ -1,7 +1,9 @@
 #if UNITY_EDITOR
 using ProjectoRTS.Buildings;
 using ProjectoRTS.Combat;
+using ProjectoRTS.Resources;
 using ProjectoRTS.Units;
+using ProjectoRTS.Waves;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
@@ -27,7 +29,8 @@ namespace ProjectoRTS.EditorTools
             public float MoveSpeed;
             public float TurnSpeed = 720f;
             public float StoppingDistance = 0.5f;
-            public int Cost;
+            public int WoodCost;
+            public int BronzeCost;
             public float TrainTime;
             public int PopulationCost;
         }
@@ -191,7 +194,7 @@ namespace ProjectoRTS.EditorTools
             Vector3 size,
             Material material,
             int woodCost,
-            int stoneCost,
+            int bronzeCost,
             float maxHealth,
             float attackDamage = 0f,
             float attackRange = 0f,
@@ -247,7 +250,7 @@ namespace ProjectoRTS.EditorTools
             serialized.FindProperty("width").intValue = footprint.x;
             serialized.FindProperty("depth").intValue = footprint.y;
             serialized.FindProperty("woodCost").intValue = woodCost;
-            serialized.FindProperty("stoneCost").intValue = stoneCost;
+            serialized.FindProperty("bronzeCost").intValue = bronzeCost;
             serialized.FindProperty("goldCost").intValue = 0;
             serialized.FindProperty("maxHealth").floatValue = maxHealth;
             serialized.FindProperty("attackDamage").floatValue = attackDamage;
@@ -663,6 +666,14 @@ namespace ProjectoRTS.EditorTools
             SetObjectReference(combat, "runtime", runtime);
             SetObjectReference(combat, "movement", movement);
 
+            if (config.Faction == Faction.Roman)
+            {
+                EnemyAiController ai = root.AddComponent<EnemyAiController>();
+                SetObjectReference(ai, "runtime", runtime);
+                SetObjectReference(ai, "movement", movement);
+                SetObjectReference(ai, "combat", combat);
+            }
+
             CreateHealthBar(
                 root.transform,
                 runtime,
@@ -704,7 +715,8 @@ namespace ProjectoRTS.EditorTools
             serialized.FindProperty("moveSpeed").floatValue = config.MoveSpeed;
             serialized.FindProperty("turnSpeed").floatValue = config.TurnSpeed;
             serialized.FindProperty("stoppingDistance").floatValue = config.StoppingDistance;
-            serialized.FindProperty("cost").intValue = config.Cost;
+            serialized.FindProperty("woodCost").intValue = config.WoodCost;
+            serialized.FindProperty("bronzeCost").intValue = config.BronzeCost;
             serialized.FindProperty("trainTime").floatValue = config.TrainTime;
             serialized.FindProperty("populationCost").intValue = config.PopulationCost;
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -1315,6 +1327,11 @@ namespace ProjectoRTS.EditorTools
         {
             BarracksBuilding barracks = root.AddComponent<BarracksBuilding>();
 
+            if (root.GetComponent<ResourceDropOff>() == null)
+            {
+                root.AddComponent<ResourceDropOff>();
+            }
+
             GameObject spawnPoint = new GameObject("SpawnPoint");
             spawnPoint.transform.SetParent(root.transform, false);
             spawnPoint.transform.localPosition = new Vector3(0f, 0f, 2.5f);
@@ -1372,6 +1389,12 @@ namespace ProjectoRTS.EditorTools
                 if (combat != null)
                 {
                     combat.Initialize(roman);
+                }
+
+                EnemyAiController ai = instance.GetComponent<EnemyAiController>();
+                if (ai != null)
+                {
+                    ai.SetHome(positions[i], 4f);
                 }
             }
         }

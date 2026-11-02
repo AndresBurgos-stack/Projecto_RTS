@@ -15,7 +15,7 @@ namespace ProjectoRTS.EditorTools
 
             GameObject point = new GameObject("Spawn Point");
             point.transform.SetParent(spawnerRoot.transform, false);
-            point.transform.position = new Vector3(0f, 0f, 46f);
+            point.transform.position = new Vector3(0f, 0f, MapHalfSize - 8f);
 
             SetObjectReference(spawner, "spawnPoint", point.transform);
             SetObjectReference(spawner, "unitParent", parent);

@@ -5,8 +5,8 @@ using UnityEngine.UI;
 namespace ProjectoRTS.Waves
 {
     /// <summary>
-    /// Simple HUD: day counter, advance warning with the next wave
-    /// composition and the Pantheon health bar.
+    /// Simple HUD: day counter and advance warning with the next wave
+    /// composition.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WaveHud : MonoBehaviour
@@ -14,12 +14,9 @@ namespace ProjectoRTS.Waves
         [Header("References")]
         [SerializeField] private WaveManager waves;
         [SerializeField] private DayNightCalendar calendar;
-        [SerializeField] private PantheonObjective objective;
         [SerializeField] private Text dayLabel;
         [SerializeField] private Text warningLabel;
-        [SerializeField] private Image objectiveFill;
 
-        private float _fullWidth = 1f;
         private StringBuilder _builder = new StringBuilder(128);
 
         private void Awake()
@@ -34,15 +31,6 @@ namespace ProjectoRTS.Waves
                 calendar = FindFirstObjectByType<DayNightCalendar>();
             }
 
-            if (objective == null)
-            {
-                objective = FindFirstObjectByType<PantheonObjective>();
-            }
-
-            if (objectiveFill != null)
-            {
-                _fullWidth = Mathf.Max(0.01f, objectiveFill.rectTransform.sizeDelta.x);
-            }
         }
 
         private void OnEnable()
@@ -54,9 +42,9 @@ namespace ProjectoRTS.Waves
                 waves.GameOver += HandleGameOver;
             }
 
-            if (objective != null)
+            if (calendar != null)
             {
-                objective.HealthChanged += HandleObjectiveHealth;
+                calendar.DayChanged += HandleDayChanged;
             }
         }
 
@@ -69,16 +57,15 @@ namespace ProjectoRTS.Waves
                 waves.GameOver -= HandleGameOver;
             }
 
-            if (objective != null)
+            if (calendar != null)
             {
-                objective.HealthChanged -= HandleObjectiveHealth;
+                calendar.DayChanged -= HandleDayChanged;
             }
         }
 
         private void Start()
         {
             RefreshDay();
-            RefreshObjective();
 
             if (warningLabel != null)
             {
@@ -93,7 +80,12 @@ namespace ProjectoRTS.Waves
                 return;
             }
 
-            dayLabel.text = $"Día {calendar.CurrentDay}";
+            dayLabel.text = $"Dia {calendar.CurrentDay}";
+        }
+
+        private void HandleDayChanged(int day, DayNightCalendar.Phase phase)
+        {
+            RefreshDay();
         }
 
         private void HandleWaveWarning(WaveDefinition wave)
@@ -140,24 +132,6 @@ namespace ProjectoRTS.Waves
             warningLabel.text = wave != null
                 ? $"Oleada {wave.DisplayName} iniciada"
                 : string.Empty;
-        }
-
-        private void HandleObjectiveHealth(PantheonObjective target)
-        {
-            RefreshObjective();
-        }
-
-        private void RefreshObjective()
-        {
-            if (objectiveFill == null || objective == null)
-            {
-                return;
-            }
-
-            float normalized = Mathf.Clamp01(objective.HealthNormalized);
-            Vector2 size = objectiveFill.rectTransform.sizeDelta;
-            size.x = _fullWidth * normalized;
-            objectiveFill.rectTransform.sizeDelta = size;
         }
 
         private void HandleGameOver()
