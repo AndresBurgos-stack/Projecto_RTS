@@ -19,6 +19,7 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Paso 3 del roadmap: **completado** (NavMesh horneado, selección con clic/arrastre y movimiento con clic derecho).
 - Paso 4 del roadmap: **completado** (combate automático y por orden, barras de vida, feedback de daño y muerte).
 - Paso 5 del roadmap: **completado** (oleadas romanas con spawner en el borde del mapa, avance hacia el Panteón e IA con prioridad soldados → edificios → Panteón).
+- Paso 8 del roadmap: **completado** (pulido de arte de estructuras: mampostería con líneas de junta en muros, torres y puerta; vigas de madera y vigas de amarre en casa, cuartel y almacén; pilastras en el ayuntamiento; alero en el almacén).
 - Economía: **implementada** (madera y bronce, costes en construcción y reclutamiento, botones deshabilitados sin recursos y HUD de recursos).
 - Recursos: **implementados** (nodos de madera y bronce repartidos por el mapa, recolección por trabajadores y depósito en Ayuntamiento, cuartel o almacén).
 - Trabajadores: **implementados** (construcción de 1 trabajador por obra, recolección con prioridad Madera/Bronce asignable desde el panel derecho, huida de enemigos).
@@ -427,5 +428,5 @@ Tras cambios en el generador, corre el menú `ProjectoRTS > Setup > Create Place
 ## Siguiente paso
 
 1. Equilibrar oleadas y economía (población, límites, velocidades).
-2. Falange (paso 8 del roadmap) y mejoras de combate.
+2. Falange y mejoras de combate.
 3. Movimiento verdaderamente libre de arqueros sobre muros (pasarelas + pathfinding propio).

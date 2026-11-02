@@ -44,7 +44,7 @@ namespace ProjectoRTS.CameraControl
         [SerializeField, Min(0f)] private float keyboardPitchSpeed = 55f;
 
         [Header("Yaw")]
-        [SerializeField] private bool rightDragRotateEnabled = true;
+        [SerializeField] private bool rightDragRotateEnabled = false;
         [SerializeField, Min(0f)] private float mouseYawSpeed = 160f;
         [SerializeField, Min(0f)] private float mousePitchSpeed = 110f;
         [SerializeField, Min(0f)] private float keyboardYawSpeed = 80f;

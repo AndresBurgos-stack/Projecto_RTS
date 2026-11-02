@@ -329,6 +329,8 @@ namespace ProjectoRTS.EditorTools
             navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
             navMeshSurface.layerMask = ~0;
             navMeshSurface.minRegionArea = 0.5f;
+            navMeshSurface.overrideVoxelSize = true;
+            navMeshSurface.voxelSize = 0.4f;
             BakeNavMesh(navMeshSurface);
 
             GameObject cameraObject = new GameObject("Main Camera");
@@ -356,7 +358,7 @@ namespace ProjectoRTS.EditorTools
             light.type = LightType.Directional;
             light.color = new Color(1f, 0.96f, 0.9f);
             light.intensity = 1.2f;
-            light.shadows = LightShadows.Soft;
+            light.shadows = LightShadows.Hard;
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
             GameObject calendarObject = new GameObject("DayNight Calendar");
@@ -571,6 +573,7 @@ namespace ProjectoRTS.EditorTools
             cameraSerialized.FindProperty("panSpeed").floatValue = 52f;
             cameraSerialized.FindProperty("maxHeight").floatValue = 120f;
             cameraSerialized.FindProperty("startPosition").vector3Value = new Vector3(0f, 55f, -50f);
+            cameraSerialized.FindProperty("rightDragRotateEnabled").boolValue = false;
             cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             return controller;

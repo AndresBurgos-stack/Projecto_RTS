@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ProjectoRTS.Buildings
@@ -10,6 +11,8 @@ namespace ProjectoRTS.Buildings
     [DisallowMultipleComponent]
     public sealed class BuildingRuntime : MonoBehaviour
     {
+        private static readonly List<BuildingRuntime> Buildings = new List<BuildingRuntime>(64);
+
         [SerializeField, Min(1f)] private float maxHealth = 100f;
         [SerializeField] private float currentHealth;
 
@@ -21,6 +24,9 @@ namespace ProjectoRTS.Buildings
         public float HealthNormalized => maxHealth > 0f ? currentHealth / maxHealth : 0f;
         public bool IsAlive => currentHealth > 0f;
 
+        /// <summary>All living and dead buildings registered in the scene.</summary>
+        public static IReadOnlyList<BuildingRuntime> All => Buildings;
+
         private bool _destroyed;
 
         private void Awake()
@@ -29,6 +35,19 @@ namespace ProjectoRTS.Buildings
             {
                 currentHealth = maxHealth;
             }
+        }
+
+        private void OnEnable()
+        {
+            if (!Buildings.Contains(this))
+            {
+                Buildings.Add(this);
+            }
+        }
+
+        private void OnDisable()
+        {
+            Buildings.Remove(this);
         }
 
         /// <summary>Sets the maximum health and refills the building.</summary>

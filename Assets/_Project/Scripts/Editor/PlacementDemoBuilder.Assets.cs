@@ -330,6 +330,77 @@ namespace ProjectoRTS.EditorTools
             if (!ranged)
             {
                 CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Cuirass",
+                    visuals.transform,
+                    new Vector3(0f, 1.04f, 0f),
+                    new Vector3(0.33f, 0.36f, 0.25f),
+                    bronze);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Chest Plate",
+                    visuals.transform,
+                    new Vector3(0f, 1.05f, 0.27f),
+                    new Vector3(0.42f, 0.34f, 0.03f),
+                    bronze);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Chest Boss",
+                    visuals.transform,
+                    new Vector3(0f, 1.0f, 0.3f),
+                    new Vector3(0.1f, 0.1f, 0.02f),
+                    bronze);
+
+                if (roman)
+                {
+                    CreatePart(
+                        PrimitiveType.Cube,
+                        "Lorica Band Low",
+                        visuals.transform,
+                        new Vector3(0f, 0.88f, 0f),
+                        new Vector3(0.68f, 0.05f, 0.5f),
+                        bronze);
+                    CreatePart(
+                        PrimitiveType.Cube,
+                        "Lorica Band High",
+                        visuals.transform,
+                        new Vector3(0f, 1.16f, 0f),
+                        new Vector3(0.68f, 0.05f, 0.5f),
+                        bronze);
+                }
+
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    CreatePart(
+                        PrimitiveType.Sphere,
+                        "Pauldron",
+                        visuals.transform,
+                        new Vector3(side * 0.33f, 1.26f, 0f),
+                        new Vector3(0.14f, 0.13f, 0.16f),
+                        bronze);
+                }
+            }
+            else
+            {
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Leather Jerkin",
+                    visuals.transform,
+                    new Vector3(0f, 1.02f, 0.1f),
+                    new Vector3(0.46f, 0.32f, 0.26f),
+                    leather);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Jerkin Strap",
+                    visuals.transform,
+                    new Vector3(-0.18f, 1.05f, 0.25f),
+                    new Vector3(0.08f, 0.03f, 0.03f),
+                    leather);
+            }
+
+            if (!ranged)
+            {
+                CreatePart(
                     PrimitiveType.Cube,
                     "Cape",
                     visuals.transform,
@@ -480,6 +551,13 @@ namespace ProjectoRTS.EditorTools
                     new Vector3(0.08f, 0.08f, 0.08f),
                     bronze);
                 CreatePart(
+                    PrimitiveType.Cube,
+                    "Gladius Guard",
+                    visuals.transform,
+                    new Vector3(0.3f, 0.93f, 0.18f),
+                    new Vector3(0.16f, 0.03f, 0.06f),
+                    bronze);
+                CreatePart(
                     PrimitiveType.Cylinder,
                     "Pilum",
                     visuals.transform,
@@ -487,11 +565,11 @@ namespace ProjectoRTS.EditorTools
                     new Vector3(0.035f, 0.95f, 0.035f),
                     wood);
                 CreatePart(
-                    PrimitiveType.Cube,
+                    PrimitiveType.Sphere,
                     "Pilum Tip",
                     visuals.transform,
                     new Vector3(0.38f, 1.98f, 0.12f),
-                    new Vector3(0.06f, 0.18f, 0.03f),
+                    new Vector3(0.06f, 0.2f, 0.035f),
                     iron);
             }
             else if (ranged)
@@ -578,7 +656,7 @@ namespace ProjectoRTS.EditorTools
                     "Shield",
                     visuals.transform,
                     new Vector3(-0.42f, 1.0f, 0.18f),
-                    new Vector3(0.55f, 0.05f, 0.55f),
+                    new Vector3(0.8f, 0.05f, 0.8f),
                     Quaternion.Euler(90f, 0f, 0f),
                     bronze);
                 CreatePart(
@@ -586,7 +664,7 @@ namespace ProjectoRTS.EditorTools
                     "Shield Face",
                     visuals.transform,
                     new Vector3(-0.42f, 1.0f, 0.24f),
-                    new Vector3(0.44f, 0.02f, 0.44f),
+                    new Vector3(0.66f, 0.02f, 0.66f),
                     Quaternion.Euler(90f, 0f, 0f),
                     tunic);
                 CreatePart(
@@ -594,7 +672,7 @@ namespace ProjectoRTS.EditorTools
                     "Shield Boss",
                     visuals.transform,
                     new Vector3(-0.42f, 1.0f, 0.28f),
-                    new Vector3(0.1f, 0.1f, 0.05f),
+                    new Vector3(0.12f, 0.12f, 0.05f),
                     bronze);
                 CreatePart(
                     PrimitiveType.Cylinder,
@@ -604,11 +682,11 @@ namespace ProjectoRTS.EditorTools
                     new Vector3(0.035f, 0.95f, 0.035f),
                     wood);
                 CreatePart(
-                    PrimitiveType.Cube,
+                    PrimitiveType.Sphere,
                     "Spear Tip",
                     visuals.transform,
                     new Vector3(0.38f, 1.98f, 0.12f),
-                    new Vector3(0.08f, 0.18f, 0.03f),
+                    new Vector3(0.07f, 0.22f, 0.035f),
                     bronze);
             }
 
@@ -745,6 +823,20 @@ namespace ProjectoRTS.EditorTools
                 stone);
             CreatePart(
                 PrimitiveType.Cube,
+                "Mortar Low",
+                parent,
+                new Vector3(0f, 0.4f, 0f),
+                new Vector3(size.x + 0.045f, 0.03f, size.z + 0.045f),
+                marble);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Mortar Mid",
+                parent,
+                new Vector3(0f, 1.35f, 0f),
+                new Vector3(size.x + 0.045f, 0.03f, size.z + 0.045f),
+                marble);
+            CreatePart(
+                PrimitiveType.Cube,
                 "Stone Band High",
                 parent,
                 new Vector3(0f, 1.7f, 0f),
@@ -765,12 +857,19 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(size.x + 0.1f, 0.5f, size.z + 0.1f),
                 terracotta);
             CreatePart(
-                PrimitiveType.Sphere,
-                "Finial",
+                PrimitiveType.Cylinder,
+                "Torch",
                 parent,
-                new Vector3(0f, 2.9f, 0f),
-                new Vector3(0.1f, 0.1f, 0.1f),
-                bronze);
+                new Vector3(0f, 3.02f, 0f),
+                new Vector3(0.07f, 0.22f, 0.07f),
+                wood);
+            CreatePart(
+                PrimitiveType.Sphere,
+                "Flame",
+                parent,
+                new Vector3(0f, 3.28f, 0f),
+                new Vector3(0.14f, 0.16f, 0.14f),
+                terracotta);
             CreatePart(
                 PrimitiveType.Cube,
                 "Door",
@@ -922,6 +1021,43 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0.25f, 1.3f, 0.15f),
                 new Vector3(0.12f, 0.3f, 0.12f),
                 stone);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Corner Beam",
+                    parent,
+                    new Vector3(side * 0.43f, 0.5f, size.z * 0.5f - 0.06f),
+                    new Vector3(0.06f, 0.5f, 0.06f),
+                    wood);
+            }
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Tie Beam",
+                parent,
+                new Vector3(0f, 0.93f, size.z * 0.5f + 0.01f),
+                new Vector3(size.x + 0.04f, 0.07f, 0.05f),
+                wood);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Flower Pot",
+                    parent,
+                    new Vector3(side * 0.22f, 0.14f, size.z * 0.5f + 0.07f),
+                    new Vector3(0.09f, 0.07f, 0.09f),
+                    terracotta);
+                CreatePart(
+                    PrimitiveType.Sphere,
+                    "Flower",
+                    parent,
+                    new Vector3(side * 0.22f, 0.26f, size.z * 0.5f + 0.07f),
+                    new Vector3(0.08f, 0.07f, 0.08f),
+                    crest);
+            }
         }
 
         private static void CreateBarracksDetails(
@@ -1038,6 +1174,63 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0f, 1.45f, size.z * 0.5f + 0.08f),
                 new Vector3(0.35f, 0.3f, 0.02f),
                 accent);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Corner Beam",
+                    parent,
+                    new Vector3(side * 0.85f, 0.65f, size.z * 0.5f - 0.06f),
+                    new Vector3(0.07f, 0.65f, 0.07f),
+                    wood);
+            }
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Tie Beam",
+                parent,
+                new Vector3(0f, 1.12f, size.z * 0.5f + 0.04f),
+                new Vector3(1.72f, 0.08f, 0.06f),
+                wood);
+
+            CreatePart(
+                PrimitiveType.Cylinder,
+                "Roof Shield",
+                parent,
+                new Vector3(0.32f, 1.95f, size.z * 0.5f - 0.12f),
+                new Vector3(0.42f, 0.03f, 0.42f),
+                Quaternion.Euler(90f, 0f, 0f),
+                bronze);
+            CreatePart(
+                PrimitiveType.Sphere,
+                "Roof Shield Boss",
+                parent,
+                new Vector3(0.32f, 1.95f, size.z * 0.5f - 0.05f),
+                new Vector3(0.08f, 0.08f, 0.08f),
+                accent);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Roof Sword Blade",
+                parent,
+                new Vector3(-0.32f, 2.12f, size.z * 0.5f - 0.12f),
+                new Vector3(0.06f, 0.55f, 0.03f),
+                bronze);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Roof Sword Guard",
+                parent,
+                new Vector3(-0.32f, 1.87f, size.z * 0.5f - 0.12f),
+                new Vector3(0.24f, 0.05f, 0.05f),
+                bronze);
+            CreatePart(
+                PrimitiveType.Sphere,
+                "Roof Sword Pommel",
+                parent,
+                new Vector3(-0.32f, 1.8f, size.z * 0.5f - 0.12f),
+                new Vector3(0.07f, 0.06f, 0.07f),
+                accent);
         }
 
         private static void CreateBuildingDetails(
@@ -1093,6 +1286,161 @@ namespace ProjectoRTS.EditorTools
                 case "GreekStorage":
                     CreateStorageDetails(parent, size, stone, terracotta, wood, bronze);
                     break;
+                case "GreekTownCenter":
+                    CreateTownCenterDetails(parent, size, stone, marble, terracotta, wood, bronze, crest);
+                    break;
+            }
+        }
+
+        private static void CreateTownCenterDetails(
+            Transform parent,
+            Vector3 size,
+            Material stone,
+            Material marble,
+            Material terracotta,
+            Material wood,
+            Material bronze,
+            Material crest)
+        {
+            float front = size.z * 0.5f;
+
+            for (int step = 1; step <= 3; step++)
+            {
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Step",
+                    parent,
+                    new Vector3(0f, 0.04f + step * 0.05f, front + 0.1f + step * 0.16f),
+                    new Vector3(size.x - 0.24f, 0.1f, 0.34f),
+                    stone);
+            }
+
+            float[] columnX = { -1.1f, -0.66f, -0.22f, 0.22f, 0.66f, 1.1f };
+            for (int i = 0; i < columnX.Length; i++)
+            {
+                float x = columnX[i];
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Column",
+                    parent,
+                    new Vector3(x, 0.78f, front + 0.1f),
+                    new Vector3(0.07f, 0.66f, 0.07f),
+                    marble);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Column Base",
+                    parent,
+                    new Vector3(x, 0.12f, front + 0.1f),
+                    new Vector3(0.18f, 0.08f, 0.18f),
+                    marble);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Column Capital",
+                    parent,
+                    new Vector3(x, 1.46f, front + 0.1f),
+                    new Vector3(0.2f, 0.06f, 0.2f),
+                    marble);
+            }
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Architrave",
+                parent,
+                new Vector3(0f, 1.56f, front + 0.12f),
+                new Vector3(size.x - 0.08f, 0.14f, 0.42f),
+                marble);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Roof Left",
+                parent,
+                new Vector3(-0.55f, size.y + 0.35f, 0f),
+                new Vector3(size.x * 0.52f, 0.1f, size.z + 0.3f),
+                Quaternion.Euler(0f, 0f, 28f),
+                terracotta);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Roof Right",
+                parent,
+                new Vector3(0.55f, size.y + 0.35f, 0f),
+                new Vector3(size.x * 0.52f, 0.1f, size.z + 0.3f),
+                Quaternion.Euler(0f, 0f, -28f),
+                terracotta);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Ridge",
+                parent,
+                new Vector3(0f, size.y + 0.62f, 0f),
+                new Vector3(0.12f, 0.12f, size.z + 0.32f),
+                terracotta);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Door",
+                parent,
+                new Vector3(0f, 0.6f, front + 0.03f),
+                new Vector3(0.5f, 1.1f, 0.07f),
+                wood);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Door Band Low",
+                parent,
+                new Vector3(0f, 0.4f, front + 0.08f),
+                new Vector3(0.54f, 0.06f, 0.02f),
+                bronze);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Door Band High",
+                parent,
+                new Vector3(0f, 0.85f, front + 0.08f),
+                new Vector3(0.54f, 0.06f, 0.02f),
+                bronze);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Window Frame",
+                    parent,
+                    new Vector3(side * 0.85f, 0.95f, front),
+                    new Vector3(0.34f, 0.5f, 0.02f),
+                    marble);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Window",
+                    parent,
+                    new Vector3(side * 0.85f, 0.95f, front + 0.012f),
+                    new Vector3(0.26f, 0.42f, 0.03f),
+                    crest);
+            }
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Pilaster",
+                    parent,
+                    new Vector3(side * 1.27f, 0.95f, front - 0.02f),
+                    new Vector3(0.12f, 1.1f, 0.14f),
+                    marble);
+            }
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Brazier",
+                    parent,
+                    new Vector3(side * 1.2f, 0.3f, front + 0.2f),
+                    new Vector3(0.16f, 0.15f, 0.16f),
+                    bronze);
+                CreatePart(
+                    PrimitiveType.Sphere,
+                    "Brazier Flame",
+                    parent,
+                    new Vector3(side * 1.2f, 0.55f, front + 0.2f),
+                    new Vector3(0.1f, 0.09f, 0.1f),
+                    terracotta);
             }
         }
 
@@ -1106,17 +1454,52 @@ namespace ProjectoRTS.EditorTools
         {
             CreatePart(
                 PrimitiveType.Cube,
-                "Roof",
+                "Roof Left",
                 parent,
-                new Vector3(0f, size.y + 0.06f, 0f),
-                new Vector3(size.x + 0.24f, 0.12f, size.z + 0.24f),
+                new Vector3(-0.35f, size.y + 0.28f, 0f),
+                new Vector3(size.x * 0.55f, 0.08f, size.z + 0.24f),
+                Quaternion.Euler(0f, 0f, 30f),
                 terracotta);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Roof Right",
+                parent,
+                new Vector3(0.35f, size.y + 0.28f, 0f),
+                new Vector3(size.x * 0.55f, 0.08f, size.z + 0.24f),
+                Quaternion.Euler(0f, 0f, -30f),
+                terracotta);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Ridge",
+                parent,
+                new Vector3(0f, size.y + 0.48f, 0f),
+                new Vector3(0.1f, 0.1f, size.z + 0.26f),
+                terracotta);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Awning",
+                parent,
+                new Vector3(0f, 0.95f, size.z * 0.5f + 0.14f),
+                new Vector3(1.1f, 0.07f, 0.3f),
+                wood);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Awning Post",
+                    parent,
+                    new Vector3(side * 0.45f, 0.45f, size.z * 0.5f + 0.18f),
+                    new Vector3(0.05f, 0.45f, 0.05f),
+                    wood);
+            }
 
             CreatePart(
                 PrimitiveType.Cube,
                 "Door",
                 parent,
-                new Vector3(0f, 0.42f, size.z * 0.5f + 0.01f),
+                new Vector3(0f, 0.42f, size.z * 0.5f + 0.02f),
                 new Vector3(0.52f, 0.84f, 0.06f),
                 wood);
 
@@ -1124,17 +1507,62 @@ namespace ProjectoRTS.EditorTools
                 PrimitiveType.Cube,
                 "Door Band",
                 parent,
-                new Vector3(0f, 0.62f, size.z * 0.5f + 0.02f),
+                new Vector3(0f, 0.62f, size.z * 0.5f + 0.06f),
                 new Vector3(0.54f, 0.08f, 0.05f),
                 bronze);
 
             CreatePart(
                 PrimitiveType.Cube,
-                "Side Beam",
+                "Side Window Frame",
                 parent,
-                new Vector3(size.x * 0.5f - 0.1f, 0.62f, 0f),
-                new Vector3(0.1f, 0.08f, size.z + 0.04f),
+                new Vector3(size.x * 0.5f - 0.01f, 0.62f, 0f),
+                new Vector3(0.03f, 0.28f, 0.4f),
                 wood);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Side Window",
+                parent,
+                new Vector3(size.x * 0.5f + 0.005f, 0.62f, 0f),
+                new Vector3(0.03f, 0.22f, 0.32f),
+                bronze);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Corner Beam",
+                    parent,
+                    new Vector3(side * (size.x * 0.5f - 0.08f), 0.55f, size.z * 0.5f - 0.08f),
+                    new Vector3(0.06f, 0.55f, 0.06f),
+                    wood);
+            }
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Eave",
+                parent,
+                new Vector3(0f, size.y - 0.02f, size.z * 0.5f + 0.06f),
+                new Vector3(size.x + 0.1f, 0.07f, 0.12f),
+                wood);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Sphere,
+                    "Amphora",
+                    parent,
+                    new Vector3(side * 0.62f, 0.3f, size.z * 0.5f + 0.06f),
+                    new Vector3(0.16f, 0.2f, 0.16f),
+                    terracotta);
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Amphora Neck",
+                    parent,
+                    new Vector3(side * 0.62f, 0.52f, size.z * 0.5f + 0.06f),
+                    new Vector3(0.05f, 0.06f, 0.05f),
+                    terracotta);
+            }
         }
 
         private static void CreateWallDetails(
@@ -1159,6 +1587,32 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0f, 0.5f, 0f),
                 new Vector3(size.x + 0.005f, 0.04f, size.z + 0.005f),
                 stone);
+
+            CreatePart(
+                PrimitiveType.Cube,
+                "Mortar Line Low",
+                parent,
+                new Vector3(0f, 0.3f, 0f),
+                new Vector3(size.x + 0.006f, 0.03f, size.z + 0.006f),
+                marble);
+            CreatePart(
+                PrimitiveType.Cube,
+                "Mortar Line High",
+                parent,
+                new Vector3(0f, 0.72f, 0f),
+                new Vector3(size.x + 0.006f, 0.03f, size.z + 0.006f),
+                marble);
+
+            for (int seam = -1; seam <= 1; seam += 2)
+            {
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Stone Seam",
+                    parent,
+                    new Vector3(seam * 0.24f, 0.52f, 0f),
+                    new Vector3(0.03f, 0.5f, size.z + 0.006f),
+                    marble);
+            }
 
             for (int side = -1; side <= 1; side += 2)
             {
@@ -1206,6 +1660,20 @@ namespace ProjectoRTS.EditorTools
                     parent,
                     new Vector3(x, 1.82f, 0f),
                     new Vector3(0.46f, 0.1f, size.z + 0.14f),
+                    marble);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Tower Mortar Low",
+                    parent,
+                    new Vector3(x, 0.55f, 0f),
+                    new Vector3(0.4f, 0.03f, size.z + 0.1f),
+                    marble);
+                CreatePart(
+                    PrimitiveType.Cube,
+                    "Tower Mortar High",
+                    parent,
+                    new Vector3(x, 1.25f, 0f),
+                    new Vector3(0.4f, 0.03f, size.z + 0.1f),
                     marble);
 
                 for (int merlon = -1; merlon <= 1; merlon += 2)
@@ -1279,6 +1747,22 @@ namespace ProjectoRTS.EditorTools
                 parent,
                 new Vector3(0f, 1.48f, size.z * 0.5f + 0.08f),
                 new Vector3(0.3f, 0.3f, 0.02f),
+                accent);
+
+            CreatePart(
+                PrimitiveType.Cylinder,
+                "Emblem Disc",
+                parent,
+                new Vector3(0f, 1.55f, size.z * 0.5f + 0.1f),
+                new Vector3(0.3f, 0.02f, 0.3f),
+                Quaternion.Euler(90f, 0f, 0f),
+                bronze);
+            CreatePart(
+                PrimitiveType.Sphere,
+                "Emblem Boss",
+                parent,
+                new Vector3(0f, 1.55f, size.z * 0.5f + 0.14f),
+                new Vector3(0.08f, 0.08f, 0.08f),
                 accent);
         }
 

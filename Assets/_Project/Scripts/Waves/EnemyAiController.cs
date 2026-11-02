@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ProjectoRTS.Buildings;
 using ProjectoRTS.Combat;
 using ProjectoRTS.Units;
@@ -48,6 +49,7 @@ namespace ProjectoRTS.Waves
         private BuildingRuntime _blockedBuilding;
         private float _blockedUntil;
         private float _objectiveBlockedUntil;
+        private PantheonObjective _objective;
 
         private void Awake()
         {
@@ -180,11 +182,11 @@ namespace ProjectoRTS.Waves
 
             _nextBuildingScanTime = Time.time + buildingScanInterval;
 
-            BuildingRuntime[] buildings = FindObjectsByType<BuildingRuntime>(FindObjectsSortMode.None);
+            IReadOnlyList<BuildingRuntime> buildings = BuildingRuntime.All;
             BuildingRuntime best = null;
             float bestSqr = buildingDetectionRadius * buildingDetectionRadius;
 
-            for (int i = 0; i < buildings.Length; i++)
+            for (int i = buildings.Count - 1; i >= 0; i--)
             {
                 BuildingRuntime candidate = buildings[i];
 
@@ -280,7 +282,12 @@ namespace ProjectoRTS.Waves
                 return;
             }
 
-            PantheonObjective objective = FindFirstObjectByType<PantheonObjective>();
+            PantheonObjective objective = _objective;
+            if (objective == null)
+            {
+                _objective = FindFirstObjectByType<PantheonObjective>();
+                objective = _objective;
+            }
             if (objective == null || !objective.IsAlive)
             {
                 return;

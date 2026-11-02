@@ -45,8 +45,8 @@ namespace ProjectoRTS.EditorTools
                     root.transform,
                     WoodClusterCenters[i],
                     ResourceType.Wood,
-                    5,
-                    240,
+                    3,
+                    400,
                     palette,
                     leafMaterial);
             }
@@ -57,8 +57,8 @@ namespace ProjectoRTS.EditorTools
                     root.transform,
                     BronzeClusterCenters[i],
                     ResourceType.Bronze,
-                    4,
-                    200,
+                    2,
+                    400,
                     palette,
                     leafMaterial);
             }
@@ -124,13 +124,7 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(1.8f, 1.5f, 1.8f),
                 leafMaterial);
 
-            CreatePart(
-                PrimitiveType.Sphere,
-                "Canopy Side",
-                root.transform,
-                new Vector3(0.55f, 2.35f, 0.25f),
-                new Vector3(1.05f, 0.95f, 1.05f),
-                leafMaterial);
+            DisableShadows(root);
         }
 
         private static void CreateBronzeNode(
@@ -171,6 +165,20 @@ namespace ProjectoRTS.EditorTools
                 new Vector3(0.45f, 0.35f, 0.45f),
                 Quaternion.Euler(18f, 24f, 12f),
                 palette.Bronze);
+
+            DisableShadows(root);
+        }
+
+        private static void DisableShadows(GameObject root)
+        {
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null)
+                {
+                    renderers[i].shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                }
+            }
         }
     }
 }
