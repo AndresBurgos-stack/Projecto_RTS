@@ -123,6 +123,12 @@ namespace ProjectoRTS.Units
             _died = true;
             Died?.Invoke(this);
 
+            Animator animator = GetComponentInChildren<Animator>(true);
+            if (animator != null)
+            {
+                animator.SetTrigger("Dead");
+            }
+
             if (destroyOnDeath)
             {
                 StartCoroutine(DeathRoutine());

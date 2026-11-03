@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: e06646623d1ffb44887fb09dde4c09ba
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 333076
+  packageName: 'PolyPeople Series - Ancient Greek [Free]'
+  packageVersion: 1.0
+  assetPath: Assets/AncientGreek_Free/Materials/AncientGreek2_CustomSkin.shadergraph
+  uploadId: 788476

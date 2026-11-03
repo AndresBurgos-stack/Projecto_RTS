@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d22f73d6940d3464191b014e85cc6d24
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 112000000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 333076
+  packageName: 'PolyPeople Series - Ancient Greek [Free]'
+  packageVersion: 1.0
+  assetPath: Assets/AncientGreek_Free/Scenes/DemoScene/LightingData.asset
+  uploadId: 788476

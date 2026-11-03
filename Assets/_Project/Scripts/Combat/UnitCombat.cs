@@ -341,6 +341,12 @@ namespace ProjectoRTS.Combat
             {
                 _nextAttackTime = Time.time + _attackInterval;
                 _target.ApplyDamage(_attackDamage);
+
+                Animator animator = GetComponentInChildren<Animator>(true);
+                if (animator != null)
+                {
+                    animator.SetTrigger("Attack");
+                }
             }
         }
 

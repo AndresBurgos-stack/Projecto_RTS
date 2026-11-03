@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fb5826a56a82384098f205e81e5467f, type: 3}
+  m_Name: UnitVisualTuning
+  m_EditorClassIdentifier: 
+  units:
+  - unitName: Hoplita arcadio
+    clothesModel: 
+    body:
+      overrideScale: 1
+      scale: {x: 0.48, y: 0.54, z: 0.5147912}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    armor:
+      overrideScale: 1
+      scale: {x: 0.48, y: 0.54, z: 0.57}
+      overridePosition: 1
+      position: {x: 0, y: 0.003, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    helmet:
+      overrideScale: 1
+      scale: {x: 0.475309, y: 0.4465126, z: 0.5628917}
+      overridePosition: 1
+      position: {x: 0, y: 0.2867, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    shield:
+      overrideScale: 1
+      scale: {x: 1.099178, y: 1.099178, z: 1.099178}
+      overridePosition: 1
+      position: {x: -0.767, y: 1.773, z: 0.336}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    spear:
+      overrideScale: 1
+      scale: {x: 0.932192, y: 0.932192, z: 0.932192}
+      overridePosition: 1
+      position: {x: 0.873, y: 1.572, z: 0.255}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    bow:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    quiver:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    buckler:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+  - unitName: Trabajador
+    clothesModel: Assets/AncientGrecce/M Normal Citizen .fbx
+    body:
+      overrideScale: 1
+      scale: {x: 0.48, y: 0.52, z: 0.48}
+      overridePosition: 1
+      position: {x: 0.038, y: -0.011, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    armor:
+      overrideScale: 1
+      scale: {x: 0.4714067, y: 0.5204763, z: 0.6401561}
+      overridePosition: 1
+      position: {x: 0.033005, y: 0.0074179, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    helmet:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    shield:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    spear:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    bow:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    quiver:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    buckler:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+  - unitName: Toxote psiloi
+    clothesModel: 
+    body:
+      overrideScale: 1
+      scale: {x: 0.5147912, y: 0.5147912, z: 0.5147912}
+      overridePosition: 1
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    armor:
+      overrideScale: 1
+      scale: {x: 0.51, y: 0.51, z: 0.51}
+      overridePosition: 1
+      position: {x: 0, y: 0.017, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    helmet:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    shield:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    spear:
+      overrideScale: 0
+      scale: {x: 1, y: 1, z: 1}
+      overridePosition: 0
+      position: {x: 0, y: 0, z: 0}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    bow:
+      overrideScale: 1
+      scale: {x: 1.050196, y: 1.050196, z: 1.050196}
+      overridePosition: 1
+      position: {x: 0.802, y: 1.723, z: 0.288}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}
+    quiver:
+      overrideScale: 1
+      scale: {x: 0.74, y: 0.8399822, z: 0.8399822}
+      overridePosition: 1
+      position: {x: -0.4446588, y: 2.158918, z: -0.05115041}
+      overrideRotation: 1
+      rotation: {x: 31.017, y: -5.331, z: 30.133}
+    buckler:
+      overrideScale: 1
+      scale: {x: 0.8159143, y: 0.8159143, z: 0.8159143}
+      overridePosition: 1
+      position: {x: -0.762, y: 1.769, z: 0.326}
+      overrideRotation: 0
+      rotation: {x: 0, y: 0, z: 0}

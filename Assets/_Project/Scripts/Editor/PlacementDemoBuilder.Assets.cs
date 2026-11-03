@@ -5,6 +5,7 @@ using ProjectoRTS.Resources;
 using ProjectoRTS.Units;
 using ProjectoRTS.Waves;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -261,13 +262,1067 @@ namespace ProjectoRTS.EditorTools
             return definition;
         }
 
+        private static GameObject CreateGreekHumanVisual(
+            GameObject visuals,
+            UnitConfig config,
+            VisualPalette palette,
+            Material tunic,
+            bool animated)
+        {
+            bool ranged = config.Role == UnitRole.Ranged;
+
+            Material bronze = palette != null ? palette.Bronze : tunic;
+            Material leather = palette != null ? palette.Leather : tunic;
+            Material wood = palette != null ? palette.Wood : tunic;
+            Material iron = palette != null ? palette.Iron : tunic;
+            Material crest = palette != null ? palette.Crest : tunic;
+
+            float k = config.Size.y / 1.8f;
+            visuals.transform.localScale = Vector3.one;
+
+            Material bodyFallback = CreateAtlasMaterial();
+            UnitVisualTuning.UnitEntry tuning = GetTuning(config.DisplayName);
+
+            GameObject body;
+
+            if (animated)
+            {
+                body = AttachImportedModel(
+                    visuals.transform,
+                    "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                    1.8f,
+                    "Body",
+                    0f,
+                    null,
+                    true);
+
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Tunic Torso",
+                    visuals.transform,
+                    new Vector3(0f, 1.15f, 0f),
+                    new Vector3(0.4f, 0.32f, 0.28f),
+                    tunic);
+                CreatePart(
+                    PrimitiveType.Cylinder,
+                    "Tunic Skirt",
+                    visuals.transform,
+                    new Vector3(0f, 0.62f, 0f),
+                    new Vector3(0.42f, 0.3f, 0.32f),
+                    tunic);
+            }
+            else
+            {
+                string armorPath = ranged
+                    ? "Assets/AncientGrecce/M Greek Archer.fbx"
+                    : "Assets/AncientGrecce/M Athenian Hoplite.fbx";
+
+                body = AttachModelFlattened(
+                    visuals.transform,
+                    "Assets/AncientGrecce/male.fbx",
+                    1.8f,
+                    "Body",
+                    0f,
+                    bodyFallback);
+
+                if (body == null)
+                {
+                    body = AttachModelFlattened(
+                        visuals.transform,
+                        "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                        1.8f,
+                        "Body",
+                        0f,
+                        bodyFallback);
+                }
+
+                ApplyTuning(body, tuning.body);
+
+                GameObject armor = AttachModelFlattened(
+                    visuals.transform,
+                    armorPath,
+                    1.8f,
+                    "Armor",
+                    0f,
+                    bodyFallback);
+                ApplyTuning(armor, tuning.armor);
+            }
+
+            if (!ranged)
+            {
+                string helmetPath = "Assets/AncientGrecce/Helmet 650 BC.fbx";
+
+                GameObject helmet = AttachModelFlattened(
+                    visuals.transform,
+                    helmetPath,
+                    0.42f,
+                    "Helmet",
+                    1.62f,
+                    bodyFallback);
+                ApplyTuning(helmet, tuning.helmet);
+            }
+
+            if (ranged)
+            {
+                GameObject bow = AttachWeaponToBone(
+                        body != null ? body.transform : null,
+                        "Assets/AncientGrecce/Bow.fbx",
+                        "hand",
+                        true,
+                        1.0f,
+                        new Vector3(0.4f, 0.5f, 0.2f),
+                        bodyFallback);
+
+                if (bow == null)
+                {
+                    bow = TryAttachImportedModel(
+                        visuals.transform,
+                        "Assets/AncientGrecce/Bow.fbx",
+                        1.0f,
+                        "Bow",
+                        0.5f,
+                        wood);
+                }
+
+                if (bow == null)
+                {
+                    CreatePart(
+                        PrimitiveType.Cube,
+                        "Bow Upper",
+                        visuals.transform,
+                        new Vector3(0.4f, 1.22f, 0.2f),
+                        new Vector3(0.04f, 0.5f, 0.04f),
+                        Quaternion.Euler(0f, 0f, -18f),
+                        wood);
+                    CreatePart(
+                        PrimitiveType.Cube,
+                        "Bow Lower",
+                        visuals.transform,
+                        new Vector3(0.4f, 0.78f, 0.2f),
+                        new Vector3(0.04f, 0.5f, 0.04f),
+                        Quaternion.Euler(0f, 0f, 18f),
+                        wood);
+                    CreatePart(
+                        PrimitiveType.Cube,
+                        "Bow String",
+                        visuals.transform,
+                        new Vector3(0.49f, 1.0f, 0.2f),
+                        new Vector3(0.012f, 1.06f, 0.012f),
+                        iron);
+                    CreatePart(
+                        PrimitiveType.Sphere,
+                        "Bow Grip",
+                        visuals.transform,
+                        new Vector3(0.38f, 1.0f, 0.2f),
+                        new Vector3(0.06f, 0.08f, 0.06f),
+                        leather);
+                }
+                else
+                {
+                    ApplyTuning(bow, tuning.bow);
+                }
+
+                GameObject quiver = AttachWeaponToBone(
+                        body != null ? body.transform : null,
+                        "Assets/AncientGrecce/Carcaj.fbx",
+                        "spine",
+                        false,
+                        0.6f,
+                        new Vector3(-0.16f, 0.85f, -0.26f),
+                        bodyFallback);
+
+                if (quiver == null)
+                {
+                    quiver = TryAttachImportedModel(
+                        visuals.transform,
+                        "Assets/AncientGrecce/Carcaj.fbx",
+                        0.6f,
+                        "Quiver",
+                        0.85f,
+                        leather);
+                }
+
+                if (quiver == null)
+                {
+                    CreatePart(
+                        PrimitiveType.Cylinder,
+                        "Quiver",
+                        visuals.transform,
+                        new Vector3(-0.16f, 1.08f, -0.26f),
+                        new Vector3(0.1f, 0.28f, 0.1f),
+                        Quaternion.Euler(18f, 0f, 12f),
+                        leather);
+                    for (int arrow = -1; arrow <= 1; arrow++)
+                    {
+                        CreatePart(
+                            PrimitiveType.Cylinder,
+                            "Arrow Shaft",
+                            visuals.transform,
+                            new Vector3(-0.16f + arrow * 0.035f, 1.38f, -0.3f),
+                            new Vector3(0.012f, 0.12f, 0.012f),
+                            wood);
+                        CreatePart(
+                            PrimitiveType.Cube,
+                            "Arrow Fletching",
+                            visuals.transform,
+                            new Vector3(-0.16f + arrow * 0.035f, 1.5f, -0.3f),
+                            new Vector3(0.05f, 0.06f, 0.012f),
+                            crest);
+                    }
+                }
+                else
+                {
+                    ApplyTuning(quiver, tuning.quiver);
+                }
+
+                GameObject buckler = AttachWeaponToBone(
+                        body != null ? body.transform : null,
+                        "Assets/AncientGrecce/PeltastShield.fbx",
+                        "hand",
+                        true,
+                        0.5f,
+                        new Vector3(-0.42f, 0.75f, 0.18f),
+                        bodyFallback);
+
+                if (buckler == null)
+                {
+                    buckler = TryAttachImportedModel(
+                        visuals.transform,
+                        "Assets/AncientGrecce/PeltastShield.fbx",
+                        0.5f,
+                        "Buckler",
+                        0.75f,
+                        leather);
+                }
+
+                if (buckler == null)
+                {
+                    CreatePart(
+                        PrimitiveType.Cylinder,
+                        "Buckler",
+                        visuals.transform,
+                        new Vector3(-0.42f, 1.0f, 0.18f),
+                        new Vector3(0.26f, 0.04f, 0.26f),
+                        Quaternion.Euler(90f, 0f, 0f),
+                        leather);
+                    CreatePart(
+                        PrimitiveType.Sphere,
+                        "Buckler Boss",
+                        visuals.transform,
+                        new Vector3(-0.42f, 1.0f, 0.23f),
+                        new Vector3(0.06f, 0.06f, 0.04f),
+                        bronze);
+                }
+                else
+                {
+                    ApplyTuning(buckler, tuning.buckler);
+                }
+            }
+            else
+            {
+                GameObject shield = AttachWeaponToBone(
+                        body != null ? body.transform : null,
+                        "Assets/AncientGrecce/Spartan Shield.fbx",
+                        "hand",
+                        true,
+                        0.9f,
+                        new Vector3(-0.46f, 0.55f, 0.18f),
+                        bodyFallback);
+
+                if (shield == null)
+                {
+                    shield = TryAttachImportedModel(
+                        visuals.transform,
+                        "Assets/AncientGrecce/Spartan Shield.fbx",
+                        0.85f,
+                        "Shield",
+                        0.55f,
+                        bronze);
+                }
+
+                if (shield == null)
+                {
+                    CreatePart(
+                        PrimitiveType.Cylinder,
+                        "Shield",
+                        visuals.transform,
+                        new Vector3(-0.46f, 1.0f, 0.18f),
+                        new Vector3(0.8f, 0.05f, 0.8f),
+                        Quaternion.Euler(90f, 0f, 0f),
+                        bronze);
+                    CreatePart(
+                        PrimitiveType.Cylinder,
+                        "Shield Face",
+                        visuals.transform,
+                        new Vector3(-0.46f, 1.0f, 0.24f),
+                        new Vector3(0.66f, 0.02f, 0.66f),
+                        Quaternion.Euler(90f, 0f, 0f),
+                        tunic);
+                    CreatePart(
+                        PrimitiveType.Sphere,
+                        "Shield Boss",
+                        visuals.transform,
+                        new Vector3(-0.46f, 1.0f, 0.28f),
+                        new Vector3(0.12f, 0.12f, 0.05f),
+                        bronze);
+                }
+                else
+                {
+                    ApplyTuning(shield, tuning.shield);
+                }
+
+                GameObject spear = AttachWeaponToBone(
+                        body != null ? body.transform : null,
+                        "Assets/AncientGrecce/Spear.fbx",
+                        "hand",
+                        false,
+                        1.9f,
+                        new Vector3(0.42f, 0.1f, 0.12f),
+                        bodyFallback);
+
+                if (spear == null)
+                {
+                    spear = TryAttachImportedModel(
+                        visuals.transform,
+                        "Assets/AncientGrecce/Spear.fbx",
+                        1.9f,
+                        "Spear",
+                        0.1f,
+                        wood);
+                }
+
+                if (spear == null)
+                {
+                    CreatePart(
+                        PrimitiveType.Cylinder,
+                        "Spear",
+                        visuals.transform,
+                        new Vector3(0.42f, 1.0f, 0.12f),
+                        new Vector3(0.035f, 0.95f, 0.035f),
+                        wood);
+                    CreatePart(
+                        PrimitiveType.Sphere,
+                        "Spear Tip",
+                        visuals.transform,
+                        new Vector3(0.42f, 1.98f, 0.12f),
+                        new Vector3(0.07f, 0.22f, 0.035f),
+                        bronze);
+                }
+                else
+                {
+                    ApplyTuning(spear, tuning.spear);
+                }
+            }
+
+            visuals.transform.localScale = new Vector3(k, k, k);
+            return visuals;
+        }
+
+        private static GameObject AttachImportedModel(
+            Transform parent,
+            string assetPath,
+            float targetHeight,
+            string childName,
+            float groundY,
+            Material materialOverride = null,
+            bool keepAnimator = false)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning("AttachImportedModel: no prefab at " + assetPath);
+                return null;
+            }
+
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.name = childName;
+            instance.transform.SetParent(parent, false);
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one;
+
+            Collider[] colliders = instance.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Object.DestroyImmediate(colliders[i]);
+            }
+
+            Animator animator = instance.GetComponentInChildren<Animator>(true);
+            if (animator != null && !keepAnimator)
+            {
+                Object.DestroyImmediate(animator);
+            }
+
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                Debug.LogWarning("AttachImportedModel: model has no renderers: " + assetPath);
+                return null;
+            }
+
+            if (materialOverride != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] is SkinnedMeshRenderer skinned)
+                    {
+                        Material[] mats = skinned.sharedMaterials;
+                        for (int m = 0; m < mats.Length; m++)
+                        {
+                            mats[m] = materialOverride;
+                        }
+
+                        skinned.sharedMaterials = mats;
+                    }
+                    else
+                    {
+                        renderers[i].sharedMaterial = materialOverride;
+                    }
+                }
+            }
+            else
+            {
+                Material fallback = GetOrCreateMaterial(
+                    "BodyFallback",
+                    new Color(0.75f, 0.72f, 0.65f, 1f));
+
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] is SkinnedMeshRenderer skinnedFill)
+                    {
+                        Material[] mats = skinnedFill.sharedMaterials;
+                        if (mats == null || mats.Length == 0)
+                        {
+                            mats = new Material[] { fallback };
+                        }
+
+                        for (int m = 0; m < mats.Length; m++)
+                        {
+                            if (mats[m] == null)
+                            {
+                                mats[m] = fallback;
+                            }
+                        }
+
+                        skinnedFill.sharedMaterials = mats;
+                    }
+                    else if (renderers[i].sharedMaterial == null)
+                    {
+                        renderers[i].sharedMaterial = fallback;
+                    }
+                }
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            float height = Mathf.Max(0.01f, bounds.size.y);
+            float bottom = bounds.min.y;
+            float s = targetHeight / height;
+
+            instance.transform.localScale = Vector3.one * s;
+            instance.transform.localPosition = new Vector3(0f, groundY - bottom * s, 0f);
+
+            Debug.Log("[AttachImportedModel] " + childName +
+                " renderers=" + renderers.Length +
+                " height=" + height.ToString("0.000") +
+                " bottom=" + bottom.ToString("0.000") +
+                " scale=" + s.ToString("0.000"));
+            return instance;
+        }
+
+        private static GameObject TryAttachImportedModel(
+            Transform parent,
+            string assetPath,
+            float targetHeight,
+            string childName,
+            float groundY,
+            Material materialOverride = null)
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(assetPath) == null)
+            {
+                return null;
+            }
+
+            return AttachImportedModel(parent, assetPath, targetHeight, childName, groundY, materialOverride);
+        }
+
+        private static Transform FindBone(Transform root, string keyword)
+        {
+            if (root == null || string.IsNullOrEmpty(keyword))
+            {
+                return null;
+            }
+
+            string lower = keyword.ToLowerInvariant();
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name.ToLowerInvariant().Contains(lower))
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private static Transform FindHandBone(Transform root, bool preferLeft)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            Transform anyHand = null;
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            {
+                string name = child.name.ToLowerInvariant();
+                if (!name.Contains("hand"))
+                {
+                    continue;
+                }
+
+                if (anyHand == null)
+                {
+                    anyHand = child;
+                }
+
+                bool leftish = name.Contains("left") ||
+                    name.EndsWith("_l") ||
+                    name.EndsWith(".l") ||
+                    name.Contains("l_hand") ||
+                    name.Contains("lhand");
+                bool rightish = name.Contains("right") ||
+                    name.EndsWith("_r") ||
+                    name.EndsWith(".r") ||
+                    name.Contains("r_hand") ||
+                    name.Contains("rhand");
+
+                if (preferLeft && leftish)
+                {
+                    return child;
+                }
+
+                if (!preferLeft && rightish)
+                {
+                    return child;
+                }
+            }
+
+            return anyHand;
+        }
+
+        private static GameObject AttachWeaponToBone(
+            Transform body,
+            string assetPath,
+            string boneKeyword,
+            bool preferLeft,
+            float targetHeight,
+            Vector3 fallbackLocalPosition,
+            Material material)
+        {
+            if (body == null || AssetDatabase.LoadAssetAtPath<GameObject>(assetPath) == null)
+            {
+                return null;
+            }
+
+            Transform bone = boneKeyword == "hand"
+                ? FindHandBone(body, preferLeft)
+                : FindBone(body, boneKeyword);
+
+            Transform parent = bone != null ? bone : body;
+            Vector3 anchor = bone != null ? Vector3.zero : fallbackLocalPosition;
+
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.name = prefab.name;
+            instance.transform.SetParent(parent, false);
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one;
+
+            Collider[] colliders = instance.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Object.DestroyImmediate(colliders[i]);
+            }
+
+            Animator animator = instance.GetComponentInChildren<Animator>(true);
+            if (animator != null)
+            {
+                Object.DestroyImmediate(animator);
+            }
+
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                Object.DestroyImmediate(instance);
+                return null;
+            }
+
+            if (material != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] is SkinnedMeshRenderer skinned)
+                    {
+                        Material[] mats = skinned.sharedMaterials;
+                        for (int m = 0; m < mats.Length; m++)
+                        {
+                            mats[m] = material;
+                        }
+
+                        skinned.sharedMaterials = mats;
+                    }
+                    else
+                    {
+                        renderers[i].sharedMaterial = material;
+                    }
+                }
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            float height = Mathf.Max(0.01f, bounds.size.y);
+            float bottom = bounds.min.y;
+            float s = targetHeight / height;
+
+            instance.transform.localScale = Vector3.one * s;
+            instance.transform.localPosition = anchor + new Vector3(0f, -bottom * s, 0f);
+            return instance;
+        }
+
+        private static GameObject AttachModelFlattened(
+            Transform parent,
+            string assetPath,
+            float targetHeight,
+            string childName,
+            float groundY,
+            Material fallbackMaterial)
+        {
+            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (model == null)
+            {
+                Debug.LogWarning("AttachModelFlattened: no model at " + assetPath);
+                return null;
+            }
+
+            GameObject holder = new GameObject(childName);
+            holder.transform.SetParent(parent, false);
+
+            GameObject sourceInstance = Object.Instantiate(model);
+            sourceInstance.name = childName + " Source";
+            sourceInstance.transform.SetParent(parent, false);
+
+            holder.transform.localRotation = sourceInstance.transform.localRotation;
+            holder.transform.localScale = sourceInstance.transform.localScale;
+            holder.transform.localPosition = sourceInstance.transform.localPosition;
+
+            CopyMeshIfPresent(sourceInstance.transform, holder, fallbackMaterial);
+            CopyModelHierarchy(sourceInstance.transform, holder.transform, fallbackMaterial);
+            Object.DestroyImmediate(sourceInstance);
+
+            Renderer[] renderers = holder.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                Debug.LogWarning("AttachModelFlattened: model has no meshes: " + assetPath);
+                Object.DestroyImmediate(holder);
+                return null;
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            float height = Mathf.Max(0.01f, bounds.size.y);
+            float bottom = bounds.min.y;
+            float s = targetHeight / height;
+
+            holder.transform.localScale = Vector3.one * s;
+            holder.transform.localPosition = new Vector3(0f, groundY - bottom * s, 0f);
+
+            Debug.Log("[AttachModelFlattened] " + childName +
+                " meshes=" + renderers.Length +
+                " height=" + height.ToString("0.000") +
+                " scale=" + s.ToString("0.000"));
+            return holder;
+        }
+
+        private static void CopyModelHierarchy(
+            Transform source,
+            Transform targetParent,
+            Material fallbackMaterial)
+        {
+            foreach (Transform child in source)
+            {
+                GameObject go = new GameObject(child.name);
+                go.transform.SetParent(targetParent, false);
+                go.transform.localPosition = child.localPosition;
+                go.transform.localRotation = child.localRotation;
+                go.transform.localScale = child.localScale;
+
+                CopyMeshIfPresent(child, go, fallbackMaterial);
+                CopyModelHierarchy(child, go.transform, fallbackMaterial);
+            }
+        }
+
+        private static void CopyMeshIfPresent(
+            Transform source,
+            GameObject target,
+            Material fallbackMaterial)
+        {
+            Mesh mesh = null;
+
+            MeshFilter meshFilter = source.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+            {
+                mesh = meshFilter.sharedMesh;
+            }
+            else
+            {
+                SkinnedMeshRenderer skinned = source.GetComponent<SkinnedMeshRenderer>();
+                if (skinned != null && skinned.sharedMesh != null)
+                {
+                    mesh = skinned.sharedMesh;
+                }
+            }
+
+            if (mesh == null)
+            {
+                return;
+            }
+
+            MeshFilter targetFilter = target.AddComponent<MeshFilter>();
+            targetFilter.sharedMesh = mesh;
+
+            MeshRenderer targetRenderer = target.AddComponent<MeshRenderer>();
+            targetRenderer.sharedMaterial = fallbackMaterial;
+        }
+
+        private static bool TryGetUnitClips(
+            out AnimationClip idle,
+            out AnimationClip walk,
+            out AnimationClip attack,
+            out AnimationClip death)
+        {
+            idle = null;
+            walk = null;
+            attack = null;
+            death = null;
+
+            if (!AssetDatabase.IsValidFolder("Assets/_Project/Animations"))
+            {
+                return false;
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:Model", new[] { "Assets/_Project/Animations" });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+
+                for (int a = 0; a < assets.Length; a++)
+                {
+                    AnimationClip clip = assets[a] as AnimationClip;
+                    if (clip == null)
+                    {
+                        continue;
+                    }
+
+                    string name = clip.name.ToLowerInvariant();
+
+                    if (idle == null && name.Contains("idle"))
+                    {
+                        idle = clip;
+                    }
+                    else if (walk == null && name.Contains("walk"))
+                    {
+                        walk = clip;
+                    }
+                    else if (attack == null &&
+                        (name.Contains("attack") || name.Contains("spear") || name.Contains("throw")))
+                    {
+                        attack = clip;
+                    }
+                    else if (death == null &&
+                        (name.Contains("death") || name.Contains("die")))
+                    {
+                        death = clip;
+                    }
+                }
+            }
+
+            return idle != null && walk != null;
+        }
+
+        private static void BuildUnitAnimatorController(
+            AnimationClip idle,
+            AnimationClip walk,
+            AnimationClip attack,
+            AnimationClip death)
+        {
+            const string controllerPath = "Assets/_Project/Animations/UnitAnimator.controller";
+            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath) != null)
+            {
+                return;
+            }
+
+            AnimatorController controller =
+                AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
+            AnimatorStateMachine rootStateMachine = controller.layers[0].stateMachine;
+
+            AnimatorState idleState = rootStateMachine.AddState("Idle");
+            AnimatorState walkState = rootStateMachine.AddState("Walk");
+            AnimatorState attackState = rootStateMachine.AddState("Attack");
+            AnimatorState deadState = rootStateMachine.AddState("Dead");
+
+            idleState.motion = idle;
+            walkState.motion = walk;
+            attackState.motion = attack;
+            deadState.motion = death;
+
+            controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
+            controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("Dead", AnimatorControllerParameterType.Trigger);
+
+            AnimatorStateTransition idleToWalk = idleState.AddTransition(walkState);
+            idleToWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+            AnimatorStateTransition walkToIdle = walkState.AddTransition(idleState);
+            walkToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+
+            AnimatorStateTransition anyToAttack = rootStateMachine.AddAnyStateTransition(attackState);
+            anyToAttack.AddCondition(AnimatorConditionMode.If, 0f, "Attack");
+            anyToAttack.hasExitTime = false;
+
+            AnimatorStateTransition attackToIdle = attackState.AddTransition(idleState);
+            attackToIdle.hasExitTime = true;
+            attackToIdle.exitTime = 0.9f;
+
+            AnimatorStateTransition anyToDead = rootStateMachine.AddAnyStateTransition(deadState);
+            anyToDead.AddCondition(AnimatorConditionMode.If, 0f, "Dead");
+            anyToDead.hasExitTime = false;
+
+            AssetDatabase.SaveAssets();
+        }
+
+        private static UnitVisualTuning.UnitEntry GetTuning(string unitName)
+        {
+            const string path = "Assets/_Project/Data/UnitVisualTuning.asset";
+            UnitVisualTuning tuning = AssetDatabase.LoadAssetAtPath<UnitVisualTuning>(path);
+            if (tuning == null)
+            {
+                tuning = ScriptableObject.CreateInstance<UnitVisualTuning>();
+                AssetDatabase.CreateAsset(tuning, path);
+            }
+
+            for (int i = 0; i < tuning.units.Count; i++)
+            {
+                if (tuning.units[i] != null && tuning.units[i].unitName == unitName)
+                {
+                    return tuning.units[i];
+                }
+            }
+
+            UnitVisualTuning.UnitEntry entry = new UnitVisualTuning.UnitEntry
+            {
+                unitName = unitName
+            };
+
+            if (unitName == "Hoplita arcadio")
+            {
+                entry.body.overrideScale = true;
+                entry.body.scale = new Vector3(0.48f, 0.54f, 0.5147912f);
+
+                entry.armor.overrideScale = true;
+                entry.armor.scale = new Vector3(0.48f, 0.54f, 0.57f);
+                entry.armor.overridePosition = true;
+                entry.armor.position = new Vector3(0f, 0.003f, 0f);
+
+                entry.helmet.overrideScale = true;
+                entry.helmet.scale = new Vector3(0.475309f, 0.4465126f, 0.5628917f);
+                entry.helmet.overridePosition = true;
+                entry.helmet.position = new Vector3(0f, 0.2867f, 0f);
+
+                entry.shield.overrideScale = true;
+                entry.shield.scale = new Vector3(1.099178f, 1.099178f, 1.099178f);
+                entry.shield.overridePosition = true;
+                entry.shield.position = new Vector3(-0.767f, 1.773f, 0.336f);
+
+                entry.spear.overrideScale = true;
+                entry.spear.scale = new Vector3(0.932192f, 0.932192f, 0.932192f);
+                entry.spear.overridePosition = true;
+                entry.spear.position = new Vector3(0.873f, 1.572f, 0.255f);
+            }
+
+            if (unitName == "Toxote psiloi")
+            {
+                entry.body.overrideScale = true;
+                entry.body.scale = new Vector3(0.5147912f, 0.5147912f, 0.5147912f);
+                entry.body.overridePosition = true;
+                entry.body.position = Vector3.zero;
+
+                entry.armor.overrideScale = true;
+                entry.armor.scale = new Vector3(0.51f, 0.51f, 0.51f);
+                entry.armor.overridePosition = true;
+                entry.armor.position = new Vector3(0f, 0.017f, 0f);
+
+                entry.bow.overrideScale = true;
+                entry.bow.scale = new Vector3(1.050196f, 1.050196f, 1.050196f);
+                entry.bow.overridePosition = true;
+                entry.bow.position = new Vector3(0.802f, 1.723f, 0.288f);
+
+                entry.buckler.overrideScale = true;
+                entry.buckler.scale = new Vector3(0.8159143f, 0.8159143f, 0.8159143f);
+                entry.buckler.overridePosition = true;
+                entry.buckler.position = new Vector3(-0.762f, 1.769f, 0.326f);
+
+                entry.quiver.overrideScale = true;
+                entry.quiver.scale = new Vector3(0.74f, 0.8399822f, 0.8399822f);
+                entry.quiver.overridePosition = true;
+                entry.quiver.position = new Vector3(-0.4446588f, 2.158918f, -0.05115041f);
+                entry.quiver.overrideRotation = true;
+                entry.quiver.rotation = new Vector3(31.017f, -5.331f, 30.133f);
+            }
+
+            if (unitName == "Trabajador")
+            {
+                entry.clothesModel = "Assets/AncientGrecce/M Normal Citizen .fbx";
+
+                entry.body.overrideScale = true;
+                entry.body.scale = new Vector3(0.48f, 0.52f, 0.48f);
+                entry.body.overridePosition = true;
+                entry.body.position = new Vector3(0.038f, -0.011f, 0f);
+
+                entry.armor.overrideScale = true;
+                entry.armor.scale = new Vector3(0.4714067f, 0.5204763f, 0.6401561f);
+                entry.armor.overridePosition = true;
+                entry.armor.position = new Vector3(0.033005f, 0.0074179f, 0f);
+            }
+
+            tuning.units.Add(entry);
+            EditorUtility.SetDirty(tuning);
+            return entry;
+        }
+
+        private static void ApplyTuning(GameObject part, UnitVisualTuning.Part tuning)
+        {
+            if (part == null || tuning == null)
+            {
+                return;
+            }
+
+            if (tuning.overrideScale)
+            {
+                part.transform.localScale = tuning.scale;
+            }
+
+            if (tuning.overridePosition)
+            {
+                part.transform.localPosition = tuning.position;
+            }
+
+            if (tuning.overrideRotation)
+            {
+                part.transform.localRotation = Quaternion.Euler(tuning.rotation);
+            }
+        }
+
+        private static Material CreateAtlasMaterial()
+        {
+            string assetPath = $"{MaterialFolder}/AncientGreeceAtlas.mat";
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            Material material = new Material(shader)
+            {
+                name = "AncientGreeceAtlas"
+            };
+
+            Texture2D atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(
+                "Assets/AncientGrecce/TexturaLowPoly.png");
+            if (atlas != null)
+            {
+                atlas.filterMode = FilterMode.Point;
+                material.SetTexture("_BaseMap", atlas);
+            }
+            else
+            {
+                material.color = new Color(0.75f, 0.72f, 0.65f, 1f);
+            }
+
+            material.SetFloat("_Smoothness", 0.15f);
+            AssetDatabase.CreateAsset(material, assetPath);
+            AssetDatabase.SaveAssets();
+            return material;
+        }
+
+        private static Material CreateHelmetMaterial(
+            string assetName,
+            string baseColorPath,
+            string normalPath,
+            string metallicPath)
+        {
+            string assetPath = $"{MaterialFolder}/{assetName}.mat";
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            Material material = new Material(shader)
+            {
+                name = assetName
+            };
+
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(baseColorPath));
+            material.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(normalPath));
+            material.SetTexture("_MetallicGlossMap", AssetDatabase.LoadAssetAtPath<Texture2D>(metallicPath));
+            material.SetFloat("_Smoothness", 0.35f);
+            material.SetFloat("_Metallic", 1f);
+
+            AssetDatabase.CreateAsset(material, assetPath);
+            AssetDatabase.SaveAssets();
+            return material;
+        }
+
         private static GameObject CreateUnitVisual(
             Transform parent,
             UnitConfig config,
-            VisualPalette palette)
+            VisualPalette palette,
+            bool animated)
         {
             GameObject visuals = new GameObject("Visuals");
             visuals.transform.SetParent(parent, false);
+
+            if (config.Faction == Faction.Greek)
+            {
+                return CreateGreekHumanVisual(visuals, config, palette, config.Material, animated);
+            }
+
             float scale = config.Size.y / 1.8f;
             visuals.transform.localScale = new Vector3(scale, scale, scale);
 
@@ -716,7 +1771,10 @@ namespace ProjectoRTS.EditorTools
             collider.height = Mathf.Max(config.Size.y, collider.radius * 2f);
             collider.center = new Vector3(0f, collider.height * 0.5f, 0f);
 
-            GameObject visuals = CreateUnitVisual(root.transform, config, palette);
+            AnimationClip idleClip, walkClip, attackClip, deathClip;
+            bool animated = TryGetUnitClips(out idleClip, out walkClip, out attackClip, out deathClip);
+
+            GameObject visuals = CreateUnitVisual(root.transform, config, palette, animated);
             Renderer[] visualRenderers = visuals.GetComponentsInChildren<Renderer>(true);
 
             UnitRuntime runtime = root.AddComponent<UnitRuntime>();
@@ -770,6 +1828,14 @@ namespace ProjectoRTS.EditorTools
             }
 
             flashSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            if (animated)
+            {
+                BuildUnitAnimatorController(idleClip, walkClip, attackClip, deathClip);
+                Animator animator = root.AddComponent<Animator>();
+                animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                    "Assets/_Project/Animations/UnitAnimator.controller");
+            }
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             Object.DestroyImmediate(root);

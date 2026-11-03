@@ -16,11 +16,26 @@ namespace ProjectoRTS.Units
         [SerializeField] private GameObject selectionIndicator;
 
         private float _turnSpeed = 720f;
+        private Animator _animator;
 
         public NavMeshAgent Agent => agent;
         public UnitRuntime Runtime { get; private set; }
         public bool IsSelected { get; private set; }
         public bool IsAlive => Runtime == null || Runtime.IsAlive;
+
+        private void Update()
+        {
+            if (_animator == null || agent == null)
+            {
+                return;
+            }
+
+            float speed = agent.enabled && agent.isOnNavMesh
+                ? agent.velocity.magnitude
+                : 0f;
+            float normalized = Mathf.Clamp01(speed / Mathf.Max(0.1f, agent.speed));
+            _animator.SetFloat("Speed", normalized);
+        }
 
         public bool IsMoving
         {
@@ -49,6 +64,7 @@ namespace ProjectoRTS.Units
             }
 
             Runtime = GetComponent<UnitRuntime>();
+            _animator = GetComponentInChildren<Animator>(true);
             SetSelected(false);
         }
 

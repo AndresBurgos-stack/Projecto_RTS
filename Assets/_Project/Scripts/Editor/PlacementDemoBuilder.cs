@@ -79,7 +79,10 @@ namespace ProjectoRTS.EditorTools
                 new Color(0.2f, 0.35f, 0.75f, 1f));
             Material psiloiMaterial = GetOrCreateMaterial(
                 "Psiloi",
-                new Color(0.2f, 0.65f, 0.55f, 1f));
+                new Color(0.3f, 0.62f, 0.88f, 1f));
+            Material workerMaterial = GetOrCreateMaterial(
+                "WorkerTunic",
+                new Color(0.93f, 0.93f, 0.9f, 1f));
             Material romanMaterial = GetOrCreateMaterial(
                 "Roman",
                 new Color(0.42f, 0.43f, 0.45f, 1f));
@@ -136,7 +139,7 @@ namespace ProjectoRTS.EditorTools
                     Faction = Faction.Greek,
                     Role = UnitRole.Infantry,
                     Size = new Vector3(0.75f, 1.7f, 0.75f),
-                    Material = psiloiMaterial,
+                    Material = workerMaterial,
                     MaxHealth = 60f,
                     AttackDamage = 0f,
                     AttackRange = 0f,
@@ -697,29 +700,92 @@ namespace ProjectoRTS.EditorTools
                     return;
                 }
 
-                Material body = FindFirstMaterial(contents);
-
                 for (int i = visuals.childCount - 1; i >= 0; i--)
                 {
                     Object.DestroyImmediate(visuals.GetChild(i).gameObject);
                 }
 
-                Material cap = CreateOrLoadCapMaterial();
+                Vector3 savedScale = visuals.localScale;
+                visuals.localScale = Vector3.one;
 
-                CreateHammerPart(PrimitiveType.Cylinder, "Leg L", visuals, new Vector3(-0.13f, 0.35f, 0f), new Vector3(0.13f, 0.35f, 0.13f), body);
-                CreateHammerPart(PrimitiveType.Cylinder, "Leg R", visuals, new Vector3(0.13f, 0.35f, 0f), new Vector3(0.13f, 0.35f, 0.13f), body);
-                CreateHammerPart(PrimitiveType.Cube, "Sandal L", visuals, new Vector3(-0.13f, 0.04f, 0.04f), new Vector3(0.18f, 0.08f, 0.28f), body);
-                CreateHammerPart(PrimitiveType.Cube, "Sandal R", visuals, new Vector3(0.13f, 0.04f, 0.04f), new Vector3(0.18f, 0.08f, 0.28f), body);
-                CreateHammerPart(PrimitiveType.Cube, "Tunic", visuals, new Vector3(0f, 1.05f, 0f), new Vector3(0.46f, 0.7f, 0.3f), cap);
-                CreateHammerPart(PrimitiveType.Sphere, "Head", visuals, new Vector3(0f, 1.58f, 0f), new Vector3(0.28f, 0.3f, 0.28f), body);
-                CreateHammerPart(PrimitiveType.Cylinder, "Arm L", visuals, new Vector3(-0.3f, 1.12f, 0f), new Vector3(0.1f, 0.26f, 0.1f), body);
-                CreateHammerPart(PrimitiveType.Cylinder, "Arm R", visuals, new Vector3(0.3f, 1.12f, 0f), new Vector3(0.1f, 0.26f, 0.1f), body);
+                UnitVisualTuning.UnitEntry tuning = GetTuning("Trabajador");
 
-                CreateHammerPart(PrimitiveType.Sphere, "Cap", visuals, new Vector3(0f, 1.72f, 0f), new Vector3(0.3f, 0.14f, 0.3f), cap);
-                CreateHammerPart(PrimitiveType.Cylinder, "Cap Brim", visuals, new Vector3(0f, 1.66f, 0.08f), new Vector3(0.38f, 0.02f, 0.38f), cap);
+                Material bodyFallback = CreateAtlasMaterial();
 
-                CreateHammerPart(PrimitiveType.Cylinder, "Hammer Handle", visuals, new Vector3(0.36f, 1.05f, 0.18f), new Vector3(0.05f, 0.3f, 0.05f), body);
-                CreateHammerPart(PrimitiveType.Cube, "Hammer Head", visuals, new Vector3(0.36f, 1.3f, 0.18f), new Vector3(0.18f, 0.12f, 0.12f), body);
+                AnimationClip idleClip, walkClip, attackClip, deathClip;
+                bool animated = TryGetUnitClips(out idleClip, out walkClip, out attackClip, out deathClip);
+
+                if (animated)
+                {
+                    AttachImportedModel(
+                        visuals,
+                        "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                        1.8f,
+                        "Body",
+                        0f,
+                        null,
+                        true);
+
+                    Material tunic = GetOrCreateMaterial(
+                        "WorkerTunic",
+                        new Color(0.93f, 0.93f, 0.9f, 1f));
+
+                    CreateHammerPart(PrimitiveType.Cylinder, "Tunic Torso", visuals, new Vector3(0f, 1.15f, 0f), new Vector3(0.4f, 0.32f, 0.28f), tunic);
+                    CreateHammerPart(PrimitiveType.Cylinder, "Tunic Skirt", visuals, new Vector3(0f, 0.62f, 0f), new Vector3(0.42f, 0.3f, 0.32f), tunic);
+                }
+                else
+                {
+                    GameObject body = AttachModelFlattened(
+                        visuals,
+                        "Assets/AncientGrecce/male.fbx",
+                        1.8f,
+                        "Body",
+                        0f,
+                        bodyFallback);
+
+                    if (body == null)
+                    {
+                        AttachModelFlattened(
+                            visuals,
+                            "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                            1.8f,
+                            "Body",
+                            0f,
+                            bodyFallback);
+                    }
+
+                    ApplyTuning(body, tuning.body);
+
+                    string clothesPath = string.IsNullOrEmpty(tuning.clothesModel)
+                        ? "Assets/AncientGrecce/M Slave.fbx"
+                        : tuning.clothesModel;
+
+                    GameObject clothes = AttachModelFlattened(
+                        visuals,
+                        clothesPath,
+                        1.8f,
+                        "Clothes",
+                        0f,
+                        bodyFallback);
+                    ApplyTuning(clothes, tuning.armor);
+                }
+
+                visuals.localScale = savedScale;
+
+                Material hammerWood = GetOrCreateMaterial(
+                    "DetailWood",
+                    new Color(0.35f, 0.22f, 0.12f, 1f));
+
+                CreateHammerPart(PrimitiveType.Cylinder, "Hammer Handle", visuals, new Vector3(0.455f, 1.05f, 0.18f), new Vector3(0.05f, 0.3f, 0.05f), hammerWood);
+                CreateHammerPart(PrimitiveType.Cube, "Hammer Head", visuals, new Vector3(0.455f, 1.3f, 0.18f), new Vector3(0.18f, 0.12f, 0.12f), hammerWood);
+
+                if (animated)
+                {
+                    BuildUnitAnimatorController(idleClip, walkClip, attackClip, deathClip);
+                    Animator animator = contents.AddComponent<Animator>();
+                    animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                        "Assets/_Project/Animations/UnitAnimator.controller");
+                }
 
                 if (contents.GetComponent<WorkerBuilder>() == null)
                 {
