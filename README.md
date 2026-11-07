@@ -20,6 +20,8 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Paso 4 del roadmap: **completado** (combate automático y por orden, barras de vida, feedback de daño y muerte).
 - Paso 5 del roadmap: **completado** (oleadas romanas con spawner en el borde del mapa, avance hacia el Panteón e IA con prioridad soldados → edificios → Panteón).
 - Paso 8 del roadmap: **completado** (pulido de arte de estructuras: mampostería con líneas de junta en muros, torres y puerta; vigas de madera y vigas de amarre en casa, cuartel y almacén; pilastras en el ayuntamiento; alero en el almacén).
+- Paso 9 del roadmap: **completado** (arte de unidades importadas, tuning visual y pipeline de animaciones).
+- Unidades enemigas: **auxiliares** (el antiguo legionario romano usa el prefab `Auxiliar.prefab` y los datos lo muestran como "Soldado auxiliar").
 - Economía: **implementada** (madera y bronce, costes en construcción y reclutamiento, botones deshabilitados sin recursos y HUD de recursos).
 - Recursos: **implementados** (nodos de madera y bronce repartidos por el mapa, recolección por trabajadores y depósito en Ayuntamiento, cuartel o almacén).
 - Trabajadores: **implementados** (construcción de 1 trabajador por obra, recolección con prioridad Madera/Bronce asignable desde el panel derecho, huida de enemigos).
@@ -424,6 +426,17 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 ### Regenerar la escena
 
 Tras cambios en el generador, corre el menú `ProjectoRTS > Setup > Create Placement Demo Scene`. Esto regenera terreno, NavMesh, cámara, edificios, nodos de recursos y oleadas; las UI de runtime (HUD, panel de construcción, panel de prioridad) se crean solas al entrar en Play.
+
+## Animaciones de unidades
+
+- Cuerpo base: `Assets/Maniqui/Maniqui.fbx`, importado como Humanoid y usado como cuerpo de las unidades animadas.
+- Clips de Mixamo en `Assets/_Project/Animations/`: `Breathing Idle.fbx`, `Walking.fbx` y `Spear And Shield Walk.fbx`.
+- Clips en loop derivados: `estaticoLoop.anim`, `caminarLoop.anim` y `SpearAndShield.anim`.
+- Controladores: `TrabajadoAnim.controller`, `HoplitaAnim.controller` y `AxuliarAnim.controller`. Los tres exponen el parámetro float `Speed` y alternan entre el clip estático y el de caminar.
+- `UnitMovement` envía al `Animator` la velocidad real del `NavMeshAgent` normalizada en el parámetro `Speed`.
+- Arte importado de unidades: `Assets/AncientGrecce/`. Pack de armas: `Assets/MedievalFantasyWeaponMassivePack/`.
+
+Estado: los clips y controladores están preparados; la asignación del `Animator` en los prefabs de unidad se está integrando.
 
 ## Siguiente paso
 

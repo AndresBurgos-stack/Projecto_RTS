@@ -285,15 +285,17 @@ namespace ProjectoRTS.EditorTools
 
             GameObject body;
 
+            Material skinMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Skin.mat");
+
             if (animated)
             {
                 body = AttachImportedModel(
                     visuals.transform,
-                    "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                    "Assets/Mannequin/Mannequin.fbx",
                     1.8f,
                     "Body",
                     0f,
-                    null,
+                    skinMaterial,
                     true);
 
                 CreatePart(
@@ -317,19 +319,20 @@ namespace ProjectoRTS.EditorTools
                     ? "Assets/AncientGrecce/M Greek Archer.fbx"
                     : "Assets/AncientGrecce/M Athenian Hoplite.fbx";
 
-                body = AttachModelFlattened(
+                body = AttachImportedModel(
                     visuals.transform,
-                    "Assets/AncientGrecce/male.fbx",
+                    "Assets/Mannequin/Mannequin.fbx",
                     1.8f,
                     "Body",
                     0f,
-                    bodyFallback);
+                    skinMaterial,
+                    true);
 
                 if (body == null)
                 {
                     body = AttachModelFlattened(
                         visuals.transform,
-                        "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                        "Assets/AncientGrecce/male.fbx",
                         1.8f,
                         "Body",
                         0f,

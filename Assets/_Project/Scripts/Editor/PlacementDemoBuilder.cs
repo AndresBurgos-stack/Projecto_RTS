@@ -711,6 +711,7 @@ namespace ProjectoRTS.EditorTools
                 UnitVisualTuning.UnitEntry tuning = GetTuning("Trabajador");
 
                 Material bodyFallback = CreateAtlasMaterial();
+                Material skinMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Skin.mat");
 
                 AnimationClip idleClip, walkClip, attackClip, deathClip;
                 bool animated = TryGetUnitClips(out idleClip, out walkClip, out attackClip, out deathClip);
@@ -719,12 +720,12 @@ namespace ProjectoRTS.EditorTools
                 {
                     AttachImportedModel(
                         visuals,
-                        "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                        "Assets/Mannequin/Mannequin.fbx",
                         1.8f,
                         "Body",
                         0f,
-                        null,
-                        true);
+                        skinMaterial,
+                        false);
 
                     Material tunic = GetOrCreateMaterial(
                         "WorkerTunic",
@@ -735,19 +736,20 @@ namespace ProjectoRTS.EditorTools
                 }
                 else
                 {
-                    GameObject body = AttachModelFlattened(
+                    GameObject body = AttachImportedModel(
                         visuals,
-                        "Assets/AncientGrecce/male.fbx",
+                        "Assets/Mannequin/Mannequin.fbx",
                         1.8f,
                         "Body",
                         0f,
-                        bodyFallback);
+                        skinMaterial,
+                        false);
 
                     if (body == null)
                     {
-                        AttachModelFlattened(
+                        body = AttachModelFlattened(
                             visuals,
-                            "Assets/AncientGreek_Free/Prefabs/Male_Elder/AncientGreek_Male_Elder2.prefab",
+                            "Assets/AncientGrecce/male.fbx",
                             1.8f,
                             "Body",
                             0f,

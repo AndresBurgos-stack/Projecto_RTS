@@ -1,12 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
-
 namespace ProjectoRTS.Units
 {
-    /// <summary>
-    /// Moves a unit with a <see cref="NavMeshAgent"/> and toggles its
-    /// selection indicator.
-    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NavMeshAgent))]
     public sealed class UnitMovement : MonoBehaviour
@@ -15,8 +10,8 @@ namespace ProjectoRTS.Units
         [SerializeField] private NavMeshAgent agent;
         [SerializeField] private GameObject selectionIndicator;
 
-        private float _turnSpeed = 720f;
         private Animator _animator;
+        private float _turnSpeed = 720f;
 
         public NavMeshAgent Agent => agent;
         public UnitRuntime Runtime { get; private set; }
@@ -92,7 +87,6 @@ namespace ProjectoRTS.Units
             }
         }
 
-        /// <summary>Applies the movement stats from the unit definition.</summary>
         public void Initialize(UnitDefinition definition)
         {
             if (Runtime == null)
