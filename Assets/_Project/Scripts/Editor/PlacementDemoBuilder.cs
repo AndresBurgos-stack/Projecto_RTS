@@ -330,19 +330,20 @@ namespace ProjectoRTS.EditorTools
             NavMeshSurface navMeshSurface = navMeshObject.AddComponent<NavMeshSurface>();
             navMeshSurface.collectObjects = CollectObjects.All;
             navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
-            navMeshSurface.layerMask = ~0;
+            navMeshSurface.layerMask = ~(1 << EnvironmentLayer);
             navMeshSurface.minRegionArea = 0.5f;
             navMeshSurface.overrideVoxelSize = true;
             navMeshSurface.voxelSize = 0.4f;
             BakeNavMesh(navMeshSurface);
+
+            CreateMapBackdrop();
 
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera camera = cameraObject.AddComponent<Camera>();
             cameraObject.transform.position = new Vector3(0f, 26f, -26f);
             cameraObject.transform.rotation = Quaternion.Euler(45f, 0f, 0f);
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.12f, 0.14f, 0.18f);
+            ConfigureMapCamera(camera);
             camera.fieldOfView = 60f;
             if (cameraObject.GetComponent<UniversalAdditionalCameraData>() == null)
             {
@@ -363,6 +364,7 @@ namespace ProjectoRTS.EditorTools
             light.intensity = 1.2f;
             light.shadows = LightShadows.Hard;
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            ConfigureMapSun(light);
 
             GameObject calendarObject = new GameObject("DayNight Calendar");
             DayNightCalendar calendar = calendarObject.AddComponent<DayNightCalendar>();
