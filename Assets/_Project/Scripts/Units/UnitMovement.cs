@@ -10,16 +10,34 @@ namespace ProjectoRTS.Units
         [SerializeField] private NavMeshAgent agent;
         [SerializeField] private GameObject selectionIndicator;
 
+        [Header("Anti-Stuck")]
+        [SerializeField, Min(0.2f)] private float stallTime = 1.2f;
+        [SerializeField, Min(0.2f)] private float stallCheckInterval = 0.3f;
+        [SerializeField, Min(0.5f)] private float escapeRadius = 1.5f;
+        [SerializeField, Min(1)] private int maxRepathAttempts = 2;
+
         private Animator _animator;
         private float _turnSpeed = 720f;
+
+        private Vector3 _lastDestination;
+        private float _stallCheckTimer;
+        private float _stallTimer;
+        private int _repathAttempts;
+        private int _escapeAttempts;
+        private int _recoveryStage;
 
         public NavMeshAgent Agent => agent;
         public UnitRuntime Runtime { get; private set; }
         public bool IsSelected { get; private set; }
         public bool IsAlive => Runtime == null || Runtime.IsAlive;
 
+        /// <summary>Raised when every recovery attempt failed and the unit is stuck.</summary>
+        public event System.Action Stuck;
+
         private void Update()
         {
+            UpdateAntiStuck();
+
             if (_animator == null || agent == null)
             {
                 return;
@@ -30,6 +48,107 @@ namespace ProjectoRTS.Units
                 : 0f;
             float normalized = Mathf.Clamp01(speed / Mathf.Max(0.1f, agent.speed));
             _animator.SetFloat("Speed", normalized);
+
+            UpdateAntiStuck();
+        }
+
+        /// <summary>
+        /// Detects units that stopped making progress while a path exists and
+        /// tries to recover: re-path, then escape sideways, then raise
+        /// <see cref="Stuck"/> so controllers can re-decide.
+        /// </summary>
+        private void UpdateAntiStuck()
+        {
+            if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            {
+                _stallTimer = 0f;
+                return;
+            }
+
+            _stallCheckTimer += Time.deltaTime;
+            if (_stallCheckTimer < stallCheckInterval)
+            {
+                return;
+            }
+
+            _stallCheckTimer = 0f;
+
+            bool tryingToMove = agent.hasPath &&
+                !agent.pathPending &&
+                agent.remainingDistance > agent.stoppingDistance + 0.15f;
+
+            if (!tryingToMove)
+            {
+                _stallTimer = 0f;
+                return;
+            }
+
+            if (agent.velocity.sqrMagnitude > 0.04f)
+            {
+                _stallTimer = 0f;
+                _recoveryStage = 0;
+                _repathAttempts = 0;
+                _escapeAttempts = 0;
+                return;
+            }
+
+            _stallTimer += stallCheckInterval;
+            if (_stallTimer < stallTime)
+            {
+                return;
+            }
+
+            _stallTimer = 0f;
+
+            if (_recoveryStage == 0)
+            {
+                _repathAttempts++;
+
+                if (_repathAttempts <= maxRepathAttempts)
+                {
+                    agent.ResetPath();
+                    agent.SetDestination(_lastDestination);
+                    return;
+                }
+
+                _recoveryStage = 1;
+            }
+
+            TryEscapeOrStuck();
+        }
+
+        private void TryEscapeOrStuck()
+        {
+            _escapeAttempts++;
+
+            if (_escapeAttempts > 2)
+            {
+                _recoveryStage = 0;
+                _repathAttempts = 0;
+                _escapeAttempts = 0;
+                agent.ResetPath();
+                Stuck?.Invoke();
+                return;
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = (i / 8f) * Mathf.PI * 2f + Random.value;
+                Vector3 candidate = transform.position +
+                    new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * escapeRadius;
+
+                if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, escapeRadius, NavMesh.AllAreas))
+                {
+                    _lastDestination = hit.position;
+                    _stallTimer = 0f;
+                    agent.isStopped = false;
+                    agent.ResetPath();
+                    agent.SetDestination(hit.position);
+                    return;
+                }
+            }
+
+            Stuck?.Invoke();
         }
 
         public bool IsMoving
@@ -126,6 +245,13 @@ namespace ProjectoRTS.Units
             {
                 return;
             }
+
+            _lastDestination = destination;
+            _stallTimer = 0f;
+            _stallCheckTimer = 0f;
+            _repathAttempts = 0;
+            _escapeAttempts = 0;
+            _recoveryStage = 0;
 
             agent.isStopped = false;
             agent.SetDestination(destination);

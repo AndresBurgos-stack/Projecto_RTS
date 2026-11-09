@@ -35,6 +35,7 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(0.5f)] private float gatherRange = 2.4f;
         [SerializeField, Min(0.5f)] private float depositRange = 3f;
         [SerializeField, Min(0.1f)] private float resourceRepathInterval = 0.6f;
+        [SerializeField, Min(1f)] private float stuckRepathTimeout = 5f;
 
         [Header("Flee")]
         [SerializeField, Min(0.5f)] private float fleeRadius = 9f;
@@ -65,6 +66,10 @@ namespace ProjectoRTS.Buildings
         private bool _atNode;
         private float _gatherTimer;
         private float _resourceRepathTimer;
+        private float _outOfRangeTimer;
+
+        private Vector3 _siteFootprintCenter;
+        private Vector2 _siteFootprintHalf;
 
         /// <summary>Site this worker is currently assigned to, or null.</summary>
         public ConstructionSite Site => _site;
@@ -93,6 +98,7 @@ namespace ProjectoRTS.Buildings
 
                 if (_cargoAmount <= 0)
                 {
+                    ReleaseNodeClaim();
                     _resourceNode = null;
                     _atNode = false;
                     _gatherTimer = 0f;
@@ -172,6 +178,12 @@ namespace ProjectoRTS.Buildings
         private void OnDisable()
         {
             Workers.Remove(this);
+            ReleaseNodeClaim();
+        }
+
+        private void OnDestroy()
+        {
+            ReleaseNodeClaim();
         }
 
         /// <summary>
@@ -183,6 +195,7 @@ namespace ProjectoRTS.Buildings
             _stoppedAtSite = false;
             _repathTimer = 0f;
             CancelGathering();
+            CacheSiteFootprint();
 
             if (_site == null)
             {
@@ -221,6 +234,7 @@ namespace ProjectoRTS.Buildings
             {
                 _site = null;
                 _stoppedAtSite = false;
+                ResumeCurrentTask();
             }
 
             if (_cargoAmount > 0)
@@ -238,6 +252,7 @@ namespace ProjectoRTS.Buildings
                     CancelGathering();
                     _stoppedAtSite = false;
                     _repathTimer = 0f;
+                    CacheSiteFootprint();
                     WalkToSite();
                 }
             }
@@ -261,19 +276,23 @@ namespace ProjectoRTS.Buildings
             if (!IsInRange())
             {
                 _repathTimer -= Time.deltaTime;
+                _outOfRangeTimer += Time.deltaTime;
 
-                if (_repathTimer <= 0f)
+                bool pathMissing = _agent != null &&
+                    _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath;
+                bool timedOut = _outOfRangeTimer >= stuckRepathTimeout;
+
+                if ((_repathTimer <= 0f && pathMissing) || timedOut)
                 {
                     _repathTimer = repathInterval;
-
-                    if (_agent != null && _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath)
-                    {
-                        WalkToSite();
-                    }
+                    _outOfRangeTimer = 0f;
+                    WalkToSite();
                 }
 
                 return;
             }
+
+            _outOfRangeTimer = 0f;
 
             if (!_stoppedAtSite)
             {
@@ -287,10 +306,12 @@ namespace ProjectoRTS.Buildings
         {
             if (_resourceNode == null || _resourceNode.IsDepleted)
             {
+                ReleaseNodeClaim();
                 _resourceNode = FindGatherNode();
                 _atNode = false;
                 _gatherTimer = 0f;
                 _resourceRepathTimer = 0f;
+                _outOfRangeTimer = 0f;
 
                 if (_resourceNode == null)
                 {
@@ -304,19 +325,23 @@ namespace ProjectoRTS.Buildings
             if (!IsInGatherRange())
             {
                 _resourceRepathTimer -= Time.deltaTime;
+                _outOfRangeTimer += Time.deltaTime;
 
-                if (_resourceRepathTimer <= 0f)
+                bool pathMissing = _agent != null &&
+                    _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath;
+                bool timedOut = _outOfRangeTimer >= stuckRepathTimeout;
+
+                if ((_resourceRepathTimer <= 0f && pathMissing) || timedOut)
                 {
                     _resourceRepathTimer = resourceRepathInterval;
-
-                    if (_agent != null && _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath)
-                    {
-                        WalkToResource();
-                    }
+                    _outOfRangeTimer = 0f;
+                    WalkToResource();
                 }
 
                 return;
             }
+
+            _outOfRangeTimer = 0f;
 
             if (!_atNode)
             {
@@ -360,19 +385,23 @@ namespace ProjectoRTS.Buildings
             if (!IsInDepositRange())
             {
                 _resourceRepathTimer -= Time.deltaTime;
+                _outOfRangeTimer += Time.deltaTime;
 
-                if (_resourceRepathTimer <= 0f)
+                bool pathMissing = _agent != null &&
+                    _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath;
+                bool timedOut = _outOfRangeTimer >= stuckRepathTimeout;
+
+                if ((_resourceRepathTimer <= 0f && pathMissing) || timedOut)
                 {
                     _resourceRepathTimer = resourceRepathInterval;
-
-                    if (_agent != null && _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath)
-                    {
-                        WalkToDropOff();
-                    }
+                    _outOfRangeTimer = 0f;
+                    WalkToDropOff();
                 }
 
                 return;
             }
+
+            _outOfRangeTimer = 0f;
 
             if (_agent != null && _agent.isOnNavMesh)
             {
@@ -400,12 +429,14 @@ namespace ProjectoRTS.Buildings
 
             if (harvested <= 0)
             {
+                ReleaseNodeClaim();
                 _resourceNode = null;
                 return;
             }
 
             _cargoType = harvestedType;
             _cargoAmount = harvested;
+            ReleaseNodeClaim();
             _resourceNode = null;
             _dropOff = null;
             Resume();
@@ -427,32 +458,38 @@ namespace ProjectoRTS.Buildings
                 return null;
             }
 
-            return ResourceNode.FindNearest(
+            ResourceNode node = ResourceNode.FindNearestAvailable(
                 transform.position,
                 _preferredResource,
-                AutoAssignRange);
+                AutoAssignRange,
+                this);
+
+            if (node != null && node.TryClaim(this))
+            {
+                return node;
+            }
+
+            return null;
         }
 
         private void WalkToResource()
         {
-            if (_resourceNode == null || _agent == null || !_agent.isOnNavMesh)
+            if (_resourceNode == null)
             {
                 return;
             }
 
-            _agent.isStopped = false;
-            _agent.SetDestination(GetApproachPoint(_resourceNode.transform.position, gatherRange * 0.75f));
+            TryWalkTo(GetApproachPoint(_resourceNode.transform.position, gatherRange * 0.75f));
         }
 
         private void WalkToDropOff()
         {
-            if (_dropOff == null || _agent == null || !_agent.isOnNavMesh)
+            if (_dropOff == null)
             {
                 return;
             }
 
-            _agent.isStopped = false;
-            _agent.SetDestination(GetApproachPoint(_dropOff.transform.position, depositRange * 0.75f));
+            TryWalkTo(GetApproachPoint(_dropOff.transform.position, depositRange * 0.75f));
         }
 
         private bool IsInGatherRange()
@@ -503,10 +540,20 @@ namespace ProjectoRTS.Buildings
 
         private void CancelGathering()
         {
+            ReleaseNodeClaim();
             _resourceNode = null;
             _atNode = false;
             _gatherTimer = 0f;
             _resourceRepathTimer = 0f;
+        }
+
+        /// <summary>Frees the reserved slot on the current resource node.</summary>
+        private void ReleaseNodeClaim()
+        {
+            if (_resourceNode != null)
+            {
+                _resourceNode.Release(this);
+            }
         }
 
         /// <summary>
@@ -590,11 +637,7 @@ namespace ProjectoRTS.Buildings
             {
                 _agent.speed = GetBaseSpeed() * Mathf.Max(1f, fleeSpeedMultiplier);
                 _agent.isStopped = false;
-
-                if (_agent.isOnNavMesh)
-                {
-                    _agent.SetDestination(_fleePoint);
-                }
+                TryWalkTo(_fleePoint);
             }
         }
 
@@ -689,13 +732,12 @@ namespace ProjectoRTS.Buildings
 
         private void WalkToSite()
         {
-            if (_site == null || _agent == null || !_agent.isOnNavMesh)
+            if (_site == null)
             {
                 return;
             }
 
-            _agent.isStopped = false;
-            _agent.SetDestination(GetApproachPoint(_site.transform.position, approachDistance));
+            TryWalkTo(GetSiteApproachPoint());
         }
 
         private void StopAtSite()
@@ -750,16 +792,173 @@ namespace ProjectoRTS.Buildings
             return point;
         }
 
+        /// <summary>
+        /// Moves the worker to a destination, warping it back onto the NavMesh
+        /// first when it ended up off it (for example after a building carved
+        /// the ground under it). Never silently fails like a raw SetDestination.
+        /// </summary>
+        private void TryWalkTo(Vector3 destination)
+        {
+            if (_agent == null)
+            {
+                _agent = GetComponent<NavMeshAgent>();
+
+                if (_agent == null)
+                {
+                    return;
+                }
+            }
+
+            if (!_agent.isOnNavMesh)
+            {
+                if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 3f, NavMesh.AllAreas))
+                {
+                    _agent.Warp(hit.position);
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            _agent.isStopped = false;
+            _agent.SetDestination(destination);
+        }
+
         private bool IsInRange()
+        {
+            return DistanceToSiteFootprint() <= workRange;
+        }
+
+        /// <summary>
+        /// Distance from the worker to the closest point of the site footprint
+        /// (corners included), measured in XZ. Works for any building size, so
+        /// workers at the corners of big structures like the 3x3 barracks are
+        /// considered in range exactly like the ones at the middle of a wall.
+        /// </summary>
+        private float DistanceToSiteFootprint()
         {
             if (_site == null)
             {
-                return false;
+                return float.MaxValue;
             }
 
-            Vector3 delta = _site.transform.position - transform.position;
-            delta.y = 0f;
-            return delta.sqrMagnitude <= workRange * workRange;
+            Vector3 local = _site.transform.InverseTransformPoint(transform.position);
+            float dx = Mathf.Max(0f, Mathf.Abs(local.x - _siteFootprintCenter.x) - _siteFootprintHalf.x);
+            float dz = Mathf.Max(0f, Mathf.Abs(local.z - _siteFootprintCenter.z) - _siteFootprintHalf.y);
+            return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
+        /// <summary>
+        /// Caches the XZ footprint of the current site from its renderer
+        /// bounds, in site-local space. Called whenever the site changes.
+        /// </summary>
+        private void CacheSiteFootprint()
+        {
+            _siteFootprintCenter = Vector3.zero;
+            _siteFootprintHalf = Vector2.zero;
+
+            if (_site == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = _site.GetComponentsInChildren<Renderer>(true);
+            bool hasBounds = false;
+            Bounds worldBounds = default;
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+
+                if (renderer == null ||
+                    renderer is ParticleSystemRenderer ||
+                    renderer is TrailRenderer ||
+                    renderer is LineRenderer)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    worldBounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    worldBounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            if (!hasBounds)
+            {
+                return;
+            }
+
+            Vector3 min = _site.transform.InverseTransformPoint(worldBounds.min);
+            Vector3 max = _site.transform.InverseTransformPoint(worldBounds.max);
+
+            _siteFootprintCenter = new Vector3((min.x + max.x) * 0.5f, 0f, (min.z + max.z) * 0.5f);
+            _siteFootprintHalf = new Vector2((max.x - min.x) * 0.5f, (max.z - min.z) * 0.5f);
+        }
+
+        /// <summary>
+        /// Picks a navmesh point next to the site footprint edge: the point on
+        /// the edge closest to the worker, pushed outward by the approach
+        /// distance. When that spot is blocked (wall or building right next to
+        /// the site), it tries 8 directions around the footprint so the worker
+        /// always finds a valid place to build from.
+        /// </summary>
+        private Vector3 GetSiteApproachPoint()
+        {
+            if (_site == null)
+            {
+                return transform.position;
+            }
+
+            Vector3 local = _site.transform.InverseTransformPoint(transform.position);
+            float edgeX = Mathf.Clamp(
+                local.x,
+                _siteFootprintCenter.x - _siteFootprintHalf.x,
+                _siteFootprintCenter.x + _siteFootprintHalf.x);
+            float edgeZ = Mathf.Clamp(
+                local.z,
+                _siteFootprintCenter.z - _siteFootprintHalf.y,
+                _siteFootprintCenter.z + _siteFootprintHalf.y);
+
+            Vector3 edge = _site.transform.TransformPoint(new Vector3(edgeX, 0f, edgeZ));
+            Vector3 outward = edge - _site.transform.position;
+            outward.y = 0f;
+
+            if (outward.sqrMagnitude < 0.01f)
+            {
+                outward = Vector3.forward;
+            }
+
+            outward.Normalize();
+
+            Vector3 candidate = edge + outward * approachDistance;
+
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 3f, NavMesh.AllAreas))
+            {
+                return hit.position;
+            }
+
+            float radius = Mathf.Max(_siteFootprintHalf.x, _siteFootprintHalf.y) + approachDistance;
+
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = i * 45f * Mathf.Deg2Rad;
+                Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                Vector3 fallback = _site.transform.position + direction * radius;
+
+                if (NavMesh.SamplePosition(fallback, out hit, 3f, NavMesh.AllAreas))
+                {
+                    return hit.position;
+                }
+            }
+
+            return transform.position;
         }
 
         /// <summary>

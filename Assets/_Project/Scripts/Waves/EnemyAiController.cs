@@ -38,6 +38,7 @@ namespace ProjectoRTS.Waves
         [SerializeField, Min(0.5f)] private float buildingDetectionRadius = 30f;
         [SerializeField, Min(0.05f)] private float buildingScanInterval = 0.5f;
         [SerializeField, Min(0.5f)] private float blockedDuration = 4f;
+        [SerializeField, Min(0f)] private float targetSwitchCooldown = 2f;
 
         private Vector3 _home;
         private float _homePatrolRadius;
@@ -49,6 +50,9 @@ namespace ProjectoRTS.Waves
         private BuildingRuntime _blockedBuilding;
         private float _blockedUntil;
         private float _objectiveBlockedUntil;
+        private UnitRuntime _blockedUnit;
+        private float _unitBlockedUntil;
+        private float _lockedUntil;
         private PantheonObjective _objective;
 
         private void Awake()
@@ -222,6 +226,7 @@ namespace ProjectoRTS.Waves
             }
 
             combat.CommandAttackBuilding(best);
+            _lockedUntil = Time.time + targetSwitchCooldown;
             _returningHome = false;
             return true;
         }
@@ -246,14 +251,20 @@ namespace ProjectoRTS.Waves
                 return false;
             }
 
+            if (enemy == _blockedUnit && Time.time < _unitBlockedUntil)
+            {
+                return false;
+            }
+
             combat.CommandAttack(enemy);
+            _lockedUntil = Time.time + targetSwitchCooldown;
             _returningHome = false;
             return true;
         }
 
         private bool TrySwitchToSoldier()
         {
-            if (combat == null || combat.Target != null)
+            if (combat == null || combat.Target != null || Time.time < _lockedUntil)
             {
                 return false;
             }
@@ -263,7 +274,7 @@ namespace ProjectoRTS.Waves
 
         private bool TrySwitchToBuilding()
         {
-            if (combat == null || combat.BuildingTarget != null || combat.Target != null)
+            if (combat == null || combat.BuildingTarget != null || combat.Target != null || Time.time < _lockedUntil)
             {
                 return false;
             }
@@ -302,6 +313,7 @@ namespace ProjectoRTS.Waves
             }
 
             combat.CommandAttackObjective(objective);
+            _lockedUntil = Time.time + targetSwitchCooldown;
             _returningHome = false;
         }
 
@@ -321,6 +333,12 @@ namespace ProjectoRTS.Waves
             if (combat.ObjectiveTarget != null)
             {
                 _objectiveBlockedUntil = Time.time + blockedDuration;
+            }
+
+            if (combat.Target != null)
+            {
+                _blockedUnit = combat.Target;
+                _unitBlockedUntil = Time.time + blockedDuration;
             }
         }
 

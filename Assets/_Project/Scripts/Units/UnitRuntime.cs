@@ -156,7 +156,7 @@ namespace ProjectoRTS.Units
             Died?.Invoke(this);
 
             Animator animator = GetComponentInChildren<Animator>(true);
-            if (animator != null)
+            if (animator != null && HasAnimatorParameter(animator, "Dead"))
             {
                 animator.SetTrigger("Dead");
             }
@@ -165,6 +165,24 @@ namespace ProjectoRTS.Units
             {
                 StartCoroutine(DeathRoutine());
             }
+        }
+
+        private static bool HasAnimatorParameter(Animator animator, string parameterName)
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                if (parameter.name == parameterName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private IEnumerator DeathRoutine()

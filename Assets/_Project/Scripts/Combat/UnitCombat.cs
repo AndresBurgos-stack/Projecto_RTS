@@ -23,6 +23,7 @@ namespace ProjectoRTS.Combat
         [Header("Targeting")]
         [SerializeField, Min(0.05f)] private float retargetInterval = 0.25f;
         [SerializeField, Min(0.05f)] private float chaseRefreshInterval = 0.2f;
+        [SerializeField, Min(0.5f)] private float forceRepathInterval = 1.5f;
         [SerializeField, Min(0f)] private float rangePadding = 0.3f;
         [SerializeField, Min(0f)] private float buildingReach = 2.5f;
         [SerializeField, Min(0f)] private float aggroRadius = 9f;
@@ -38,7 +39,9 @@ namespace ProjectoRTS.Combat
         private float _nextRetargetTime;
         private float _nextAttackTime;
         private float _nextChaseTime;
+        private float _nextForceRepathTime;
         private Vector3 _lastChasePosition;
+        private Animator _animator;
         private float _attackRange;
         private float _attackDamage;
         private float _attackInterval;
@@ -111,6 +114,8 @@ namespace ProjectoRTS.Combat
             {
                 movement = GetComponent<UnitMovement>();
             }
+
+            _animator = GetComponentInChildren<Animator>(true);
 
             ApplyDefinition();
         }
@@ -196,6 +201,38 @@ namespace ProjectoRTS.Combat
 
             _nextChaseTime = 0f;
             _lastChasePosition = target.transform.position;
+        }
+
+        private void OnEnable()
+        {
+            if (movement == null)
+            {
+                movement = GetComponent<UnitMovement>();
+            }
+
+            if (movement != null)
+            {
+                movement.Stuck += HandleStuck;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (movement != null)
+            {
+                movement.Stuck -= HandleStuck;
+            }
+        }
+
+        /// <summary>
+        /// Called by <see cref="UnitMovement"/> when the unit cannot reach its
+        /// destination. Drops the current target so the AI re-decides instead
+        /// of standing still forever.
+        /// </summary>
+        private void HandleStuck()
+        {
+            ClearTarget();
+            _nextRetargetTime = Time.time + retargetInterval * 4f;
         }
 
         /// <summary>Orders this unit to attack the central objective.</summary>
@@ -374,17 +411,41 @@ namespace ProjectoRTS.Combat
                 movement.FaceTowards(_target.transform.position);
             }
 
+            _chasing = false;
+
             if (Time.time >= _nextAttackTime)
             {
                 _nextAttackTime = Time.time + _attackInterval;
                 _target.ApplyDamage(_attackDamage, IsMeleeAttacker);
 
-                Animator animator = GetComponentInChildren<Animator>(true);
-                if (animator != null)
+                if (_animator != null && HasAnimatorParameter("Attack"))
                 {
-                    animator.SetTrigger("Attack");
+                    _animator.SetTrigger("Attack");
                 }
             }
+        }
+
+        /// <summary>
+        /// True when the unit animator exposes the given trigger. Avoids the
+        /// "Parameter does not exist" console spam when a controller only has
+        /// the Speed parameter.
+        /// </summary>
+        private bool HasAnimatorParameter(string parameterName)
+        {
+            if (_animator == null || _animator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            foreach (AnimatorControllerParameter parameter in _animator.parameters)
+            {
+                if (parameter.name == parameterName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void UpdateBuildingAttack()
@@ -473,13 +534,20 @@ namespace ProjectoRTS.Combat
             Vector3 targetPosition = _target.transform.position;
             bool targetMoved = (targetPosition - _lastChasePosition).sqrMagnitude > 0.25f;
 
-            if (!targetMoved && Time.time < _nextChaseTime)
+            if (!targetMoved && Time.time < _nextChaseTime && Time.time < _nextForceRepathTime)
             {
                 return;
             }
 
-            _nextChaseTime = Time.time + chaseRefreshInterval;
+            if (targetMoved)
+            {
+                _nextChaseTime = Time.time + chaseRefreshInterval;
+            }
+
+            _nextForceRepathTime = Time.time + forceRepathInterval;
             _lastChasePosition = targetPosition;
+            _chasing = true;
+            _chaseIssuedTime = Time.time;
             movement.MoveTo(targetPosition);
         }
 
