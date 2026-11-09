@@ -48,6 +48,8 @@ namespace ProjectoRTS.Audio
 
             _instance = this;
 
+            EnsureAudioListener();
+
             AudioClip clip = UnityEngine.Resources.Load<AudioClip>(ResourcePath);
             if (clip == null)
             {
@@ -64,6 +66,23 @@ namespace ProjectoRTS.Audio
 
             source.Play();
             StartCoroutine(FadeIn(source));
+        }
+
+        private void EnsureAudioListener()
+        {
+            if (Object.FindFirstObjectByType<AudioListener>() != null)
+            {
+                return;
+            }
+
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null)
+            {
+                mainCamera.gameObject.AddComponent<AudioListener>();
+                return;
+            }
+
+            gameObject.AddComponent<AudioListener>();
         }
 
         private IEnumerator FadeIn(AudioSource source)
