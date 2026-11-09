@@ -2,6 +2,7 @@ using ProjectoRTS.Buildings;
 using ProjectoRTS.Core;
 using ProjectoRTS.Resources;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ProjectoRTS.Economy
@@ -22,12 +23,20 @@ namespace ProjectoRTS.Economy
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (!SceneFlow.IsGameplayScene || _instance != null)
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            HandleSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        }
+
+        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!SceneFlow.IsGameplaySceneName(scene.name) || _instance != null)
             {
                 return;
             }
 
             GameObject host = new GameObject("Economy HUD");
+            SceneManager.MoveGameObjectToScene(host, scene);
             host.AddComponent<EconomyHud>();
         }
 

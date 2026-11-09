@@ -1,5 +1,6 @@
 using ProjectoRTS.Core;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ProjectoRTS.Waves
@@ -24,12 +25,21 @@ namespace ProjectoRTS.Waves
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (!SceneFlow.IsGameplayScene || Object.FindFirstObjectByType<PantheonHud>() != null)
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            HandleSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        }
+
+        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!SceneFlow.IsGameplaySceneName(scene.name)
+                || Object.FindFirstObjectByType<PantheonHud>() != null)
             {
                 return;
             }
 
             GameObject host = new GameObject("Pantheon HUD");
+            SceneManager.MoveGameObjectToScene(host, scene);
             host.AddComponent<PantheonHud>();
         }
 

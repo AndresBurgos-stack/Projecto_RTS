@@ -1,6 +1,7 @@
 using ProjectoRTS.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace ProjectoRTS.Buildings
 {
@@ -19,12 +20,21 @@ namespace ProjectoRTS.Buildings
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (!SceneFlow.IsGameplayScene || Object.FindFirstObjectByType<BuildingDebugDamage>() != null)
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            HandleSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        }
+
+        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!SceneFlow.IsGameplaySceneName(scene.name)
+                || Object.FindFirstObjectByType<BuildingDebugDamage>() != null)
             {
                 return;
             }
 
             GameObject host = new GameObject("Building Debug Damage");
+            SceneManager.MoveGameObjectToScene(host, scene);
             host.AddComponent<BuildingDebugDamage>();
         }
 

@@ -20,11 +20,12 @@ namespace ProjectoRTS.Core
 
         public static bool IsGameplayScene
         {
-            get
-            {
-                string sceneName = SceneManager.GetActiveScene().name;
-                return sceneName == GameplaySceneName || sceneName == LegacyGameplaySceneName;
-            }
+            get { return IsGameplaySceneName(SceneManager.GetActiveScene().name); }
+        }
+
+        public static bool IsGameplaySceneName(string sceneName)
+        {
+            return sceneName == GameplaySceneName || sceneName == LegacyGameplaySceneName;
         }
     }
 }
