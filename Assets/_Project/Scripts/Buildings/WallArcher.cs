@@ -51,6 +51,13 @@ namespace ProjectoRTS.Buildings
                 _combat.ClearTarget();
             }
 
+            if (_runtime != null)
+            {
+                _runtime.SetMounted(
+                    true,
+                    _wall != null ? _wall.GetComponentInParent<BuildingRuntime>() : null);
+            }
+
             SnapToSlot();
         }
 
@@ -156,12 +163,25 @@ namespace ProjectoRTS.Buildings
             _targetWall = null;
             _released = false;
             _transferring = false;
+
+            if (_runtime != null)
+            {
+                _runtime.SetMounted(
+                    true,
+                    target.GetComponentInParent<BuildingRuntime>());
+            }
+
             SnapToSlot();
         }
 
         /// <summary>Leaves the wall and returns the unit to the ground below.</summary>
         public void Dismount()
         {
+            if (_runtime != null)
+            {
+                _runtime.SetMounted(false);
+            }
+
             if (_combat != null)
             {
                 _combat.SetRangeBonus(0f);
@@ -224,6 +244,11 @@ namespace ProjectoRTS.Buildings
 
         private void OnDestroy()
         {
+            if (_runtime != null)
+            {
+                _runtime.SetMounted(false);
+            }
+
             ReleaseWall();
         }
     }

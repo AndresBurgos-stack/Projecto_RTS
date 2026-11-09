@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using ProjectoRTS.Buildings;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -33,6 +34,15 @@ namespace ProjectoRTS.Units
         public float MaxHealth => definition != null ? definition.MaxHealth : 0f;
         public float HealthNormalized => MaxHealth > 0f ? currentHealth / MaxHealth : 0f;
         public bool IsAlive => currentHealth > 0f;
+
+        /// <summary>True while the unit stands on top of a wall segment.</summary>
+        public bool IsMounted { get; private set; }
+
+        /// <summary>
+        /// Wall building that hosts this unit while mounted, or null.
+        /// Used by melee attackers to retarget the wall instead of the archer.
+        /// </summary>
+        public BuildingRuntime MountedWallBuilding { get; private set; }
 
         private void Awake()
         {
@@ -89,6 +99,28 @@ namespace ProjectoRTS.Units
             {
                 Die();
             }
+        }
+
+        /// <summary>
+        /// Applies damage from a melee or ranged attacker. Melee attacks are
+        /// ignored while the unit is mounted on a wall: only ranged attackers
+        /// can hurt it until it dismounts.
+        /// </summary>
+        public void ApplyDamage(float amount, bool isMelee)
+        {
+            if (IsMounted && isMelee)
+            {
+                return;
+            }
+
+            ApplyDamage(amount);
+        }
+
+        /// <summary>Sets or clears the wall-mounted state for melee immunity.</summary>
+        public void SetMounted(bool mounted, BuildingRuntime wallBuilding = null)
+        {
+            IsMounted = mounted;
+            MountedWallBuilding = mounted ? wallBuilding : null;
         }
 
         private void Register()

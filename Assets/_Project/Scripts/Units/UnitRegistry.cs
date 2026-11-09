@@ -42,12 +42,15 @@ namespace ProjectoRTS.Units
 
         /// <summary>
         /// Returns the closest living unit of another faction within a
-        /// horizontal radius, or null when there is no candidate.
+        /// horizontal radius, or null when there is no candidate. Melee
+        /// attackers pass <paramref name="excludeMounted"/> to skip archers
+        /// standing on walls, which they cannot reach.
         /// </summary>
         public static UnitRuntime FindNearestEnemy(
             Vector3 position,
             Faction faction,
-            float maxDistance)
+            float maxDistance,
+            bool excludeMounted = false)
         {
             UnitRuntime best = null;
             float bestSqrDistance = maxDistance * maxDistance;
@@ -62,6 +65,11 @@ namespace ProjectoRTS.Units
                 }
 
                 if (!unit.IsAlive || unit.Faction == faction || unit.Faction == Faction.None)
+                {
+                    continue;
+                }
+
+                if (excludeMounted && unit.IsMounted)
                 {
                     continue;
                 }

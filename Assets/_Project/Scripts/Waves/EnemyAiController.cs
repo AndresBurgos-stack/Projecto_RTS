@@ -238,7 +238,8 @@ namespace ProjectoRTS.Waves
             UnitRuntime enemy = UnitRegistry.FindNearestEnemy(
                 transform.position,
                 runtime.Faction,
-                detectionRadius);
+                detectionRadius,
+                combat != null && combat.IsMeleeAttacker);
 
             if (enemy == null)
             {

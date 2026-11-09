@@ -48,6 +48,14 @@ namespace ProjectoRTS.Combat
         public PantheonObjective ObjectiveTarget => _objectiveTarget;
         public BuildingRuntime BuildingTarget => _buildingTarget;
 
+        /// <summary>
+        /// True when this unit fights in melee (Infantry or Cavalry).
+        /// Melee units cannot damage archers mounted on walls.
+        /// </summary>
+        public bool IsMeleeAttacker =>
+            runtime != null &&
+            (runtime.Role == UnitRole.Infantry || runtime.Role == UnitRole.Cavalry);
+
         public bool HasTarget =>
             (_target != null && _target.IsAlive) ||
             (_objectiveTarget != null && _objectiveTarget.IsAlive) ||
@@ -156,6 +164,18 @@ namespace ProjectoRTS.Combat
 
             if (target.Faction == runtime.Faction || target.Faction == Faction.None)
             {
+                return;
+            }
+
+            if (IsMeleeAttacker && target.IsMounted)
+            {
+                BuildingRuntime wall = target.MountedWallBuilding;
+
+                if (wall != null && wall.IsAlive)
+                {
+                    CommandAttackBuilding(wall);
+                }
+
                 return;
             }
 
@@ -283,7 +303,8 @@ namespace ProjectoRTS.Combat
                     _target = UnitRegistry.FindNearestEnemy(
                         transform.position,
                         runtime.Faction,
-                        radius);
+                        radius,
+                        IsMeleeAttacker);
 
                     if (_target != null)
                     {
@@ -306,6 +327,22 @@ namespace ProjectoRTS.Combat
 
             if (_target == null)
             {
+                return;
+            }
+
+            if (_target.IsMounted && IsMeleeAttacker)
+            {
+                BuildingRuntime wall = _target.MountedWallBuilding;
+
+                if (wall != null && wall.IsAlive)
+                {
+                    CommandAttackBuilding(wall);
+                }
+                else
+                {
+                    ClearTarget();
+                }
+
                 return;
             }
 
@@ -340,7 +377,7 @@ namespace ProjectoRTS.Combat
             if (Time.time >= _nextAttackTime)
             {
                 _nextAttackTime = Time.time + _attackInterval;
-                _target.ApplyDamage(_attackDamage);
+                _target.ApplyDamage(_attackDamage, IsMeleeAttacker);
 
                 Animator animator = GetComponentInChildren<Animator>(true);
                 if (animator != null)
