@@ -410,6 +410,7 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 - Montados ganan +2 de alcance; clic derecho en suelo o enemigo los desmonta.
 - `BuildingRangedAttack`: las torres disparan flechas visibles a enemigos en rango (10 de daño, alcance 9). El muro en sí no dispara.
 - Los toxotes (psiloi) tienen alcance 9.
+- Inmunidad cuerpo a cuerpo: un toxote montado no recibe daño melee. Los atacantes melee (Infantry/Cavalry) no lo fijan como objetivo y redirigen su ataque al muro; solo los arqueros enemigos pueden dañarlo. Al caer el muro (o al ordenarle bajar), se desmonta y vuelve a ser vulnerable.
 
 ### Edificios
 
@@ -419,13 +420,18 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 | Puerta | 2 | 30M 20B | huella 2x1, no rota |
 | Torre | 3 | 30M 40B | ataque a distancia automático |
 | Casa | 4 | 50M 20B | decorativa |
-| Cuartel | 5 | 100M 50B | recluta hoplitas y toxotes |
+| Cuartel | 5 | 100M 50B | recluta hoplitas y toxotes, modelo griego 3×3 |
 | Ayuntamiento | 6 | 125M 75B | recluta trabajadores, depósito |
 | Almacén | 7 | 75M 10B | depósito de recursos |
 
 ### Regenerar la escena
 
 Tras cambios en el generador, corre el menú `ProjectoRTS > Setup > Create Placement Demo Scene`. Esto regenera terreno, NavMesh, cámara, edificios, nodos de recursos y oleadas; las UI de runtime (HUD, panel de construcción, panel de prioridad) se crean solas al entrar en Play.
+
+### Cuartel griego
+
+- El cuartel usa el modelo `Assets/_Project/Prefabs/Buildings/Barrack.fbx` (material `AncientGreekBarracks.mat`, textura paleta `Textures/AncientGreek/TexturaLowPoly.png`).
+- Huella de lote 3×3 (antes 2×2), tamaño real 3.00 × 2.10 × 2.60, con `BoxCollider` y `NavMeshObstacle` a escala; la raíz del prefab se mantiene a escala 1.
 
 ## Animaciones de unidades
 
