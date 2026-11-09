@@ -1,3 +1,4 @@
+using ProjectoRTS.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,7 +24,7 @@ namespace ProjectoRTS.Waves
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindFirstObjectByType<PantheonHud>() != null)
+            if (!SceneFlow.IsGameplayScene || Object.FindFirstObjectByType<PantheonHud>() != null)
             {
                 return;
             }

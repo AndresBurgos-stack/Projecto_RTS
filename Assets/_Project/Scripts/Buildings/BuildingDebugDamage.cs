@@ -1,3 +1,4 @@
+using ProjectoRTS.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -18,7 +19,7 @@ namespace ProjectoRTS.Buildings
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindFirstObjectByType<BuildingDebugDamage>() != null)
+            if (!SceneFlow.IsGameplayScene || Object.FindFirstObjectByType<BuildingDebugDamage>() != null)
             {
                 return;
             }

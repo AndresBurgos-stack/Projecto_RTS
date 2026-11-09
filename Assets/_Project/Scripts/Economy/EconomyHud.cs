@@ -1,4 +1,5 @@
 using ProjectoRTS.Buildings;
+using ProjectoRTS.Core;
 using ProjectoRTS.Resources;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,7 +22,7 @@ namespace ProjectoRTS.Economy
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (_instance != null)
+            if (!SceneFlow.IsGameplayScene || _instance != null)
             {
                 return;
             }

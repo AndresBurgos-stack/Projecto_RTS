@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ProjectoRTS.Core;
 using ProjectoRTS.Resources;
 using ProjectoRTS.Units;
 using UnityEngine;
@@ -34,7 +35,7 @@ namespace ProjectoRTS.Buildings
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (_instance != null)
+            if (!SceneFlow.IsGameplayScene || _instance != null)
             {
                 return;
             }
