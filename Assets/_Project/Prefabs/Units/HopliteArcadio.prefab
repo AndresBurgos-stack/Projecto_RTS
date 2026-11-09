@@ -373,6 +373,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agent: {fileID: 1129537506977061096}
   selectionIndicator: {fileID: 2957829263113130394}
+  stallTime: 1.2
+  stallCheckInterval: 0.3
+  escapeRadius: 1.5
+  maxRepathAttempts: 2
 --- !u!114 &6315994039097687810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -389,6 +393,7 @@ MonoBehaviour:
   movement: {fileID: 839742005975935394}
   retargetInterval: 0.25
   chaseRefreshInterval: 0.2
+  forceRepathInterval: 1.5
   rangePadding: 0.3
   buildingReach: 2.5
   aggroRadius: 9

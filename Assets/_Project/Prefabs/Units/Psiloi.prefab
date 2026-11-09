@@ -163,7 +163,7 @@ MonoBehaviour:
   movement: {fileID: 7050060195044370717}
   retargetInterval: 0.25
   chaseRefreshInterval: 0.2
-  rangePadding: 0.3
+  rangePadding: 0.6
   buildingReach: 2.5
   aggroRadius: 9
   autoAcquire: 1
@@ -205,7 +205,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &803218440050393042
 Transform:
   m_ObjectHideFlags: 0

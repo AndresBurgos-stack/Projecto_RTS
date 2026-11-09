@@ -369,7 +369,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 261325938280819393}
-  selectionIndicator: {fileID: 0}
+  selectionIndicator: {fileID: 8046944706421395260}
 --- !u!114 &1281189317502158590
 MonoBehaviour:
   m_ObjectHideFlags: 0
