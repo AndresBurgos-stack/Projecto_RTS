@@ -61,6 +61,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -82,9 +84,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &889341928124610913
 GameObject:
@@ -147,6 +151,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -168,9 +174,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &2158205987475492052
 GameObject:
@@ -233,6 +241,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -254,9 +264,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &2886218585307278866
 GameObject:
@@ -273,6 +285,7 @@ GameObject:
   - component: {fileID: 839742005975935394}
   - component: {fileID: 6315994039097687810}
   - component: {fileID: 5491615820315975392}
+  - component: {fileID: 5450964255656974287}
   m_Layer: 0
   m_Name: HopliteArcadio
   m_TagString: Untagged
@@ -419,6 +432,46 @@ MonoBehaviour:
   - {fileID: 2501001976035426625}
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   flashDuration: 0.12
+--- !u!114 &5450964255656974287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2886218585307278866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e49f14f31e262ae46b8fd07ad7c8dd4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectoRTS.Units.HopliteProceduralAnimator
+  armDownAngle: 78
+  elbowBendAngle: 15
+  shieldArmDownAngle: 72
+  shieldElbowBendAngle: 38
+  shieldForwardX: 0
+  shieldForwardZ: 10
+  legSwingAngle: 30
+  armSwingAngle: 14
+  bobHeight: 0.035
+  strideRate: 6
+  attackDuration: 0.62
+  hitTime: 0.27
+  windupEnd: 0.18
+  thrustEnd: 0.34
+  windupArmAngle: 22
+  thrustArmAngle: 70
+  thrustElbowAngle: -5
+  spineLeanAngle: 10
+  windupArmTwist: 15
+  thrustArmTwist: 55
+  windupElbowTwist: 10
+  thrustElbowTwist: 20
+  variationDuration: 0.06
+  variationHeight: 0.18
+  variationLateral: 0.12
+  lungeDistance: 0.14
+  fingerCurl: 55
+  thumbCurl: 40
 --- !u!1 &2957829263113130394
 GameObject:
   m_ObjectHideFlags: 0
@@ -480,6 +533,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -501,9 +556,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &3469239460061120031
 GameObject:
@@ -647,6 +704,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -668,9 +727,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1001 &838256961299797841
 PrefabInstance:
@@ -952,7 +1013,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8540970151224618481, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       insertIndex: -1
       addedObject: {fileID: 594175293759237136}
-    - targetCorrespondingSourceObject: {fileID: 8320100988931978864, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 7762600346132792352, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       insertIndex: -1
       addedObject: {fileID: 9049510590196274137}
     m_AddedComponents: []
@@ -987,9 +1048,9 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8540970151224618481, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
   m_PrefabInstance: {fileID: 2143226497331253481}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &7982818220074133145 stripped
+--- !u!4 &8503938247904433353 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 8320100988931978864, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+  m_CorrespondingSourceObject: {fileID: 7762600346132792352, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
   m_PrefabInstance: {fileID: 2143226497331253481}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3667631473315932938
@@ -1084,31 +1145,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.03145232
+      value: -0.1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.21700388
+      value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.07693651
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.70705163
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.008845091
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.008844636
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.7070513
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e8e91560dc73b7a478bbdc884033fac7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1153,10 +1214,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3833853668537030700}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1206,7 +1267,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 7982818220074133145}
+    m_TransformParent: {fileID: 8503938247904433353}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalScale.x
@@ -1222,31 +1283,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.179
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.34501
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.025
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.7162702
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.000790257
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.00022814251
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.69782263
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 299f2e7c6bd9b704982ef9f05db5a73f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1291,10 +1352,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8565144195075443043}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}

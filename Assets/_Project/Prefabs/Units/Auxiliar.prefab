@@ -61,6 +61,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -82,9 +84,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &2361500562349518842
 GameObject:
@@ -196,6 +200,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -217,9 +223,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &7286954970806266342
 GameObject:
@@ -337,6 +345,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agent: {fileID: 2101728868658699352}
   selectionIndicator: {fileID: 2227798127362694910}
+  stallTime: 1.2
+  stallCheckInterval: 0.3
+  escapeRadius: 1.5
+  maxRepathAttempts: 2
 --- !u!114 &8524798331834158951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -353,6 +365,7 @@ MonoBehaviour:
   movement: {fileID: 8094957376153928418}
   retargetInterval: 0.25
   chaseRefreshInterval: 0.2
+  forceRepathInterval: 1.5
   rangePadding: 0.3
   buildingReach: 2.5
   aggroRadius: 9
@@ -384,6 +397,7 @@ MonoBehaviour:
   buildingDetectionRadius: 30
   buildingScanInterval: 0.5
   blockedDuration: 4
+  targetSwitchCooldown: 2
 --- !u!114 &6253351117826918364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -497,6 +511,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -518,9 +534,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1001 &63803523979078939
 PrefabInstance:
@@ -528,31 +546,31 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 8471891376515548727}
+    m_TransformParent: {fileID: 2385040752648766414}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.31347
+      value: 0.313
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.3500759
+      value: 0.35
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.379
+      value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.025
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalRotation.x
@@ -560,11 +578,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dd3e9f320ef7bc647a6761c69e0477a6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -636,10 +654,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 874759521421873226}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -719,10 +737,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 8668271062045463528, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 3224730324270765585, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       insertIndex: -1
       addedObject: {fileID: 533700242328881904}
-    - targetCorrespondingSourceObject: {fileID: 8320100988931978864, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 7762600346132792352, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4033635648356553884}
     m_AddedComponents: []
@@ -732,14 +750,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
   m_PrefabInstance: {fileID: 998064949452543455}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &8471891376515548727 stripped
+--- !u!4 &2385040752648766414 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 8668271062045463528, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3224730324270765585, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
   m_PrefabInstance: {fileID: 998064949452543455}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &9128577693712491439 stripped
+--- !u!4 &7377913425029157375 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 8320100988931978864, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+  m_CorrespondingSourceObject: {fileID: 7762600346132792352, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
   m_PrefabInstance: {fileID: 998064949452543455}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8215660906047240686
@@ -748,47 +766,47 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 9128577693712491439}
+    m_TransformParent: {fileID: 7377913425029157375}
     m_Modifications:
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.22153799
+      value: 0.17
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.14152084
+      value: 0.17
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.16331019
+      value: 0.17
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.0072
+      value: 0.09
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.332
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.6952981
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.00000025448597
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.00000013318123
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.7187215
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 5042270510934093170, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -806,6 +824,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Gladius Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 6175159169704302109, guid: d4658baa8d3066546962a5f0d4ffb9d2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: -6478536213147159724, guid: efe80d6f09aa0ab41b1a8d0de169e945, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -834,10 +856,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4373429463113092646}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
