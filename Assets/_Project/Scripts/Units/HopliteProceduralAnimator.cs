@@ -300,7 +300,7 @@ namespace ProjectoRTS.Units
 
             if (_leftShield != null)
             {
-                _leftShield.rotation = Quaternion.LookRotation(-transform.forward, Vector3.up);
+                _leftShield.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
             }
 
             if (_modelRoot != null)
@@ -314,17 +314,33 @@ namespace ProjectoRTS.Units
             if (_rightUpperArm != null)
             {
                 Vector3 direction = _rightUpperArm.TransformDirection(Vector3.up);
-                Vector3 target = LocalDirection(new Vector3(0.05f, -0.75f, 0.25f));
+                Vector3 target = LocalDirection(new Vector3(0.08f, -0.90f, -0.10f));
                 direction = Vector3.Slerp(direction, target, 0.8f);
                 AimBone(_rightUpperArm, direction);
+            }
+
+            if (_rightLowerArm != null)
+            {
+                Vector3 direction = _rightLowerArm.TransformDirection(Vector3.up);
+                Vector3 target = LocalDirection(new Vector3(0.05f, 0.15f, 0.85f));
+                direction = Vector3.Slerp(direction, target, 0.8f);
+                AimBone(_rightLowerArm, direction);
             }
 
             if (_leftUpperArm != null)
             {
                 Vector3 direction = _leftUpperArm.TransformDirection(Vector3.up);
-                Vector3 target = LocalDirection(new Vector3(-0.05f, -0.65f, 0.15f));
+                Vector3 target = LocalDirection(new Vector3(-0.08f, -0.85f, -0.10f));
                 direction = Vector3.Slerp(direction, target, 0.8f);
                 AimBone(_leftUpperArm, direction);
+            }
+
+            if (_leftLowerArm != null)
+            {
+                Vector3 direction = _leftLowerArm.TransformDirection(Vector3.up);
+                Vector3 target = LocalDirection(new Vector3(-0.08f, 0.10f, 0.82f));
+                direction = Vector3.Slerp(direction, target, 0.8f);
+                AimBone(_leftLowerArm, direction);
             }
 
             if (_rightUpperLeg != null)
@@ -345,7 +361,7 @@ namespace ProjectoRTS.Units
 
             if (_leftShield != null)
             {
-                _leftShield.rotation = Quaternion.LookRotation(-transform.forward, Vector3.up);
+                _leftShield.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
             }
 
             if (_rightHand != null)
@@ -386,9 +402,16 @@ namespace ProjectoRTS.Units
                 AimBone(_leftUpperArm, direction);
             }
 
+            if (_leftLowerArm != null)
+            {
+                Vector3 direction = _leftLowerArm.TransformDirection(Vector3.up);
+                direction = Vector3.Slerp(direction, LocalDirection(new Vector3(-0.12f, 0.10f, 0.80f)), 0.8f);
+                AimBone(_leftLowerArm, direction);
+            }
+
             if (_leftShield != null)
             {
-                _leftShield.rotation = Quaternion.LookRotation(-transform.forward, Vector3.up);
+                _leftShield.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
             }
         }
 
