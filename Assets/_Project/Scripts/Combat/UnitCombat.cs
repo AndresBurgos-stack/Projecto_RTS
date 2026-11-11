@@ -36,6 +36,7 @@ namespace ProjectoRTS.Combat
         private BuildingRuntime _pendingBuildingTarget;
         private PantheonObjective _pendingObjectiveTarget;
         private float _pendingHitDeadline;
+        private float _lastAttackStartTime = float.MinValue;
         private bool _manualTarget;
         private bool _autoTarget;
         private bool _chasing;
@@ -474,6 +475,18 @@ namespace ProjectoRTS.Combat
 
             if (_animator != null && HasAnimatorParameter("Attack"))
             {
+                // The attack clip is about one second long: never re-trigger
+                // while it is still playing, or the animation would restart
+                // mid-play without a new shot.
+                const float minAttackSpacing = 1.05f;
+
+                if (Time.time - _lastAttackStartTime < minAttackSpacing)
+                {
+                    _nextAttackTime = _lastAttackStartTime + minAttackSpacing;
+                    return;
+                }
+
+                _lastAttackStartTime = Time.time;
                 _animator.SetTrigger("Attack");
                 return;
             }
