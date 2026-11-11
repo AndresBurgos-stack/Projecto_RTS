@@ -71,6 +71,10 @@ namespace ProjectoRTS.Buildings
         private Vector3 _siteFootprintCenter;
         private Vector2 _siteFootprintHalf;
 
+        private Animator _animator;
+        private bool _hasGatherParam;
+        private bool _gatheringSet;
+
         /// <summary>Site this worker is currently assigned to, or null.</summary>
         public ConstructionSite Site => _site;
 
@@ -159,6 +163,8 @@ namespace ProjectoRTS.Buildings
             _agent = GetComponent<NavMeshAgent>();
             _runtime = GetComponent<UnitRuntime>();
             _baseSpeed = _agent != null ? _agent.speed : 0f;
+            _animator = GetComponentInChildren<Animator>(true);
+            _hasGatherParam = HasAnimatorParameter(_animator, "Gathering");
 
             UnitCombat combat = GetComponent<UnitCombat>();
             if (combat != null)
@@ -420,6 +426,8 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
+            SetGathering(false);
+
             ResourceType harvestedType = _resourceNode.Type;
             int harvested = _resourceNode.Harvest(carryCapacity);
 
@@ -479,6 +487,7 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
+            SetGathering(false);
             TryWalkTo(GetApproachPoint(_resourceNode.transform.position, gatherRange * 0.75f));
         }
 
@@ -489,6 +498,7 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
+            SetGathering(false);
             TryWalkTo(GetApproachPoint(_dropOff.transform.position, depositRange * 0.75f));
         }
 
@@ -519,6 +529,7 @@ namespace ProjectoRTS.Buildings
         private void StopAtResource()
         {
             _atNode = true;
+            SetGathering(true);
 
             if (_agent != null && _agent.isOnNavMesh)
             {
@@ -541,6 +552,7 @@ namespace ProjectoRTS.Buildings
         private void CancelGathering()
         {
             ReleaseNodeClaim();
+            SetGathering(false);
             _resourceNode = null;
             _atNode = false;
             _gatherTimer = 0f;
@@ -554,6 +566,41 @@ namespace ProjectoRTS.Buildings
             {
                 _resourceNode.Release(this);
             }
+        }
+
+        /// <summary>Plays or stops the gather animation on the worker animator.</summary>
+        private void SetGathering(bool value)
+        {
+            if (!_hasGatherParam || _animator == null)
+            {
+                return;
+            }
+
+            if (_gatheringSet == value)
+            {
+                return;
+            }
+
+            _gatheringSet = value;
+            _animator.SetBool("Gathering", value);
+        }
+
+        private static bool HasAnimatorParameter(Animator animator, string parameterName)
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                if (parameter.name == parameterName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -627,6 +674,7 @@ namespace ProjectoRTS.Buildings
                 _fleeing = true;
                 _stoppedAtSite = false;
                 _atNode = false;
+                SetGathering(false);
             }
 
             _fleeEnemy = enemy;
@@ -737,6 +785,7 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
+            SetGathering(false);
             TryWalkTo(GetSiteApproachPoint());
         }
 
