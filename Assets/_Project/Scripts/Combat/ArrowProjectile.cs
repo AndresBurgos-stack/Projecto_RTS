@@ -48,7 +48,7 @@ namespace ProjectoRTS.Combat
             }
 
             arrow.transform.position = origin;
-            arrow.transform.localScale = new Vector3(0.05f, 0.05f, 0.6f);
+            arrow.transform.localScale = new Vector3(0.09f, 0.09f, 0.9f);
 
             Vector3 toTarget = TargetPoint(target) - origin;
             if (toTarget.sqrMagnitude > 0.0001f)

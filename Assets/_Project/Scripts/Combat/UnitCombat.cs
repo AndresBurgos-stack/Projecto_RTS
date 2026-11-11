@@ -35,6 +35,7 @@ namespace ProjectoRTS.Combat
         private UnitRuntime _pendingUnitTarget;
         private BuildingRuntime _pendingBuildingTarget;
         private PantheonObjective _pendingObjectiveTarget;
+        private float _pendingHitDeadline;
         private bool _manualTarget;
         private bool _autoTarget;
         private bool _chasing;
@@ -335,6 +336,14 @@ namespace ProjectoRTS.Combat
                 return;
             }
 
+            // Safety net: if the attack clip had no animation event (or the
+            // relay was lost), the pending hit still lands instead of stalling.
+            if (HasPendingTargets() && Time.time >= _pendingHitDeadline)
+            {
+                ApplyAttackHit();
+                return;
+            }
+
             if (_target != null && (!_target.IsAlive || !_target.gameObject.activeInHierarchy))
             {
                 bool wasManual = _manualTarget;
@@ -455,6 +464,7 @@ namespace ProjectoRTS.Combat
             _pendingUnitTarget = _target;
             _pendingBuildingTarget = _buildingTarget;
             _pendingObjectiveTarget = _objectiveTarget;
+            _pendingHitDeadline = Time.time + Mathf.Max(0.5f, _attackInterval * 1.2f);
 
             if (_proceduralAnimator != null)
             {
@@ -515,6 +525,14 @@ namespace ProjectoRTS.Combat
             _pendingUnitTarget = null;
             _pendingBuildingTarget = null;
             _pendingObjectiveTarget = null;
+            _pendingHitDeadline = float.MaxValue;
+        }
+
+        private bool HasPendingTargets()
+        {
+            return _pendingUnitTarget != null ||
+                _pendingBuildingTarget != null ||
+                _pendingObjectiveTarget != null;
         }
 
         /// <summary>
