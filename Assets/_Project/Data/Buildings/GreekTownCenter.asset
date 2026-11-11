@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04294eb3a4fc9a249aae4764250c2bd7, type: 3}
   m_Name: GreekTownCenter
   m_EditorClassIdentifier: 
-  displayName: Ayuntamiento
+  displayName: Choza de obreros
   category: 2
   prefab: {fileID: 7986343559318423397, guid: e57272c4aea1e6a40b7345fc11fe0854, type: 3}
   width: 3
