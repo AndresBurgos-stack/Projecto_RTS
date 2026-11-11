@@ -19,13 +19,19 @@ namespace ProjectoRTS.Combat
         private static Material _arrowMaterial;
 
         private UnitRuntime _target;
+        private UnitRuntime _attacker;
         private float _damage;
         private float _speed = DefaultSpeed;
         private float _spawnTime;
         private Vector3 _lastTargetPoint;
 
         /// <summary>Spawns an arrow that damages the target on impact.</summary>
-        public static void Spawn(Vector3 origin, UnitRuntime target, float damage, float speed = DefaultSpeed)
+        public static void Spawn(
+            Vector3 origin,
+            UnitRuntime target,
+            float damage,
+            UnitRuntime attacker = null,
+            float speed = DefaultSpeed)
         {
             if (target == null || !target.IsAlive || damage <= 0f)
             {
@@ -58,6 +64,7 @@ namespace ProjectoRTS.Combat
 
             ArrowProjectile projectile = arrow.AddComponent<ArrowProjectile>();
             projectile._target = target;
+            projectile._attacker = attacker;
             projectile._damage = damage;
             projectile._speed = Mathf.Max(1f, speed);
             projectile._spawnTime = Time.time;
@@ -99,7 +106,7 @@ namespace ProjectoRTS.Combat
         {
             if (_target != null && _target.IsAlive)
             {
-                _target.ApplyDamage(_damage, false);
+                _target.ApplyDamage(_damage, false, _attacker);
             }
 
             Destroy(gameObject);

@@ -86,6 +86,7 @@ namespace ProjectoRTS.Waves
             if (runtime != null)
             {
                 runtime.Died += HandleDied;
+                runtime.HitByEnemy += HandleHitByEnemy;
             }
         }
 
@@ -94,7 +95,26 @@ namespace ProjectoRTS.Waves
             if (runtime != null)
             {
                 runtime.Died -= HandleDied;
+                runtime.HitByEnemy -= HandleHitByEnemy;
             }
+        }
+
+        /// <summary>
+        /// Retaliates when another unit damages this one: the attacker becomes
+        /// the combat target so the unit marches toward it instead of standing
+        /// still while being shot from beyond the detection radius.
+        /// </summary>
+        private void HandleHitByEnemy(UnitRuntime victim, UnitRuntime attacker)
+        {
+            if (attacker == null || !attacker.IsAlive || combat == null || !enabled)
+            {
+                return;
+            }
+
+            combat.CommandAttack(attacker);
+            _lockedUntil = Time.time + targetSwitchCooldown;
+            _returningHome = false;
+            _nextRepathTime = 0f;
         }
 
         /// <summary>Sets the point the unit patrols around and its radius.</summary>

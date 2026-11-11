@@ -511,14 +511,15 @@ namespace ProjectoRTS.Combat
             {
                 if (IsMeleeAttacker)
                 {
-                    _pendingUnitTarget.ApplyDamage(_attackDamage, true);
+                    _pendingUnitTarget.ApplyDamage(_attackDamage, true, runtime);
                 }
                 else
                 {
                     ArrowProjectile.Spawn(
                         transform.position + Vector3.up * 1.2f,
                         _pendingUnitTarget,
-                        _attackDamage);
+                        _attackDamage,
+                        runtime);
                 }
             }
             else if (_pendingBuildingTarget != null && _pendingBuildingTarget.IsAlive)

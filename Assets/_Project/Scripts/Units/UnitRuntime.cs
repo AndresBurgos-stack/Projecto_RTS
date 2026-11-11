@@ -26,6 +26,12 @@ namespace ProjectoRTS.Units
         public event Action<UnitRuntime, float> Damaged;
         public event Action<UnitRuntime> Died;
 
+        /// <summary>
+        /// Raised when another unit damages this one, with the attacker.
+        /// Lets AI controllers retaliate instead of standing still.
+        /// </summary>
+        public event Action<UnitRuntime, UnitRuntime> HitByEnemy;
+
         public UnitDefinition Definition => definition;
         public Faction Faction => definition != null ? definition.Faction : Faction.None;
         public UnitRole Role => definition != null ? definition.Role : UnitRole.Infantry;
@@ -106,7 +112,7 @@ namespace ProjectoRTS.Units
         /// ignored while the unit is mounted on a wall: only ranged attackers
         /// can hurt it until it dismounts.
         /// </summary>
-        public void ApplyDamage(float amount, bool isMelee)
+        public void ApplyDamage(float amount, bool isMelee, UnitRuntime attacker = null)
         {
             if (IsMounted && isMelee)
             {
@@ -114,6 +120,11 @@ namespace ProjectoRTS.Units
             }
 
             ApplyDamage(amount);
+
+            if (attacker != null && IsAlive)
+            {
+                HitByEnemy?.Invoke(this, attacker);
+            }
         }
 
         /// <summary>Sets or clears the wall-mounted state for melee immunity.</summary>
