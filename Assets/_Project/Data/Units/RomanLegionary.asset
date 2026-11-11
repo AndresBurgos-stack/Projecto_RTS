@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Soldado auxiliar
   faction: 2
   role: 0
-  prefab: {fileID: 7286954970806266342, guid: 3f7dc23c6fa54244c9a9fde182fc14b6, type: 3}
+  prefab: {fileID: 2913986622251012045, guid: 9fcf3bda893612a4eb110fc1c1de820e, type: 3}
   maxHealth: 110
   attackDamage: 10
   attackRange: 1.5

@@ -15,11 +15,12 @@ MonoBehaviour:
   displayName: Greek Barracks
   category: 2
   prefab: {fileID: 813661351429206949, guid: 7b5252e15771b244d95a201eef7e68d8, type: 3}
-  width: 3
-  depth: 3
+  width: 2
+  depth: 2
   woodCost: 100
   bronzeCost: 50
   goldCost: 0
   maxHealth: 300
   attackDamage: 0
   attackRange: 0
+  populationBonus: 0
