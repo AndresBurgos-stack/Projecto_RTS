@@ -11,7 +11,6 @@ namespace ProjectoRTS.Core
     {
         public const string TitleSceneName = "TitleScreen";
         public const string GameplaySceneName = "Gameplay";
-        public const string LegacyGameplaySceneName = "PlacementDemo";
 
         public static bool IsTitleScreen
         {
@@ -25,7 +24,7 @@ namespace ProjectoRTS.Core
 
         public static bool IsGameplaySceneName(string sceneName)
         {
-            return sceneName == GameplaySceneName || sceneName == LegacyGameplaySceneName;
+            return sceneName == GameplaySceneName;
         }
     }
 }

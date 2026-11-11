@@ -23,7 +23,6 @@ namespace ProjectoRTS.EditorTools
     {
         private const string TitleScenePath = "Assets/Scenes/TitleScreen.unity";
         private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
-        private const string LegacyGameplayScenePath = "Assets/Scenes/PlacementDemo.unity";
         private const string MusicAssetPath = "Assets/_Project/Audio/Musica_portada.mp3";
         private const string MusicSourcePath = "musica juego/Musica_portada.mp3";
 
@@ -34,7 +33,7 @@ namespace ProjectoRTS.EditorTools
             {
                 bool overwrite = EditorUtility.DisplayDialog(
                     "Create Title Screen",
-                    "TitleScreen.unity already exists. Recreate it?\n\nGameplay.unity and PlacementDemo.unity will not be modified.",
+                    "TitleScreen.unity already exists. Recreate it?\n\nGameplay.unity will not be modified.",
                     "Recreate",
                     "Cancel");
 
@@ -196,15 +195,8 @@ namespace ProjectoRTS.EditorTools
                 return;
             }
 
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(LegacyGameplayScenePath) == null)
-            {
-                throw new FileNotFoundException(
-                    $"Neither {GameplayScenePath} nor {LegacyGameplayScenePath} exists.");
-            }
-
-            AssetDatabase.CopyAsset(LegacyGameplayScenePath, GameplayScenePath);
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[TitleScreenSetup] Copied {LegacyGameplayScenePath} to {GameplayScenePath}.");
+            throw new FileNotFoundException(
+                $"{GameplayScenePath} does not exist. Create the gameplay scene first.");
         }
 
         private static void EnsureMusicAsset()
