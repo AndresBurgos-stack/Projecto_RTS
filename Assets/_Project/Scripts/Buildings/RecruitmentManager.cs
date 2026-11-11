@@ -92,6 +92,14 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
+            if (!PopulationSystem.CanAdd(unit.PopulationCost))
+            {
+                Debug.Log("[Poblacion] Límite alcanzado (" +
+                    PopulationSystem.CurrentPopulation + "/" +
+                    PopulationSystem.MaxPopulation + "). Construye mas casas.");
+                return;
+            }
+
             Vector3 position = _activeBarracks.GetSpawnPosition(_spawnIndex);
             _spawnIndex++;
 

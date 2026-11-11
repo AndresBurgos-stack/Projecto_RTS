@@ -41,6 +41,9 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(0f)] private float attackDamage;
         [SerializeField, Min(0f)] private float attackRange;
 
+        [Header("Population")]
+        [SerializeField, Min(0)] private int populationBonus;
+
         public string DisplayName => displayName;
         public BuildingCategory Category => category;
         public GameObject Prefab => prefab;
@@ -56,6 +59,9 @@ namespace ProjectoRTS.Buildings
         public float MaxHealth => maxHealth;
         public float AttackDamage => attackDamage;
         public float AttackRange => attackRange;
+
+        /// <summary>How much this building raises the population cap when built.</summary>
+        public int PopulationBonus => populationBonus;
 
         private void OnValidate()
         {

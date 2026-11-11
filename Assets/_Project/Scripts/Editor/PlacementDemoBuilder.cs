@@ -394,7 +394,7 @@ namespace ProjectoRTS.EditorTools
                 townHall.name = townCenter.DisplayName;
 
                 BuildingRuntime townHallRuntime = townHall.AddComponent<BuildingRuntime>();
-                townHallRuntime.Configure(townCenter.MaxHealth);
+                townHallRuntime.Configure(townCenter);
 
                 if (townHall.GetComponent<StructureHealthBar>() == null)
                 {

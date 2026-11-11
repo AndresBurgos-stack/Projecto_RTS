@@ -32,6 +32,9 @@ namespace ProjectoRTS.Combat
         private UnitRuntime _target;
         private PantheonObjective _objectiveTarget;
         private BuildingRuntime _buildingTarget;
+        private UnitRuntime _pendingUnitTarget;
+        private BuildingRuntime _pendingBuildingTarget;
+        private PantheonObjective _pendingObjectiveTarget;
         private bool _manualTarget;
         private bool _autoTarget;
         private bool _chasing;
@@ -42,6 +45,7 @@ namespace ProjectoRTS.Combat
         private float _nextForceRepathTime;
         private Vector3 _lastChasePosition;
         private Animator _animator;
+        private HopliteProceduralAnimator _proceduralAnimator;
         private float _attackRange;
         private float _attackDamage;
         private float _attackInterval;
@@ -116,8 +120,30 @@ namespace ProjectoRTS.Combat
             }
 
             _animator = GetComponentInChildren<Animator>(true);
-
+            _proceduralAnimator = GetComponent<HopliteProceduralAnimator>();
+            AttachAttackEventRelay();
             ApplyDefinition();
+        }
+
+        /// <summary>
+        /// The Animator lives on the visual child, so the animation event needs
+        /// a relay on that same GameObject to reach the combat component.
+        /// </summary>
+        private void AttachAttackEventRelay()
+        {
+            if (_animator == null)
+            {
+                return;
+            }
+
+            UnitAttackEventRelay relay = _animator.GetComponent<UnitAttackEventRelay>();
+
+            if (relay == null)
+            {
+                relay = _animator.gameObject.AddComponent<UnitAttackEventRelay>();
+            }
+
+            relay.Configure(this);
         }
 
         private void Start()
@@ -415,14 +441,80 @@ namespace ProjectoRTS.Combat
 
             if (Time.time >= _nextAttackTime)
             {
-                _nextAttackTime = Time.time + _attackInterval;
-                _target.ApplyDamage(_attackDamage, IsMeleeAttacker);
+                BeginAttack();
+            }
+        }
 
-                if (_animator != null && HasAnimatorParameter("Attack"))
+        /// <summary>
+        /// Starts one attack cycle. Targets are snapshotted so the hit lands on
+        /// the target that was actually attacked when the animation event fires.
+        /// </summary>
+        private void BeginAttack()
+        {
+            _nextAttackTime = Time.time + _attackInterval;
+            _pendingUnitTarget = _target;
+            _pendingBuildingTarget = _buildingTarget;
+            _pendingObjectiveTarget = _objectiveTarget;
+
+            if (_proceduralAnimator != null)
+            {
+                _proceduralAnimator.PlayAttack(ApplyAttackHit);
+                return;
+            }
+
+            if (_animator != null && HasAnimatorParameter("Attack"))
+            {
+                _animator.SetTrigger("Attack");
+                return;
+            }
+
+            // Units without an attack clip keep the previous instant-hit behaviour.
+            ApplyAttackHit();
+        }
+
+        /// <summary>
+        /// Damage frame callback invoked by the Attack animation event. Applies
+        /// the hit once to the target snapshotted by <see cref="BeginAttack"/>.
+        /// </summary>
+        public void ApplyAttackHit()
+        {
+            if (runtime == null || !runtime.IsAlive)
+            {
+                ClearPendingTargets();
+                return;
+            }
+
+            if (_pendingUnitTarget != null && _pendingUnitTarget.IsAlive)
+            {
+                if (IsMeleeAttacker)
                 {
-                    _animator.SetTrigger("Attack");
+                    _pendingUnitTarget.ApplyDamage(_attackDamage, true);
+                }
+                else
+                {
+                    ArrowProjectile.Spawn(
+                        transform.position + Vector3.up * 1.2f,
+                        _pendingUnitTarget,
+                        _attackDamage);
                 }
             }
+            else if (_pendingBuildingTarget != null && _pendingBuildingTarget.IsAlive)
+            {
+                _pendingBuildingTarget.ApplyDamage(_attackDamage);
+            }
+            else if (_pendingObjectiveTarget != null && _pendingObjectiveTarget.IsAlive)
+            {
+                _pendingObjectiveTarget.ApplyDamage(_attackDamage);
+            }
+
+            ClearPendingTargets();
+        }
+
+        private void ClearPendingTargets()
+        {
+            _pendingUnitTarget = null;
+            _pendingBuildingTarget = null;
+            _pendingObjectiveTarget = null;
         }
 
         /// <summary>
@@ -489,8 +581,7 @@ namespace ProjectoRTS.Combat
 
             if (Time.time >= _nextAttackTime)
             {
-                _nextAttackTime = Time.time + _attackInterval;
-                _buildingTarget.ApplyDamage(_attackDamage);
+                BeginAttack();
             }
         }
 
@@ -524,8 +615,7 @@ namespace ProjectoRTS.Combat
 
             if (Time.time >= _nextAttackTime)
             {
-                _nextAttackTime = Time.time + _attackInterval;
-                _objectiveTarget.ApplyDamage(_attackDamage);
+                BeginAttack();
             }
         }
 

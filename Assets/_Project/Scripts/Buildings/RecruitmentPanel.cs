@@ -23,6 +23,8 @@ namespace ProjectoRTS.Buildings
         private readonly List<GameObject> _buttons = new List<GameObject>();
         private readonly List<UnitDefinition> _buttonUnits = new List<UnitDefinition>();
         private bool _initialized;
+        private string _activeBarracksText = "Reclutamiento";
+        private float _nextRefresh;
 
         private void Awake()
         {
@@ -49,10 +51,12 @@ namespace ProjectoRTS.Buildings
 
             if (title != null)
             {
-                title.text = barracks != null
+                _activeBarracksText = barracks != null
                     ? $"Reclutamiento - {barracks.name}"
                     : "Reclutamiento";
             }
+
+            RefreshPopulationTitle();
 
             if (barracks != null && buttonContainer != null && buttonTemplate != null)
             {
@@ -101,6 +105,32 @@ namespace ProjectoRTS.Buildings
             ClearButtons();
         }
 
+        private void Update()
+        {
+            if (panelRoot == null || !panelRoot.activeSelf)
+            {
+                return;
+            }
+
+            if (Time.time < _nextRefresh)
+            {
+                return;
+            }
+
+            _nextRefresh = Time.time + 0.5f;
+            RefreshPopulationTitle();
+            RefreshAffordability();
+        }
+
+        private void RefreshPopulationTitle()
+        {
+            if (title != null)
+            {
+                title.text = _activeBarracksText +
+                    $" - Población: {PopulationSystem.CurrentPopulation}/{PopulationSystem.MaxPopulation}";
+            }
+        }
+
         private void RefreshAffordability()
         {
             for (int i = 0; i < _buttons.Count && i < _buttonUnits.Count; i++)
@@ -118,7 +148,8 @@ namespace ProjectoRTS.Buildings
 
                 UnitDefinition unit = _buttonUnits[i];
                 button.interactable = unit != null &&
-                    PlayerEconomy.CanAfford(unit.WoodCost, unit.BronzeCost);
+                    PlayerEconomy.CanAfford(unit.WoodCost, unit.BronzeCost) &&
+                    PopulationSystem.CanAdd(unit.PopulationCost);
             }
         }
 

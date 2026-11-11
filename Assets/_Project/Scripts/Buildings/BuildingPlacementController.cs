@@ -288,7 +288,7 @@ namespace ProjectoRTS.Buildings
             instance.name = definition.DisplayName;
 
             BuildingRuntime runtime = instance.AddComponent<BuildingRuntime>();
-            runtime.Configure(definition.MaxHealth);
+            runtime.Configure(definition);
 
             ConstructionSite site = instance.AddComponent<ConstructionSite>();
             site.BeginConstruction();

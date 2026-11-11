@@ -86,6 +86,7 @@ namespace ProjectoRTS.Economy
             _label.text =
                 "Madera: " + PlayerEconomy.Wood +
                 "\nBronce: " + PlayerEconomy.Bronze +
+                "\nPoblación: " + PopulationSystem.CurrentPopulation + "/" + PopulationSystem.MaxPopulation +
                 "\nTrabajadores: " + WorkerBuilder.Count +
                 "\nPriorizan madera: " + WorkerBuilder.CountPreferred(ResourceType.Wood) +
                 "\nPriorizan bronce: " + WorkerBuilder.CountPreferred(ResourceType.Bronze) +
@@ -116,7 +117,7 @@ namespace ProjectoRTS.Economy
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
             rect.anchoredPosition = new Vector2(24f, -80f);
-            rect.sizeDelta = new Vector2(250f, 172f);
+            rect.sizeDelta = new Vector2(250f, 200f);
 
             Image background = panel.AddComponent<Image>();
             background.color = new Color(0.08f, 0.09f, 0.12f, 0.9f);

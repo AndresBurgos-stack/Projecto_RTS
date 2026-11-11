@@ -1029,6 +1029,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!114 &132788061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1068,6 +1069,7 @@ MonoBehaviour:
   type: 0
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &176763907
 GameObject:
   m_ObjectHideFlags: 0
@@ -1438,7 +1440,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -35.91
+      value: -34.58
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1474,6 +1476,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154215057541871320, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
@@ -2340,6 +2346,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &354978983
 GameObject:
   m_ObjectHideFlags: 0
@@ -3611,6 +3618,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &503530850
 GameObject:
   m_ObjectHideFlags: 0
@@ -3833,6 +3841,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &528080405
 GameObject:
   m_ObjectHideFlags: 0
@@ -4236,6 +4245,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &542911661
 GameObject:
   m_ObjectHideFlags: 0
@@ -4433,6 +4443,7 @@ MonoBehaviour:
   type: 0
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &591028700
 GameObject:
   m_ObjectHideFlags: 0
@@ -5664,6 +5675,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &709031878
 GameObject:
   m_ObjectHideFlags: 0
@@ -5759,7 +5771,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 12.93
+      value: 13.4
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5787,6 +5799,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154215057541871320, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
@@ -7261,6 +7277,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &964169422
 GameObject:
   m_ObjectHideFlags: 0
@@ -7840,6 +7857,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1046939544
 GameObject:
   m_ObjectHideFlags: 0
@@ -8598,6 +8616,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1133582425
 GameObject:
   m_ObjectHideFlags: 0
@@ -9082,6 +9101,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1194128313
 GameObject:
   m_ObjectHideFlags: 0
@@ -9437,6 +9457,7 @@ MonoBehaviour:
   type: 0
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1001 &1325822727
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9492,6 +9513,10 @@ PrefabInstance:
     - target: {fileID: 4577034113271871887, guid: 24457fdf8e66c3c49b7599931e0fdcb2, type: 3}
       propertyPath: m_Convex
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4577034113271871887, guid: 24457fdf8e66c3c49b7599931e0fdcb2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9981,6 +10006,7 @@ MonoBehaviour:
   type: 0
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1434886979
 GameObject:
   m_ObjectHideFlags: 0
@@ -10699,6 +10725,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1601176550
 GameObject:
   m_ObjectHideFlags: 0
@@ -10920,6 +10947,7 @@ MonoBehaviour:
   type: 0
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1648086879 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
@@ -10945,6 +10973,7 @@ MonoBehaviour:
   type: 0
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1649882359
 GameObject:
   m_ObjectHideFlags: 0
@@ -11276,7 +11305,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 20.22
+      value: 20.88
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -11312,6 +11341,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154215057541871320, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
@@ -11841,6 +11874,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1768149512
 GameObject:
   m_ObjectHideFlags: 0
@@ -12056,6 +12090,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1803177915
 GameObject:
   m_ObjectHideFlags: 0
@@ -12332,7 +12367,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 8.03
+      value: 6.36
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -12360,6 +12395,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154215057541871320, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
@@ -12517,6 +12556,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!1 &1955907806
 GameObject:
   m_ObjectHideFlags: 0
@@ -13011,6 +13051,7 @@ MonoBehaviour:
   type: 1
   amount: 400
   hideWhenDepleted: 1
+  capacity: 2
 --- !u!114 &2042876732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13157,6 +13198,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9154215057541871320, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_Name
       value: Madera
@@ -13179,7 +13224,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 17.361284
+      value: 16.87
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -13187,7 +13232,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 9.62
+      value: 8.99
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -13215,6 +13260,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8377151309574368355, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154215057541871320, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154215057541871321, guid: 2554008d6447a2540b44e55f0c0b576e, type: 3}

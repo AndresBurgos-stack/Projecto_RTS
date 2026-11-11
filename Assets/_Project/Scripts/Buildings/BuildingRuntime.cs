@@ -24,6 +24,9 @@ namespace ProjectoRTS.Buildings
         public float HealthNormalized => maxHealth > 0f ? currentHealth / maxHealth : 0f;
         public bool IsAlive => currentHealth > 0f;
 
+        /// <summary>Building definition this runtime was configured with, or null.</summary>
+        public BuildingDefinition Definition { get; private set; }
+
         /// <summary>All living and dead buildings registered in the scene.</summary>
         public static IReadOnlyList<BuildingRuntime> All => Buildings;
 
@@ -50,10 +53,15 @@ namespace ProjectoRTS.Buildings
             Buildings.Remove(this);
         }
 
-        /// <summary>Sets the maximum health and refills the building.</summary>
-        public void Configure(float health)
+        /// <summary>
+        /// Sets the building definition, maximum health and refills the
+        /// building. The definition is kept so systems like the population
+        /// cap can read the building type data.
+        /// </summary>
+        public void Configure(BuildingDefinition definition)
         {
-            maxHealth = Mathf.Max(1f, health);
+            Definition = definition;
+            maxHealth = Mathf.Max(1f, definition != null ? definition.MaxHealth : 100f);
             currentHealth = maxHealth;
             _destroyed = false;
             HealthChanged?.Invoke(this);
