@@ -32,7 +32,7 @@ namespace ProjectoRTS.Buildings
         [Header("Gather")]
         [SerializeField, Min(1)] private int carryCapacity = 10;
         [SerializeField, Min(0.1f)] private float gatherTime = 2f;
-        [SerializeField, Min(0.5f)] private float gatherRange = 2.4f;
+        [SerializeField, Min(0.5f)] private float gatherRange = 1.6f;
         [SerializeField, Min(0.5f)] private float depositRange = 3f;
         [SerializeField, Min(0.1f)] private float resourceRepathInterval = 0.6f;
         [SerializeField, Min(1f)] private float stuckRepathTimeout = 5f;

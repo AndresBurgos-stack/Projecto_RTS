@@ -429,7 +429,7 @@ MonoBehaviour:
   repathInterval: 0.5
   carryCapacity: 10
   gatherTime: 2
-  gatherRange: 2.4
+  gatherRange: 1.6
   depositRange: 3
   resourceRepathInterval: 0.6
   fleeRadius: 9
