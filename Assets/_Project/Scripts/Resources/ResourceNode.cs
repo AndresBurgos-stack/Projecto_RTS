@@ -20,12 +20,51 @@ namespace ProjectoRTS.Resources
         [SerializeField] private bool hideWhenDepleted = true;
         [SerializeField, Min(1)] private int capacity = 2;
 
+        [Header("Gather Focus")]
+        [SerializeField] private Transform gatherPoint;
+        [SerializeField, Min(0f)] private float gatherRadius = 0.3f;
+
         private readonly List<WorkerBuilder> _claimants = new List<WorkerBuilder>(2);
         private bool _depleted;
+        private Vector3 _gatherPoint;
+        private float _gatherRadius;
+        private bool _gatherFocusReady;
 
         public ResourceType Type => type;
         public int Amount => amount;
         public bool IsDepleted => _depleted || amount <= 0;
+
+        /// <summary>
+        /// World position the workers should walk to and face when gathering.
+        /// For the bronze nodes this is the centre of the visible rock, not
+        /// the node pivot, because the rock prefab is offset from the pivot.
+        /// </summary>
+        public Vector3 GatherPoint
+        {
+            get
+            {
+                if (!_gatherFocusReady)
+                {
+                    RefreshGatherFocus();
+                }
+
+                return _gatherPoint;
+            }
+        }
+
+        /// <summary>Horizontal radius of the node around <see cref="GatherPoint"/>.</summary>
+        public float GatherRadius
+        {
+            get
+            {
+                if (!_gatherFocusReady)
+                {
+                    RefreshGatherFocus();
+                }
+
+                return _gatherRadius;
+            }
+        }
 
         /// <summary>Number of workers currently reserved on this node.</summary>
         public int ClaimedCount
@@ -50,6 +89,16 @@ namespace ProjectoRTS.Resources
         /// <summary>All nodes currently registered in the scene.</summary>
         public static IReadOnlyList<ResourceNode> All => Nodes;
 
+        private void Awake()
+        {
+            RefreshGatherFocus();
+        }
+
+        private void OnValidate()
+        {
+            _gatherFocusReady = false;
+        }
+
         private void OnEnable()
         {
             if (!Nodes.Contains(this))
@@ -69,6 +118,7 @@ namespace ProjectoRTS.Resources
             type = resourceType;
             amount = Mathf.Max(1, resourceAmount);
             _depleted = false;
+            _gatherFocusReady = false;
         }
 
         /// <summary>
@@ -155,6 +205,105 @@ namespace ProjectoRTS.Resources
         }
 
         /// <summary>
+        /// Resolves the point workers should gather from. An explicit
+        /// <see cref="gatherPoint"/> wins; otherwise the bronze rock child is
+        /// used, and any other node falls back to its own pivot.
+        /// </summary>
+        private void RefreshGatherFocus()
+        {
+            _gatherFocusReady = true;
+
+            if (gatherPoint != null)
+            {
+                _gatherPoint = gatherPoint.position;
+                _gatherRadius = Mathf.Max(0f, gatherRadius);
+                return;
+            }
+
+            Transform bronze = transform.Find("Bronze");
+
+            if (bronze != null)
+            {
+                _gatherPoint = ComputeGatherFocus(bronze, out _gatherRadius);
+                return;
+            }
+
+            _gatherPoint = transform.position;
+            _gatherRadius = Mathf.Max(0f, gatherRadius);
+        }
+
+        /// <summary>
+        /// Horizontal centre and radius of every renderer under the given
+        /// root. Used for the bronze rock, whose prefab is offset from the
+        /// node pivot.
+        /// </summary>
+        private Vector3 ComputeGatherFocus(Transform root, out float radius)
+        {
+            radius = Mathf.Max(0f, gatherRadius);
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            bool hasBounds = false;
+            Bounds bounds = default;
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+
+                if (renderer == null ||
+                    renderer is ParticleSystemRenderer ||
+                    renderer is TrailRenderer ||
+                    renderer is LineRenderer)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            if (!hasBounds)
+            {
+                return root.position;
+            }
+
+            Vector3 center = bounds.center;
+            center.y = transform.position.y;
+            radius = Mathf.Max(radius, Mathf.Max(bounds.extents.x, bounds.extents.z));
+            return center;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector3 point = transform.position;
+            float radius = Mathf.Max(0f, gatherRadius);
+
+            if (gatherPoint != null)
+            {
+                point = gatherPoint.position;
+            }
+            else
+            {
+                Transform bronze = transform.Find("Bronze");
+
+                if (bronze != null)
+                {
+                    point = ComputeGatherFocus(bronze, out radius);
+                }
+            }
+
+            Gizmos.color = new Color(1f, 0.8f, 0.1f, 1f);
+            Gizmos.DrawWireSphere(point, Mathf.Max(0.05f, radius));
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(transform.position, point);
+        }
+
+        /// <summary>
         /// Closest non-depleted node of the given type with a free slot, or
         /// null. Nodes already claimed by the worker count as available for it.
         /// </summary>
@@ -187,7 +336,7 @@ namespace ProjectoRTS.Resources
                     continue;
                 }
 
-                float sqr = (node.transform.position - position).sqrMagnitude;
+                float sqr = (node.GatherPoint - position).sqrMagnitude;
                 if (sqr <= bestSqr)
                 {
                     bestSqr = sqr;
@@ -222,7 +371,7 @@ namespace ProjectoRTS.Resources
                     continue;
                 }
 
-                float sqr = (node.transform.position - position).sqrMagnitude;
+                float sqr = (node.GatherPoint - position).sqrMagnitude;
                 if (sqr <= bestSqr)
                 {
                     bestSqr = sqr;

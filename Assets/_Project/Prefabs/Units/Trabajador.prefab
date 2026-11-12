@@ -430,6 +430,8 @@ MonoBehaviour:
   carryCapacity: 10
   gatherTime: 2
   gatherRange: 1.3
+  gatherTurnSpeed: 720
+  gatherYawOffset: 0
   depositRange: 3
   resourceRepathInterval: 0.6
   fleeRadius: 9
@@ -461,7 +463,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0

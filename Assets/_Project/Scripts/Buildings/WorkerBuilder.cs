@@ -33,6 +33,8 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(1)] private int carryCapacity = 10;
         [SerializeField, Min(0.1f)] private float gatherTime = 2f;
         [SerializeField, Min(0.5f)] private float gatherRange = 1.3f;
+        [SerializeField, Min(1f)] private float gatherTurnSpeed = 720f;
+        [SerializeField] private float gatherYawOffset = 0f;
         [SerializeField, Min(0.5f)] private float depositRange = 3f;
         [SerializeField, Min(0.1f)] private float resourceRepathInterval = 0.6f;
         [SerializeField, Min(1f)] private float stuckRepathTimeout = 5f;
@@ -353,6 +355,10 @@ namespace ProjectoRTS.Buildings
             {
                 StopAtResource();
             }
+            else
+            {
+                FaceGatherPoint(false);
+            }
 
             _gatherTimer += Time.deltaTime;
 
@@ -488,7 +494,8 @@ namespace ProjectoRTS.Buildings
             }
 
             SetGathering(false);
-            TryWalkTo(GetApproachPoint(_resourceNode.transform.position, gatherRange * 0.75f));
+            float standDistance = _resourceNode.GatherRadius + gatherRange * 0.75f;
+            TryWalkTo(GetApproachPoint(_resourceNode.GatherPoint, standDistance));
         }
 
         private void WalkToDropOff()
@@ -509,9 +516,10 @@ namespace ProjectoRTS.Buildings
                 return false;
             }
 
-            Vector3 delta = _resourceNode.transform.position - transform.position;
+            Vector3 delta = _resourceNode.GatherPoint - transform.position;
             delta.y = 0f;
-            return delta.sqrMagnitude <= gatherRange * gatherRange;
+            float range = _resourceNode.GatherRadius + gatherRange;
+            return delta.sqrMagnitude <= range * range;
         }
 
         private bool IsInDepositRange()
@@ -535,24 +543,61 @@ namespace ProjectoRTS.Buildings
             {
                 _agent.isStopped = true;
                 _agent.ResetPath();
+                _agent.updateRotation = false;
             }
 
-            if (_resourceNode != null)
+            FaceGatherPoint(true);
+        }
+
+        /// <summary>
+        /// Turns the worker towards the visible gather point. Called once on
+        /// arrival and every frame afterwards, because the NavMeshAgent and
+        /// collisions can otherwise leave the body facing the wrong way.
+        /// </summary>
+        private void FaceGatherPoint(bool snap)
+        {
+            if (_resourceNode == null)
             {
-                Vector3 look = _resourceNode.transform.position - transform.position;
-                look.y = 0f;
-
-                if (look.sqrMagnitude > 0.0001f)
-                {
-                    transform.rotation = Quaternion.LookRotation(look.normalized);
-                }
+                return;
             }
+
+            Vector3 look = _resourceNode.GatherPoint - transform.position;
+            look.y = 0f;
+
+            if (look.sqrMagnitude <= 0.0001f)
+            {
+                return;
+            }
+
+            Quaternion target = Quaternion.LookRotation(look.normalized, Vector3.up);
+
+            if (Mathf.Abs(gatherYawOffset) > 0.01f)
+            {
+                target = Quaternion.Euler(0f, gatherYawOffset, 0f) * target;
+            }
+
+            if (snap)
+            {
+                transform.rotation = target;
+                return;
+            }
+
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation,
+                target,
+                Mathf.Max(1f, gatherTurnSpeed) * Time.deltaTime);
         }
 
         private void CancelGathering()
         {
             ReleaseNodeClaim();
             SetGathering(false);
+
+            if (_agent != null)
+            {
+                _agent.updateRotation = true;
+            }
+
             _resourceNode = null;
             _atNode = false;
             _gatherTimer = 0f;
@@ -816,6 +861,7 @@ namespace ProjectoRTS.Buildings
             if (_agent != null && _agent.isOnNavMesh)
             {
                 _agent.isStopped = false;
+                _agent.updateRotation = true;
             }
         }
 
@@ -871,6 +917,7 @@ namespace ProjectoRTS.Buildings
             }
 
             _agent.isStopped = false;
+            _agent.updateRotation = true;
             _agent.SetDestination(destination);
         }
 
