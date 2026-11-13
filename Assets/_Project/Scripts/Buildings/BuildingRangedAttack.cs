@@ -6,9 +6,11 @@ namespace ProjectoRTS.Buildings
 {
     /// <summary>
     /// Lets a structure shoot at nearby enemies like archers on a tower or
-    /// wall. Damage is applied when the shot is released and a small arrow
-    /// flies to the target for feedback. Towers and walls configure their own
-    /// damage, range and cadence from the demo scene builder.
+    /// wall. Each shot has a short wind-up so the archer appears to aim
+    /// before the arrow flies; damage is applied when the shot is released
+    /// and a small arrow flies to the target for feedback. Towers and walls
+    /// configure their own damage, range and cadence from the demo scene
+    /// builder.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BuildingRangedAttack : MonoBehaviour
@@ -18,6 +20,7 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(0.05f)] private float attackInterval = 1.2f;
         [SerializeField, Min(0.5f)] private float muzzleHeight = 2.4f;
         [SerializeField, Min(0.05f)] private float flightTime = 0.22f;
+        [SerializeField, Min(0.05f)] private float windUpTime = 0.5f;
 
         private float _nextFireTime;
         private Material _arrowMaterial;
@@ -73,6 +76,24 @@ namespace ProjectoRTS.Buildings
 
         private void Fire(UnitRuntime target)
         {
+            StartCoroutine(ShootAfterAim(target));
+        }
+
+        /// <summary>
+        /// Holds the shot briefly so the archer appears to aim before the
+        /// arrow flies, mirroring the unit archers' draw-then-release timing.
+        /// The target is validated again after the wind-up because it may die
+        /// or leave while the archer is aiming.
+        /// </summary>
+        private IEnumerator ShootAfterAim(UnitRuntime target)
+        {
+            yield return new WaitForSeconds(windUpTime);
+
+            if (target == null || !target.IsAlive)
+            {
+                yield break;
+            }
+
             target.ApplyDamage(attackDamage);
             StartCoroutine(FlyArrow(target));
         }

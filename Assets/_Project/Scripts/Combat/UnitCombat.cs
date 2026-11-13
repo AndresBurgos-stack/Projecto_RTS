@@ -36,6 +36,7 @@ namespace ProjectoRTS.Combat
         private BuildingRuntime _pendingBuildingTarget;
         private PantheonObjective _pendingObjectiveTarget;
         private float _pendingHitDeadline;
+        private bool _hitAppliedThisAttack;
         private float _lastAttackStartTime = float.MinValue;
         private bool _manualTarget;
         private bool _autoTarget;
@@ -466,6 +467,7 @@ namespace ProjectoRTS.Combat
             _pendingBuildingTarget = _buildingTarget;
             _pendingObjectiveTarget = _objectiveTarget;
             _pendingHitDeadline = Time.time + Mathf.Max(0.5f, _attackInterval * 1.2f);
+            _hitAppliedThisAttack = false;
 
             if (_proceduralAnimator != null)
             {
@@ -488,6 +490,11 @@ namespace ProjectoRTS.Combat
 
                 _lastAttackStartTime = Time.time;
                 _animator.SetTrigger("Attack");
+
+                // The attack clip lasts ~1.02s and its OnAttackHit event fires
+                // mid-clip, so the fallback only needs to outlive the clip, not
+                // the whole attack interval.
+                _pendingHitDeadline = Time.time + 1.2f;
                 return;
             }
 
@@ -501,6 +508,21 @@ namespace ProjectoRTS.Combat
         /// </summary>
         public void ApplyAttackHit()
         {
+            // The attack clip can deliver this callback more than once (a
+            // duplicated animation event) or race with the safety-net deadline;
+            // guarantee exactly one hit per attack cycle.
+            if (_hitAppliedThisAttack)
+            {
+#if UNITY_EDITOR
+                Debug.LogWarning(
+                    $"[{name}] Ignored a repeated attack hit in the same cycle " +
+                    "(duplicate animation event or safety net racing the relay).");
+#endif
+                return;
+            }
+
+            _hitAppliedThisAttack = true;
+
             if (runtime == null || !runtime.IsAlive)
             {
                 ClearPendingTargets();
