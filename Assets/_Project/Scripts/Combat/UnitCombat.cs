@@ -342,6 +342,11 @@ namespace ProjectoRTS.Combat
             // relay was lost), the pending hit still lands instead of stalling.
             if (HasPendingTargets() && Time.time >= _pendingHitDeadline)
             {
+#if UNITY_EDITOR
+                Debug.LogWarning(
+                    $"[{name}] Attack hit applied by the safety net — the Attack " +
+                    "clip's OnAttackHit animation event did not fire.");
+#endif
                 ApplyAttackHit();
                 return;
             }
