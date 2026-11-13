@@ -76,6 +76,10 @@ namespace ProjectoRTS.Buildings
         private Animator _animator;
         private bool _hasGatherParam;
         private bool _gatheringSet;
+        private Transform _leftLegBone;
+        private Transform _rightLegBone;
+        private float _bodyYawError;
+        private bool _bodyYawErrorValid;
 
         /// <summary>Site this worker is currently assigned to, or null.</summary>
         public ConstructionSite Site => _site;
@@ -355,10 +359,6 @@ namespace ProjectoRTS.Buildings
             {
                 StopAtResource();
             }
-            else
-            {
-                FaceGatherPoint(false);
-            }
 
             _gatherTimer += Time.deltaTime;
 
@@ -547,12 +547,19 @@ namespace ProjectoRTS.Buildings
             }
 
             FaceGatherPoint(true);
+
+#if UNITY_EDITOR
+            Debug.Log(
+                $"[WorkerBuilder] {name}: gather bodyYawError={_bodyYawError:F1}deg, " +
+                $"rootYaw={transform.eulerAngles.y:F1}deg");
+#endif
         }
 
         /// <summary>
         /// Turns the worker towards the visible gather point. Called once on
-        /// arrival and every frame afterwards, because the NavMeshAgent and
-        /// collisions can otherwise leave the body facing the wrong way.
+        /// arrival and from <see cref="LateUpdate"/> every frame afterwards,
+        /// because the NavMeshAgent and collisions can otherwise leave the
+        /// body facing the wrong way.
         /// </summary>
         private void FaceGatherPoint(bool snap)
         {
@@ -569,11 +576,38 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            Quaternion target = Quaternion.LookRotation(look.normalized, Vector3.up);
+            // The gather clip carries its own baked-in root rotation, so the
+            // visible body can face sideways even when the transform is aimed
+            // at the resource. Measure the real pose yaw from the leg bones
+            // and cancel it out of the root rotation.
+            float measured = GetBodyYawError();
+            float deltaTime = snap ? 0f : Time.deltaTime;
+
+            if (snap || !_bodyYawErrorValid)
+            {
+                _bodyYawError = measured;
+                _bodyYawErrorValid = true;
+            }
+            else
+            {
+                _bodyYawError = Mathf.LerpAngle(
+                    _bodyYawError,
+                    measured,
+                    1f - Mathf.Exp(-8f * deltaTime));
+            }
+
+            float yaw = -_bodyYawError;
 
             if (Mathf.Abs(gatherYawOffset) > 0.01f)
             {
-                target = Quaternion.Euler(0f, gatherYawOffset, 0f) * target;
+                yaw += gatherYawOffset;
+            }
+
+            Quaternion target = Quaternion.LookRotation(look.normalized, Vector3.up);
+
+            if (Mathf.Abs(yaw) > 0.01f)
+            {
+                target = Quaternion.Euler(0f, yaw, 0f) * target;
             }
 
             if (snap)
@@ -586,6 +620,54 @@ namespace ProjectoRTS.Buildings
                 transform.rotation,
                 target,
                 Mathf.Max(1f, gatherTurnSpeed) * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Visual yaw of the animated body relative to the worker root,
+        /// measured from the humanoid upper leg bones. Returns 0 when the
+        /// skeleton is not available.
+        /// </summary>
+        private float GetBodyYawError()
+        {
+            if (_animator == null)
+            {
+                return 0f;
+            }
+
+            if (_leftLegBone == null || _rightLegBone == null)
+            {
+                _leftLegBone = _animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+                _rightLegBone = _animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+            }
+
+            if (_leftLegBone == null || _rightLegBone == null)
+            {
+                return 0f;
+            }
+
+            Vector3 side = _leftLegBone.position - _rightLegBone.position;
+            side.y = 0f;
+
+            if (side.sqrMagnitude <= 0.000001f)
+            {
+                return 0f;
+            }
+
+            Vector3 bodyForward = Vector3.Cross(Vector3.up, side.normalized);
+
+            return Vector3.SignedAngle(transform.forward, bodyForward, Vector3.up);
+        }
+
+        /// <summary>
+        /// Keeps the gather facing corrected after the animator has evaluated
+        /// the clip pose for this frame.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (_atNode && _resourceNode != null && IsInGatherRange())
+            {
+                FaceGatherPoint(false);
+            }
         }
 
         private void CancelGathering()
