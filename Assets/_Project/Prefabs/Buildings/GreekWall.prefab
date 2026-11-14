@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 6698065743909035977}
   - component: {fileID: 8953238487539888346}
   m_Layer: 0
-  m_Name: Stairs (6)
+  m_Name: "pelda\xF1o"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -113,11 +113,11 @@ Transform:
   m_GameObject: {fileID: 1649611910203402736}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49796087, y: -0.49877852, z: -0.5012132, w: 0.5020362}
-  m_LocalPosition: {x: -0.005, y: 0.166, z: -0.532}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 0.4}
+  m_LocalPosition: {x: 0, y: -1.2147619, z: 0.0019999743}
+  m_LocalScale: {x: 0.15633984, y: 0.070001684, z: 0.611711}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 0, y: -89.627, z: -89.906}
 --- !u!33 &6698065743909035977
 MeshFilter:
@@ -270,7 +270,7 @@ GameObject:
   - component: {fileID: 7105271661086954539}
   - component: {fileID: 8808249415412409087}
   m_Layer: 0
-  m_Name: Stairs (4)
+  m_Name: "pelda\xF1o"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -285,11 +285,11 @@ Transform:
   m_GameObject: {fileID: 3166591811913352523}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49796087, y: -0.49877852, z: -0.5012132, w: 0.5020362}
-  m_LocalPosition: {x: -0.005, y: 0.761, z: -0.534}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 0.4}
+  m_LocalPosition: {x: 0, y: -0.28453887, z: 0}
+  m_LocalScale: {x: 0.15633984, y: 0.070001684, z: 0.611711}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 0, y: -89.627, z: -89.906}
 --- !u!33 &7105271661086954539
 MeshFilter:
@@ -464,7 +464,7 @@ GameObject:
   - component: {fileID: 4054504112610647925}
   - component: {fileID: 406261829834323200}
   m_Layer: 0
-  m_Name: Stairs (1)
+  m_Name: Stairs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -479,11 +479,11 @@ Transform:
   m_GameObject: {fileID: 3568476116518886093}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7065115, y: 0.00035671648, z: -0.0042199106, w: 0.70768887}
-  m_LocalPosition: {x: -0.213, y: 0.683, z: -0.531}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 1.15}
+  m_LocalPosition: {x: -0.3180944, y: -0.4064839, z: 0.0029999614}
+  m_LocalScale: {x: 0.15292789, y: 0.070001654, z: 1.7979068}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 89.673, y: -72.865, z: -73.236}
 --- !u!33 &4054504112610647925
 MeshFilter:
@@ -550,7 +550,7 @@ GameObject:
   - component: {fileID: 2364359500339894839}
   - component: {fileID: 6353921215246791405}
   m_Layer: 0
-  m_Name: Stairs (2)
+  m_Name: "pelda\xF1o"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -565,11 +565,11 @@ Transform:
   m_GameObject: {fileID: 3597835008848870084}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49796087, y: -0.49877852, z: -0.5012132, w: 0.5020362}
-  m_LocalPosition: {x: -0.005, y: 1.113, z: -0.534}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 0.4}
+  m_LocalPosition: {x: 0, y: 0.26577803, z: 0}
+  m_LocalScale: {x: 0.15633984, y: 0.070001684, z: 0.611711}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 0, y: -89.627, z: -89.906}
 --- !u!33 &2364359500339894839
 MeshFilter:
@@ -659,14 +659,6 @@ Transform:
   - {fileID: 1032101959715969805}
   - {fileID: 2501328820259953076}
   - {fileID: 1024467647406524959}
-  - {fileID: 7996375060185059006}
-  - {fileID: 8973618847440368078}
-  - {fileID: 7777444613660314284}
-  - {fileID: 944331311519974853}
-  - {fileID: 376646251963007590}
-  - {fileID: 1828676919804153886}
-  - {fileID: 7444185392572048640}
-  - {fileID: 410386796612469618}
   m_Father: {fileID: 3529764739093981543}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4344996582244735476
@@ -681,7 +673,7 @@ GameObject:
   - component: {fileID: 6392510337416332499}
   - component: {fileID: 7379659086799576123}
   m_Layer: 0
-  m_Name: Stairs (7)
+  m_Name: "pelda\xF1o"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -696,11 +688,11 @@ Transform:
   m_GameObject: {fileID: 4344996582244735476}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49796087, y: -0.49877852, z: -0.5012132, w: 0.5020362}
-  m_LocalPosition: {x: -0.005, y: 0.351, z: -0.532}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 0.4}
+  m_LocalPosition: {x: 0, y: -0.9255328, z: 0.0019999743}
+  m_LocalScale: {x: 0.15633984, y: 0.070001684, z: 0.611711}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 0, y: -89.627, z: -89.906}
 --- !u!33 &6392510337416332499
 MeshFilter:
@@ -954,11 +946,11 @@ Transform:
   m_GameObject: {fileID: 5165553721367743929}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7065115, y: 0.00035671648, z: -0.0042199106, w: 0.70768887}
-  m_LocalPosition: {x: 0.205, y: 0.681, z: -0.535}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 1.15}
+  m_LocalPosition: {x: 0.32115299, y: -0.40961075, z: -0.0010000467}
+  m_LocalScale: {x: 0.15292789, y: 0.070001654, z: 1.7979068}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 89.673, y: -72.865, z: -73.236}
 --- !u!33 &1393770021787537957
 MeshFilter:
@@ -1025,7 +1017,7 @@ GameObject:
   - component: {fileID: 1362188861481322407}
   - component: {fileID: 8824513124428982686}
   m_Layer: 0
-  m_Name: Stairs (5)
+  m_Name: "pelda\xF1o"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1040,11 +1032,11 @@ Transform:
   m_GameObject: {fileID: 5216283624401728530}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49796087, y: -0.49877852, z: -0.5012132, w: 0.5020362}
-  m_LocalPosition: {x: -0.005, y: 0.547, z: -0.533}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 0.4}
+  m_LocalPosition: {x: 0, y: -0.6191065, z: 0.0009999871}
+  m_LocalScale: {x: 0.15633984, y: 0.070001684, z: 0.611711}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 0, y: -89.627, z: -89.906}
 --- !u!33 &1362188861481322407
 MeshFilter:
@@ -1111,7 +1103,7 @@ GameObject:
   - component: {fileID: 265800500411691693}
   - component: {fileID: 4821685677296330598}
   m_Layer: 0
-  m_Name: Stairs (3)
+  m_Name: "pelda\xF1o"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1126,11 +1118,11 @@ Transform:
   m_GameObject: {fileID: 5254526561646627279}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49796087, y: -0.49877852, z: -0.5012132, w: 0.5020362}
-  m_LocalPosition: {x: -0.005, y: 0.943, z: -0.534}
-  m_LocalScale: {x: 0.1, y: 0.07, z: 0.4}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.15633984, y: 0.070001684, z: 0.611711}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8214268338660558150}
+  m_Father: {fileID: 117177782229884720}
   m_LocalEulerAnglesHint: {x: 0, y: -89.627, z: -89.906}
 --- !u!33 &265800500411691693
 MeshFilter:
@@ -1357,6 +1349,45 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7646951364920786785
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 117177782229884720}
+  m_Layer: 0
+  m_Name: Escalera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &117177782229884720
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7646951364920786785}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.005000001, y: 0.943, z: -0.534}
+  m_LocalScale: {x: 0.65389395, y: 0.63963157, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7996375060185059006}
+  - {fileID: 8973618847440368078}
+  - {fileID: 7777444613660314284}
+  - {fileID: 944331311519974853}
+  - {fileID: 376646251963007590}
+  - {fileID: 1828676919804153886}
+  - {fileID: 7444185392572048640}
+  - {fileID: 410386796612469618}
+  m_Father: {fileID: 3529764739093981543}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8204695237741625792
 GameObject:
   m_ObjectHideFlags: 0
@@ -1385,11 +1416,12 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5293, y: 1.5634, z: 1}
+  m_LocalScale: {x: 1, y: 1.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2316076899128254617}
   - {fileID: 8214268338660558150}
+  - {fileID: 117177782229884720}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!208 &3271108379559645527
@@ -1420,5 +1452,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5101a417ddd6d542aedf0135561bd8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  capacity: 2
+  capacity: 1
   topHeight: 1.35
+  climbMarkerName: Escalera
