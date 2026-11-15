@@ -1073,8 +1073,31 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            Vector3 min = _site.transform.InverseTransformPoint(worldBounds.min);
-            Vector3 max = _site.transform.InverseTransformPoint(worldBounds.max);
+            Vector3 boundsCenter = worldBounds.center;
+            Vector3 boundsExtents = worldBounds.extents;
+
+            // World bounds are axis-aligned while the site may be rotated, so
+            // converting just the min/max corners would yield wrong local
+            // extents (negative half sizes at 90°/180°) and workers would
+            // never consider themselves in range. Convert all eight corners
+            // instead: exact for right-angle rotations, conservative otherwise.
+            Vector3 min = new Vector3(
+                float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            Vector3 max = new Vector3(
+                float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+
+            for (int c = 0; c < 8; c++)
+            {
+                Vector3 corner = boundsCenter + new Vector3(
+                    (c & 1) == 0 ? -boundsExtents.x : boundsExtents.x,
+                    (c & 2) == 0 ? -boundsExtents.y : boundsExtents.y,
+                    (c & 4) == 0 ? -boundsExtents.z : boundsExtents.z);
+
+                Vector3 local = _site.transform.InverseTransformPoint(corner);
+
+                min = Vector3.Min(min, local);
+                max = Vector3.Max(max, local);
+            }
 
             _siteFootprintCenter = new Vector3((min.x + max.x) * 0.5f, 0f, (min.z + max.z) * 0.5f);
             _siteFootprintHalf = new Vector2((max.x - min.x) * 0.5f, (max.z - min.z) * 0.5f);

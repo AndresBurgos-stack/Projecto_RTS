@@ -23,7 +23,9 @@ namespace ProjectoRTS.Buildings
 
         [Header("Progress Bar")]
         [SerializeField] private Color fillColor = new Color(0.95f, 0.72f, 0.2f, 1f);
-        [SerializeField] private float barHeightOffset = 0.8f;
+        // Kept small so the bar hugs the top of tall buildings (wall, tower)
+        // instead of floating a full metre above the parapet.
+        [SerializeField] private float barHeightOffset = 0.35f;
 
         private readonly List<Renderer> _renderers = new List<Renderer>(8);
         private readonly List<Material[]> _originalMaterials = new List<Material[]>(8);
@@ -71,6 +73,14 @@ namespace ProjectoRTS.Buildings
             if (_ghostMaterial != null)
             {
                 Destroy(_ghostMaterial);
+            }
+
+            // The bar is not parented to the building anymore, so it must be
+            // destroyed here or it would keep floating after the site dies.
+            if (_barRoot != null)
+            {
+                Destroy(_barRoot);
+                _barRoot = null;
             }
         }
 
@@ -230,7 +240,7 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            float top = 2f;
+            float topWorld = transform.position.y + 2f;
             if (_renderers.Count > 0 && _renderers[0] != null)
             {
                 Bounds bounds = _renderers[0].bounds;
@@ -242,12 +252,18 @@ namespace ProjectoRTS.Buildings
                     }
                 }
 
-                top = bounds.max.y - transform.position.y;
+                topWorld = bounds.max.y;
             }
 
+            // The bar lives at the scene root in world space: parenting it to
+            // the building inherits its scale, and scaled buildings (the wall
+            // is stretched 3.35x in Y) both threw the bar far above the roof
+            // and distorted its aspect ratio.
             _barRoot = new GameObject("Construction Bar");
-            _barRoot.transform.SetParent(transform, false);
-            _barRoot.transform.localPosition = new Vector3(0f, top + barHeightOffset, 0f);
+            _barRoot.transform.position = new Vector3(
+                transform.position.x,
+                topWorld + barHeightOffset,
+                transform.position.z);
             _barRoot.transform.localScale = Vector3.one * 0.01f;
 
             Canvas canvas = _barRoot.AddComponent<Canvas>();

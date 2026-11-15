@@ -6,7 +6,9 @@ namespace ProjectoRTS.Resources
 {
     /// <summary>
     /// A building point where workers can deposit harvested resources. The
-    /// town hall and barracks both use one.
+    /// workers' hut and the storage building use one; gameplay buildings like
+    /// the barracks must not, so workers always carry their cargo to a
+    /// proper store.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ResourceDropOff : MonoBehaviour

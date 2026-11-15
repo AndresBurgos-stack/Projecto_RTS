@@ -48,6 +48,17 @@ namespace ProjectoRTS.Buildings
             }
         }
 
+        private void OnDestroy()
+        {
+            // The canvas is not parented to the building anymore, so clean it
+            // up here or it would keep floating after the building dies.
+            if (_canvas != null)
+            {
+                Destroy(_canvas.gameObject);
+                _canvas = null;
+            }
+        }
+
         private void Start()
         {
             BuildBar();
@@ -125,7 +136,8 @@ namespace ProjectoRTS.Buildings
                 typeof(Canvas),
                 typeof(CanvasScaler));
 
-            canvasObject.transform.SetParent(transform, false);
+            // Kept unparented: inheriting the building's scale would distort
+            // the bar on scaled buildings (the wall stretches 3.35x in Y).
             canvasObject.transform.position = position;
             canvasObject.transform.rotation = Quaternion.identity;
             canvasObject.transform.localScale = Vector3.one * 0.01f;

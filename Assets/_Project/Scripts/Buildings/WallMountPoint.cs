@@ -19,6 +19,7 @@ namespace ProjectoRTS.Buildings
         [SerializeField] private string climbMarkerName = "Escalera";
         [SerializeField, Min(0.8f)] private float approachDistance = 1.4f;
         [SerializeField, Min(0.3f)] private float climbFaceDistance = 0.55f;
+        [SerializeField] private bool circularClimb = false;
 
         private readonly List<UnitRuntime> _mounted = new List<UnitRuntime>(2);
         private readonly List<UnitRuntime> _pending = new List<UnitRuntime>(4);
@@ -45,8 +46,9 @@ namespace ProjectoRTS.Buildings
             if (marker == null)
             {
 #if UNITY_EDITOR
-                // Log once per point: buildings like towers have no ladder by design.
-                if (!_markerWarningLogged)
+                // Log once per point: flat walls should have a ladder;
+                // round buildings (towers) climb by side by design.
+                if (!_markerWarningLogged && !circularClimb)
                 {
                     _markerWarningLogged = true;
                     Debug.LogWarning(
@@ -95,6 +97,14 @@ namespace ProjectoRTS.Buildings
         /// <summary>Distance from the wall center to the ground approach point.</summary>
         public float ApproachDistance => approachDistance;
 
+        /// <summary>
+        /// True for round buildings like towers: the climb rises straight up
+        /// outside the round body and then steps onto the platform, and
+        /// mounted archers face outward from the center. The climb face
+        /// itself still follows the ladder marker like on a wall.
+        /// </summary>
+        public bool CircularClimb => circularClimb;
+
         public bool HasSpace
         {
             get
@@ -142,7 +152,7 @@ namespace ProjectoRTS.Buildings
         /// </summary>
         public Vector3 GetClimbBasePosition(int slotIndex, float climbSide, float groundY)
         {
-            float slotOffset = SlotLocal(slotIndex).x;
+            Vector3 slot = SlotLocal(slotIndex);
 
             float faceDistance = climbFaceDistance;
             if (_climbMarker != null)
@@ -152,7 +162,7 @@ namespace ProjectoRTS.Buildings
             }
 
             Vector3 world = transform.TransformPoint(
-                new Vector3(slotOffset, 0f, climbSide * faceDistance));
+                new Vector3(slot.x, 0f, climbSide * faceDistance));
             world.y = groundY;
             return world;
         }
@@ -245,7 +255,8 @@ namespace ProjectoRTS.Buildings
             toUnit.y = 0f;
             float squadSide = Vector3.Dot(toUnit, transform.forward) >= 0f ? 1f : -1f;
             float climbSide = _hasClimbMarker ? _markerSide : squadSide;
-            Vector3 approach = transform.TransformPoint(new Vector3(0f, 0f, climbSide * approachDistance));
+            Vector3 approach = transform.TransformPoint(
+                new Vector3(0f, 0f, climbSide * approachDistance));
 
 #if UNITY_EDITOR
             Debug.Log(

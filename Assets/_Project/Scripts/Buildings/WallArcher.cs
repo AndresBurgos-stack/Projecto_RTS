@@ -113,10 +113,14 @@ namespace ProjectoRTS.Buildings
 
             transform.position = basePoint;
 
-            // Phase 2: steady eased rise along the wall face into the slot,
-            // turning outward over the last stretch instead of snapping.
+            // Phase 2: steady eased rise along the climb face, turning
+            // outward over the last stretch instead of snapping. Round
+            // buildings rise straight up outside the body and then step onto
+            // the platform; walls rise diagonally into the slot directly.
             float riseHeight = slot.y - basePoint.y;
             float riseDuration = Mathf.Clamp(riseHeight * 0.55f, 0.6f, 1.3f);
+            Vector3 facePoint = new Vector3(slot.x, slot.y, basePoint.z);
+            Vector3 riseEnd = _wall.CircularClimb ? facePoint : slot;
             elapsed = 0f;
             while (elapsed < riseDuration)
             {
@@ -128,7 +132,7 @@ namespace ProjectoRTS.Buildings
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / riseDuration);
                 float eased = t * t * (3f - 2f * t);
-                transform.position = Vector3.Lerp(basePoint, slot, eased);
+                transform.position = Vector3.Lerp(basePoint, riseEnd, eased);
 
                 float turn = Mathf.Clamp01((t - 0.65f) / 0.35f);
                 if (turn > 0f)
@@ -137,6 +141,26 @@ namespace ProjectoRTS.Buildings
                 }
 
                 yield return null;
+            }
+
+            if (_wall.CircularClimb)
+            {
+                // Phase 3: step from the tower face across the parapet to
+                // the slot on the platform.
+                float slideDuration = 0.35f;
+                elapsed = 0f;
+                while (elapsed < slideDuration)
+                {
+                    if (ClimbBlocked())
+                    {
+                        yield break;
+                    }
+
+                    elapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / slideDuration);
+                    transform.position = Vector3.Lerp(facePoint, slot, t);
+                    yield return null;
+                }
             }
 
             _transferring = false;
@@ -170,6 +194,16 @@ namespace ProjectoRTS.Buildings
             if (_wall == null)
             {
                 return transform.rotation;
+            }
+
+            if (_wall.CircularClimb)
+            {
+                // Round towers: look outward from the tower center.
+                Vector3 radial = transform.position - _wall.transform.position;
+                radial.y = 0f;
+                return radial.sqrMagnitude > 0.0001f
+                    ? Quaternion.LookRotation(radial.normalized, Vector3.up)
+                    : transform.rotation;
             }
 
             Vector3 outward = _wall.transform.forward * -_climbSide;

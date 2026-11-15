@@ -15,8 +15,8 @@ MonoBehaviour:
   displayName: Greek House
   category: 3
   prefab: {fileID: 7462493490174262651, guid: 532eed28f4f3a0b439ae4688c31aad00, type: 3}
-  width: 1
-  depth: 1
+  width: 2
+  depth: 2
   woodCost: 50
   bronzeCost: 20
   goldCost: 0

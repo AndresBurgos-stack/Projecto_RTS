@@ -15,8 +15,8 @@ MonoBehaviour:
   displayName: Choza de obreros
   category: 2
   prefab: {fileID: 7986343559318423397, guid: e57272c4aea1e6a40b7345fc11fe0854, type: 3}
-  width: 3
-  depth: 3
+  width: 4
+  depth: 4
   woodCost: 125
   bronzeCost: 75
   goldCost: 0

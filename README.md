@@ -23,10 +23,13 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Paso 9 del roadmap: **completado** (arte de unidades importadas, tuning visual y pipeline de animaciones).
 - Unidades enemigas: **auxiliares** (el antiguo legionario romano usa el prefab `Auxiliar.prefab` y los datos lo muestran como "Soldado auxiliar").
 - Economía: **implementada** (madera y bronce, costes en construcción y reclutamiento, botones deshabilitados sin recursos y HUD de recursos).
-- Recursos: **implementados** (nodos de madera y bronce repartidos por el mapa, recolección por trabajadores y depósito en Ayuntamiento, cuartel o almacén).
+- Recursos: **implementados** (nodos de madera y bronce repartidos por el mapa, recolección por trabajadores y depósito solo en la choza de obreros o el almacén).
 - Trabajadores: **implementados** (construcción de 1 trabajador por obra, recolección con prioridad Madera/Bronce asignable desde el panel derecho, huida de enemigos).
 - Muros y arqueros: **implementados** (toxotes montables sobre muros con clic derecho, traslado entre tramos conectados, torres con ataque a distancia, almenas y rampa con rotación).
 - Mapa ampliado a 300x300 con cámara RTS ajustada para recorrerlo.
+- Escena de juego: `Assets/Scenes/Gameplay.unity` (recursos, oleadas y Panteón).
+- Edificios a escala de muralla: **implementado** (muro elevado a la altura de la torre, cuartel/casa/almacén/choza/puerta agrandados; la torre llena su huella para eliminar el hueco con el muro).
+- Construcción de edificios: **implementada** (obra translúcida, barra de porcentaje pegada a la cima y 1 obrero por obra; los obreros ya construyen bien los edificios rotados con `R`).
 
 La primera importación puede tardar varios minutos porque UPM extrae URP, Shader Graph y sus dependencias. Las siguientes aperturas son mucho más rápidas.
 
@@ -163,10 +166,10 @@ Unity.exe -projectPath D:\ProjectoRTS -batchmode -nographics -quit -executeMetho
 2. Pulsa Play.
 3. Pulsa una tecla para elegir el edificio:
    - `1` → Greek Wall (1×1)
-   - `2` → Greek Gate (2×1)
-   - `3` → Greek Tower (1×1)
-   - `4` → Greek House (1×1)
-   - `5` → Greek Barracks (2×2)
+   - `2` → Greek Gate (3×1)
+   - `3` → Greek Tower (2×2)
+   - `4` → Greek House (2×2)
+   - `5` → Greek Barracks (5×5)
 4. Mueve el ratón: el preview se ajusta a la celda y cambia a verde (válido) o rojo (ocupado/fuera del grid).
 5. Clic izquierdo para colocar. Mantén `Shift` para seguir colocando.
 6. Clic derecho o `Escape` para cancelar.
@@ -176,7 +179,7 @@ La demo usa un grid de 40×40 con celdas de 1 unidad y origen `(-20, 0, -20)`, s
 ## Probar el reclutamiento
 
 1. Abre `Assets/Scenes/PlacementDemo.unity` y pulsa Play.
-2. Pulsa `5` y coloca un `Greek Barracks` (2×2).
+2. Pulsa `5` y coloca un `Greek Barracks` (5×5).
 3. Haz clic sobre el cuartel colocado: aparece el panel **Reclutamiento** en la esquina inferior izquierda.
 4. Pulsa **Reclutar Hoplita arcadio** o **Reclutar Psiloi**: la unidad aparece como cápsula delante del cuartel y recibe los stats de su `UnitDefinition`.
 5. Cada clic adicional en un botón genera otra unidad con un pequeño desplazamiento lateral.
@@ -393,7 +396,7 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 ### Recursos
 
 - `ResourceNode`: nodos finitos de madera (árboles) y bronce (rocas) repartidos en clusters por el mapa de 300x300. Se ocultan al agotarse.
-- `ResourceDropOff`: puntos de depósito en Ayuntamiento, cuartel y almacén. Los trabajadores entregan en el más cercano.
+- `ResourceDropOff`: puntos de depósito en la **choza de obreros** y el **almacén** (la caserna ya no acepta entregas). Los trabajadores entregan en el más cercano de esos dos.
 - Cada trabajador carga 10 recursos y tarda 2 segundos en recolectar.
 
 ### Trabajadores
@@ -405,8 +408,9 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 
 ### Muros, torres y arqueros
 
-- El muro tiene rampa y almenas; la rotación con `R` permite dejar la rampa mirando hacia la base.
-- `WallMountPoint`: cada tramo admite 2 toxotes. Clic derecho sobre un muro terminado con toxotes seleccionados los sube; clic derecho sobre otro tramo cercano los traslada por arriba de la muralla.
+- El muro tiene escalera y almenas y se eleva a la altura de la torre (cuerpo ~4.2 m, almenas ~4.7 m); la rotación con `R` deja la escalera mirando hacia la base.
+- `WallMountPoint`: cada tramo admite 1 toxote centrado. Clic derecho sobre un muro terminado con toxotes seleccionados los sube; clic derecho sobre otro tramo cercano los traslada por arriba de la muralla.
+- La torre griega usa el modelo `GreekTower2.fbx`, llena su huella 2×2 (radio 1.0) para no dejar hueco con los muros y su escalera orientable con `R` permite subir hasta 4 toxotes por subida circular exterior.
 - Montados ganan +2 de alcance; clic derecho en suelo o enemigo los desmonta.
 - `BuildingRangedAttack`: las torres disparan flechas visibles a enemigos en rango (10 de daño, alcance 9). El muro en sí no dispara.
 - Los toxotes (psiloi) tienen alcance 9.
@@ -414,15 +418,15 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 
 ### Edificios
 
-| Edificio | Tecla | Coste | Notas |
-|---|---|---|---|
-| Muro | 1 | 10M 5B | 2 puestos de toxotes, rampa |
-| Puerta | 2 | 30M 20B | huella 2x1, no rota |
-| Torre | 3 | 30M 40B | ataque a distancia automático |
-| Casa | 4 | 50M 20B | decorativa |
-| Cuartel | 5 | 100M 50B | recluta hoplitas y toxotes, modelo griego 3×3 |
-| Ayuntamiento | 6 | 125M 75B | recluta trabajadores, depósito |
-| Almacén | 7 | 75M 10B | depósito de recursos |
+| Edificio | Tecla | Coste | Huella | Notas |
+|---|---|---|---|---|
+| Muro | 1 | 10M 5B | 1×1 | 1 puesto de toxote, escalera; alta a la altura de la torre |
+| Puerta | 2 | 30M 20B | 3×1 | calza con la muralla, no rota |
+| Torre | 3 | 30M 40B | 2×2 | ataque a distancia automático, escalera orientable con `R` |
+| Casa | 4 | 50M 20B | 2×2 | decorativa |
+| Cuartel | 5 | 100M 50B | 5×5 | recluta hoplitas y toxotes |
+| Choza de obreros | 6 | 125M 75B | 4×4 | recluta trabajadores, punto de depósito |
+| Almacén | 7 | 75M 10B | 3×3 | punto de depósito de recursos |
 
 ### Regenerar la escena
 
@@ -443,6 +447,29 @@ Tras cambios en el generador, corre el menú `ProjectoRTS > Setup > Create Place
 - Arte importado de unidades: `Assets/AncientGrecce/`. Pack de armas: `Assets/MedievalFantasyWeaponMassivePack/`.
 
 Estado: los clips y controladores están preparados; la asignación del `Animator` en los prefabs de unidad se está integrando.
+
+## Últimos ajustes: construcción, escala y depósito
+
+### Obras de construcción (`ConstructionSite`)
+
+- Al colocar un edificio queda translúcido y sin colliders, con una barra world-space que muestra el porcentaje y desaparece al terminar. Un solo obrero por obra.
+- La barra de construcción y la barra de vida de la estructura se crean **sin padre, en posición mundial**: al heredar la escala del edificio se desplazaban y deformaban (el muro se estira 3.35x en Y).
+- Altura del cartel: cima real del edificio + 0.35 m, igual para todos los edificios.
+
+### Bug corregido: edificios rotados no se construían
+
+- `WorkerBuilder` cacheaba la huella de la obra convirtiendo solo las esquinas min/max del AABB mundial al espacio local del edificio. Con un edificio rotado 90°/180° salían semitamaños negativos, el obrero quedaba eternamente "fuera de rango" dando vueltas a la obra y el porcentaje no avanzaba.
+- Ahora convierte las 8 esquinas del AABB: exacto para giros de 90° y conservador en cualquier otro caso.
+
+### Depósito de materiales
+
+- Solo la **choza de obreros** y el **almacén** aceptan entregas (`ResourceDropOff`); se quitó de la caserna, que se llevaba las entregas por cercanía.
+
+### Torre y muro
+
+- El muro se elevó a la altura de la torre (raíz Y 3.35) y su escalera se reconstruyó para la nueva altura; los puestos de toxote quedan dentro del almenado.
+- La torre usa el modelo `GreekTower2.fbx` con una escalera procedural de 9 peldaños y rieles, orientable con `R` (montada en la cara −Z del prefab).
+- El cuerpo de la torre se ensanchó (escala X/Z 0.202, altura intacta 4.55) para llenar su huella 2×2: el hueco torre-muro baja de ~17 cm a ~2 cm; `BoxCollider` y `NavMeshObstacle` ampliados en consecuencia. Evita colocar muros justo detrás de la escalera: la escalera sobresale de la huella.
 
 ## Siguiente paso
 
