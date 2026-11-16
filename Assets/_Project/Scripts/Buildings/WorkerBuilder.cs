@@ -47,6 +47,14 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(0.1f)] private float fleeScanInterval = 0.3f;
         [SerializeField, Min(0.5f)] private float fleeRepathInterval = 1f;
 
+        [Header("Cargo Visuals")]
+        [SerializeField] private Material woodLogMaterial;
+        [SerializeField] private Material bronzeOreMaterial;
+        [Tooltip("Log bundle length as a fraction of the worker's own size.")]
+        [SerializeField, Min(0.05f)] private float logLengthFactor = 0.28f;
+        [Tooltip("Ore cluster diameter as a fraction of the worker's own size.")]
+        [SerializeField, Min(0.05f)] private float oreSizeFactor = 0.17f;
+
         private NavMeshAgent _agent;
         private UnitRuntime _runtime;
         private ConstructionSite _site;
@@ -76,6 +84,23 @@ namespace ProjectoRTS.Buildings
         private Animator _animator;
         private bool _hasGatherParam;
         private bool _gatheringSet;
+        private bool _hasCarryingParam;
+        private bool _carryingSet;
+        private bool _hasBuildingParam;
+        private bool _buildingSet;
+
+        private Transform _cargoAnchor;
+        private GameObject _cargoRoot;
+        private GameObject _hammerVisual;
+        private GameObject _logsHolder;
+        private GameObject _rockHolder;
+        private bool _cargoVisualReady;
+        private bool _cargoVisualMissing;
+        private readonly List<Renderer> _hammerRenderers = new List<Renderer>(4);
+        private bool _hammerVisible = true;
+
+        private static Material _woodFallbackMaterial;
+        private static Material _oreFallbackMaterial;
         private Transform _leftLegBone;
         private Transform _rightLegBone;
         private float _bodyYawError;
@@ -171,6 +196,8 @@ namespace ProjectoRTS.Buildings
             _baseSpeed = _agent != null ? _agent.speed : 0f;
             _animator = GetComponentInChildren<Animator>(true);
             _hasGatherParam = HasAnimatorParameter(_animator, "Gathering");
+            _hasCarryingParam = HasAnimatorParameter(_animator, "Carrying");
+            _hasBuildingParam = HasAnimatorParameter(_animator, "Building");
 
             UnitCombat combat = GetComponent<UnitCombat>();
             if (combat != null)
@@ -211,6 +238,7 @@ namespace ProjectoRTS.Buildings
 
             if (_site == null)
             {
+                SetBuilding(false);
                 ResumeCurrentTask();
                 return;
             }
@@ -237,6 +265,12 @@ namespace ProjectoRTS.Buildings
                 _runtime = GetComponent<UnitRuntime>();
             }
 
+            // Synced every frame so the carry animation follows the cargo even
+            // when the worker spawned, fled or got assigned while loaded.
+            SetCarrying(_cargoAmount > 0);
+            EnsureCargoVisuals();
+            UpdateCargoVisual();
+
             if (UpdateFlee())
             {
                 return;
@@ -246,6 +280,7 @@ namespace ProjectoRTS.Buildings
             {
                 _site = null;
                 _stoppedAtSite = false;
+                SetBuilding(false);
                 ResumeCurrentTask();
             }
 
@@ -287,6 +322,7 @@ namespace ProjectoRTS.Buildings
 
             if (!IsInRange())
             {
+                SetBuilding(false);
                 _repathTimer -= Time.deltaTime;
                 _outOfRangeTimer += Time.deltaTime;
 
@@ -311,6 +347,7 @@ namespace ProjectoRTS.Buildings
                 StopAtSite();
             }
 
+            SetBuilding(true);
             _site.AddProgress(Time.deltaTime * workMultiplier);
         }
 
@@ -712,6 +749,470 @@ namespace ProjectoRTS.Buildings
             _animator.SetBool("Gathering", value);
         }
 
+        /// <summary>Plays the carry animation while the worker has cargo.</summary>
+        private void SetCarrying(bool value)
+        {
+            if (!_hasCarryingParam || _animator == null)
+            {
+                return;
+            }
+
+            if (_carryingSet == value)
+            {
+                return;
+            }
+
+            _carryingSet = value;
+            _animator.SetBool("Carrying", value);
+        }
+
+        /// <summary>Plays the strike animation while the worker builds.</summary>
+        private void SetBuilding(bool value)
+        {
+            if (!_hasBuildingParam || _animator == null)
+            {
+                return;
+            }
+
+            if (_buildingSet == value)
+            {
+                return;
+            }
+
+            _buildingSet = value;
+            _animator.SetBool("Building", value);
+        }
+
+        /// <summary>
+        /// Builds the carried-cargo props once: a log bundle for wood and the
+        /// bronze ore vein. The props live in normal world-metre space under
+        /// the unit root and are glued to the rig's right-hand bone every
+        /// frame, so they appear exactly when the carry animation plays. The
+        /// "Martillo" node is never used as a pose source: after the model
+        /// swap its placement points far outside the character, which dragged
+        /// the cargo under the terrain.
+        /// </summary>
+        private void EnsureCargoVisuals()
+        {
+            if (_cargoVisualReady || _cargoVisualMissing)
+            {
+                return;
+            }
+
+            Transform hammer = FindDeepChild(transform, "Martillo");
+            if (hammer == null)
+            {
+                _cargoVisualMissing = true;
+                return;
+            }
+
+            _hammerVisual = hammer.gameObject;
+            CacheHammerRenderers(hammer);
+
+            // Grip on the animated hand bone. The hammer node only serves as
+            // a fallback anchor and for the hide-while-carrying renderer swap.
+            Transform grip = FindHandBone(transform);
+            if (grip == null)
+            {
+                grip = hammer;
+                Debug.LogWarning(
+                    "WorkerBuilder: no RightHand bone found; carrying the cargo on the Martillo node instead.");
+            }
+            else
+            {
+                float gripDistance = Vector3.Distance(grip.position, transform.position);
+                if (gripDistance > 3f)
+                {
+                    Debug.LogWarning(
+                        $"WorkerBuilder: RightHand bone is {gripDistance:0.00} m from the unit root; cargo may look misplaced.");
+                }
+            }
+
+            _cargoAnchor = grip;
+
+            // The cargo root mirrors the grip's world pose each frame. Its
+            // scale is normalised to one so props can be sized in plain
+            // metres, regardless of the unit's or the rig's own scaling.
+            _cargoRoot = new GameObject("Cargo Anchor");
+            Transform cargoTransform = _cargoRoot.transform;
+            cargoTransform.SetParent(transform, false);
+            Vector3 unitLossy = AbsScale(transform.lossyScale);
+            cargoTransform.localScale = new Vector3(
+                1f / Mathf.Max(unitLossy.x, 1e-5f),
+                1f / Mathf.Max(unitLossy.y, 1e-5f),
+                1f / Mathf.Max(unitLossy.z, 1e-5f));
+
+            SyncCargoPose();
+
+            // Sizes come from the visible character itself: the Martillo
+            // node's placement is unreliable after the model swap, but the
+            // skinned body meshes always describe the real unit size.
+            float unitSize = GetUnitSize();
+            float logLength = unitSize * logLengthFactor;
+            float oreDiameter = unitSize * oreSizeFactor;
+
+            try
+            {
+                // The cargo root faces the same way as the worker, so the
+                // bundle lies across the chest where both hands grip it and
+                // the ore cluster sits between the palms.
+                _logsHolder = BuildLogBundle(Vector3.zero, logLength);
+                _rockHolder = BuildOreVein(oreDiameter);
+            }
+            catch (System.Exception exception)
+            {
+                // A broken asset reference must not throw from Update every
+                // frame; disable the cargo visuals instead.
+                Debug.LogWarning($"WorkerBuilder: cargo visuals disabled ({exception.Message})");
+                _cargoVisualMissing = true;
+                return;
+            }
+
+            _cargoVisualReady = true;
+        }
+
+        /// <summary>
+        /// Finds the rig's right-hand bone: an exact "RightHand" (with or
+        /// without a rig prefix like "mixamorig:") first, then any name
+        /// containing it, since finger bones still sit at the palm.
+        /// </summary>
+        private static Transform FindHandBone(Transform root)
+        {
+            Transform exact = null;
+            Transform loose = null;
+            CollectHandBone(root, ref exact, ref loose);
+            return exact != null ? exact : loose;
+        }
+
+        private static void CollectHandBone(Transform node, ref Transform exact, ref Transform loose)
+        {
+            string name = node.name;
+            if (exact == null &&
+                (string.Equals(name, "RightHand", System.StringComparison.OrdinalIgnoreCase) ||
+                 name.EndsWith(":RightHand", System.StringComparison.OrdinalIgnoreCase)))
+            {
+                exact = node;
+            }
+
+            if (loose == null &&
+                name.IndexOf("RightHand", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                loose = node;
+            }
+
+            for (int i = 0; i < node.childCount; i++)
+            {
+                CollectHandBone(node.GetChild(i), ref exact, ref loose);
+            }
+        }
+
+        /// <summary>
+        /// Diagonal of the unit's skinned body bounds, used to size the cargo
+        /// relative to the worker. Skinned meshes ignore the misplaced
+        /// Martillo node, whose MeshRenderers would poison combined bounds.
+        /// </summary>
+        private float GetUnitSize()
+        {
+            Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
+            bool found = false;
+
+            foreach (SkinnedMeshRenderer renderer in transform.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (!found)
+                {
+                    bounds = renderer.bounds;
+                    found = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return found && bounds.size.magnitude > 0.01f ? bounds.size.magnitude : 2.2f;
+        }
+
+        /// <summary>
+        /// Glues the cargo anchor to the grip's position and the body's
+        /// facing: the hands tell it where to hold, the body tells it which
+        /// way to lie, so the bundle always sits across the chest.
+        /// </summary>
+        private void SyncCargoPose()
+        {
+            if (_cargoRoot == null || _cargoAnchor == null)
+            {
+                return;
+            }
+
+            _cargoRoot.transform.position = _cargoAnchor.position;
+            _cargoRoot.transform.rotation = transform.rotation;
+        }
+
+        /// <summary>Shows or hides the hammer and the carried cargo props.</summary>
+        private void UpdateCargoVisual()
+        {
+            // Keep the cargo glued to the hammer's world pose before any
+            // visibility work, so it never lags a frame behind the hand.
+            SyncCargoPose();
+
+            if (_cargoAnchor == null)
+            {
+                return;
+            }
+
+            bool carrying = _cargoAmount > 0;
+            bool showLogs = carrying && _cargoType == ResourceType.Wood;
+            bool showRock = carrying && _cargoType == ResourceType.Bronze;
+
+            // The cargo is only synced to the hammer's pose; the hammer itself
+            // stays active and just swaps its renderers out while carrying.
+            SetHammerVisible(!carrying);
+
+            if (_logsHolder != null && _logsHolder.activeSelf != showLogs)
+            {
+                _logsHolder.SetActive(showLogs);
+            }
+
+            if (_rockHolder != null && _rockHolder.activeSelf != showRock)
+            {
+                _rockHolder.SetActive(showRock);
+            }
+        }
+
+        private void SetHammerVisible(bool visible)
+        {
+            if (_hammerVisible == visible)
+            {
+                return;
+            }
+
+            _hammerVisible = visible;
+            for (int i = 0; i < _hammerRenderers.Count; i++)
+            {
+                if (_hammerRenderers[i] != null)
+                {
+                    _hammerRenderers[i].enabled = visible;
+                }
+            }
+        }
+
+        private void CacheHammerRenderers(Transform hammer)
+        {
+            _hammerRenderers.Clear();
+            foreach (Renderer renderer in hammer.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer is ParticleSystemRenderer)
+                {
+                    continue;
+                }
+
+                _hammerRenderers.Add(renderer);
+            }
+        }
+
+        private GameObject BuildLogBundle(Vector3 centerLocalPosition, float logLength)
+        {
+            GameObject holder = new GameObject("Cargo Wood");
+            Transform holderTransform = holder.transform;
+            holderTransform.SetParent(_cargoRoot.transform, false);
+            holderTransform.localPosition = centerLocalPosition;
+            holderTransform.localRotation = Quaternion.identity;
+
+            // The bundle lies across the body along the cargo root's X axis,
+            // so both hands grip it. Three cylinders packed in a triangle:
+            // two at the bottom, one resting on top.
+            float logDiameter = logLength * 0.16f;
+            float lengthUnits = logLength * 0.5f;
+
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject log = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                Destroy(log.GetComponent<Collider>());
+                log.name = "Log";
+                log.transform.SetParent(holderTransform, false);
+
+                MeshRenderer logRenderer = log.GetComponent<MeshRenderer>();
+                logRenderer.sharedMaterial = woodLogMaterial != null
+                    ? woodLogMaterial
+                    : GetWoodFallbackMaterial();
+
+                // Roll each cylinder onto its side so its length runs along
+                // the bundle axis (X).
+                log.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                log.transform.localScale = new Vector3(logDiameter, lengthUnits, logDiameter);
+
+                switch (i)
+                {
+                    case 0: // bottom, far side
+                        log.transform.localPosition = new Vector3(0f, 0f, -logDiameter * 0.5f);
+                        break;
+                    case 1: // bottom, near side
+                        log.transform.localPosition = new Vector3(0f, 0f, logDiameter * 0.5f);
+                        break;
+                    default: // resting on top, in the groove of the pair
+                        log.transform.localPosition = new Vector3(0f, logDiameter * 0.87f, 0f);
+                        break;
+                }
+            }
+
+            return holder;
+        }
+
+        /// <summary>
+        /// Builds a small "ore vein" cluster out of squashed spheres with the
+        /// bronze material, matching the round ore chunks shown on the
+        /// resource nodes. Centred on the grip so the chunk sits in the palm.
+        /// The ore copy is matte so it reads as mineral instead of a mirror.
+        /// </summary>
+        private GameObject BuildOreVein(float oreDiameter)
+        {
+            GameObject holder = new GameObject("Cargo Bronze");
+            Transform holderTransform = holder.transform;
+            holderTransform.SetParent(_cargoRoot.transform, false);
+            holderTransform.localPosition = Vector3.zero;
+
+            Material oreMaterial = GetOreMaterial(bronzeOreMaterial);
+            float diameter = oreDiameter;
+            float squash = 0.78f;
+
+            CreateOreChunk(holderTransform, oreMaterial,
+                new Vector3(0f, 0.06f, 0f) * diameter, diameter, squash);
+            CreateOreChunk(holderTransform, oreMaterial,
+                new Vector3(0.55f, -0.28f, 0.3f) * diameter, diameter * 0.55f, squash);
+            CreateOreChunk(holderTransform, oreMaterial,
+                new Vector3(-0.45f, -0.34f, -0.35f) * diameter, diameter * 0.45f, squash);
+
+            return holder;
+        }
+
+        /// <summary>
+        /// Clones the bronze material with a much lower metallic value: raw
+        /// metal reflects the sky and reads as a plain white blob in-game.
+        /// </summary>
+        private static Material GetOreMaterial(Material source)
+        {
+            if (_oreFallbackMaterial == null)
+            {
+                if (source != null)
+                {
+                    _oreFallbackMaterial = new Material(source);
+                }
+                else
+                {
+                    _oreFallbackMaterial = new Material(
+                        Shader.Find("Universal Render Pipeline/Lit"));
+                    _oreFallbackMaterial.SetColor(
+                        "_BaseColor", new Color(0.72f, 0.52f, 0.2f, 1f));
+                }
+
+                _oreFallbackMaterial.name = "Worker Ore";
+                if (_oreFallbackMaterial.HasProperty("_Metallic"))
+                {
+                    _oreFallbackMaterial.SetFloat("_Metallic", 0.35f);
+                }
+
+                if (_oreFallbackMaterial.HasProperty("_Smoothness"))
+                {
+                    _oreFallbackMaterial.SetFloat("_Smoothness", 0.4f);
+                }
+            }
+
+            return _oreFallbackMaterial;
+        }
+
+        /// <summary>Brown material used when the wood reference is missing.</summary>
+        private static Material GetWoodFallbackMaterial()
+        {
+            if (_woodFallbackMaterial == null)
+            {
+                _woodFallbackMaterial = new Material(
+                    Shader.Find("Universal Render Pipeline/Lit"));
+                _woodFallbackMaterial.name = "Worker Wood";
+                _woodFallbackMaterial.SetColor(
+                    "_BaseColor", new Color(0.55f, 0.38f, 0.22f, 1f));
+            }
+
+            return _woodFallbackMaterial;
+        }
+
+        private static void CreateOreChunk(
+            Transform parent,
+            Material material,
+            Vector3 offset,
+            float diameter,
+            float squash)
+        {
+            GameObject chunk = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Destroy(chunk.GetComponent<Collider>());
+            chunk.name = "Ore Vein";
+            chunk.transform.SetParent(parent, false);
+            chunk.transform.localPosition = offset;
+            chunk.transform.localScale = new Vector3(diameter, diameter * squash, diameter);
+
+            MeshRenderer chunkRenderer = chunk.GetComponent<MeshRenderer>();
+            chunkRenderer.sharedMaterial = material;
+        }
+
+        private static Transform FindDeepChild(Transform root, string childName)
+        {
+            if (root.name == childName)
+            {
+                return root;
+            }
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform result = FindDeepChild(root.GetChild(i), childName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Diagonal of the combined world bounds of a prop's renderers.</summary>
+        private static float GetPropWorldSize(Transform root)
+        {
+            return TryGetPropBounds(root, out Bounds bounds) ? bounds.size.magnitude : 0.3f;
+        }
+
+        /// <summary>Combined world bounds of every mesh renderer under a prop.</summary>
+        private static bool TryGetPropBounds(Transform root, out Bounds bounds)
+        {
+            bool found = false;
+            bounds = new Bounds(Vector3.zero, Vector3.zero);
+
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer is ParticleSystemRenderer)
+                {
+                    continue;
+                }
+
+                if (!found)
+                {
+                    bounds = renderer.bounds;
+                    found = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return found;
+        }
+
+        private static Vector3 AbsScale(Vector3 scale)
+        {
+            return new Vector3(
+                Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
+                Mathf.Max(0.0001f, Mathf.Abs(scale.y)),
+                Mathf.Max(0.0001f, Mathf.Abs(scale.z)));
+        }
+
         private static bool HasAnimatorParameter(Animator animator, string parameterName)
         {
             if (animator == null || animator.runtimeAnimatorController == null)
@@ -802,6 +1303,7 @@ namespace ProjectoRTS.Buildings
                 _stoppedAtSite = false;
                 _atNode = false;
                 SetGathering(false);
+                SetBuilding(false);
             }
 
             _fleeEnemy = enemy;

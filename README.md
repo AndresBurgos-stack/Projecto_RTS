@@ -471,6 +471,14 @@ Estado: los clips y controladores están preparados; la asignación del `Animato
 - La torre usa el modelo `GreekTower2.fbx` con una escalera procedural de 9 peldaños y rieles, orientable con `R` (montada en la cara −Z del prefab).
 - El cuerpo de la torre se ensanchó (escala X/Z 0.202, altura intacta 4.55) para llenar su huella 2×2: el hueco torre-muro baja de ~17 cm a ~2 cm; `BoxCollider` y `NavMeshObstacle` ampliados en consecuencia. Evita colocar muros justo detrás de la escalera: la escalera sobresale de la huella.
 
+### Animaciones y velocidad del trabajador
+
+- La velocidad del trabajador bajó de 4.5 a 3.5: ya no es la unidad más rápida del juego (sigue por delante del hoplita, 3.2).
+- Al construir golpea con el clip de recolección (parámetro `Building` → estado `Construir`); solo golpea cuando está dentro del alcance de la obra.
+- Mientras lleva materiales camina con la animación `Transporte` (parámetro `Carrying` → estado `Transporte`); al detenerse vuelve a la pose estática.
+- Los clips `Transporte.anim` y `Recoleccion2.anim` ahora están en loop: el golpeo y la carga se repiten en vez de congelarse al terminar el primer ciclo.
+- Cargamento visible: al talar madera carga un haz de 3 troncos acostado en triángulo, cruzado al frente como llevándolo con ambas manos (con material de madera) y al minar carga un racimo de menas redondas de bronce ("Ore Vein": esferas achatadas con material Bronze mate, para que no refleje el cielo y se vea blanco); el cargamento aparece cuando el obrero hace la animación de carga, vive en espacio de metros junto a la raíz de la unidad y se pega cada frame al hueso de la mano derecha del rig (`RightHand`), no al nodo Martillo (que quedó mal ubicado tras el cambio de modelo). Tamaño relativo al personaje, ajustable en el inspector (`logLengthFactor`, `oreSizeFactor`). Si faltan las referencias de material en el inspector, el código usa materiales de respaldo (marrón para madera, bronce para mena).
+
 ## Siguiente paso
 
 1. Equilibrar oleadas y economía (población, límites, velocidades).
