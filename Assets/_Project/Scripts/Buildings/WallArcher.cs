@@ -188,7 +188,12 @@ namespace ProjectoRTS.Buildings
             return false;
         }
 
-        /// <summary>Rotation looking over the wall, away from the face it climbed.</summary>
+        /// <summary>
+        /// Rotation looking over the wall, in the direction opposite the
+        /// ladder face. The ladder marks the face units climb from, so the
+        /// archer always watches the opposite side; this holds for flat
+        /// walls and round towers alike, and after moving between segments.
+        /// </summary>
         private Quaternion FaceOutwardRotation()
         {
             if (_wall == null)
@@ -196,24 +201,18 @@ namespace ProjectoRTS.Buildings
                 return transform.rotation;
             }
 
-            if (_wall.CircularClimb)
-            {
-                // Round towers: look outward from the tower center.
-                Vector3 radial = transform.position - _wall.transform.position;
-                radial.y = 0f;
-                return radial.sqrMagnitude > 0.0001f
-                    ? Quaternion.LookRotation(radial.normalized, Vector3.up)
-                    : transform.rotation;
-            }
+            float ladderSide = Mathf.Approximately(_wall.ClimbSide, 0f)
+                ? _climbSide
+                : _wall.ClimbSide;
 
-            Vector3 outward = _wall.transform.forward * -_climbSide;
+            Vector3 outward = _wall.transform.forward * -ladderSide;
             outward.y = 0f;
             return outward.sqrMagnitude > 0.0001f
                 ? Quaternion.LookRotation(outward.normalized, Vector3.up)
                 : transform.rotation;
         }
 
-        /// <summary>Turns the archer to look over the wall, away from the face it climbed.</summary>
+        /// <summary>Turns the archer to look over the wall, away from the ladder face.</summary>
         private void FaceOutward()
         {
             transform.rotation = FaceOutwardRotation();
