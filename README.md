@@ -412,6 +412,7 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 - `WallMountPoint`: cada tramo admite 1 toxote centrado. Clic derecho sobre un muro terminado con toxotes seleccionados los sube; clic derecho sobre otro tramo cercano los traslada por arriba de la muralla.
 - La torre griega usa el modelo `GreekTower2.fbx`, llena su huella 2×2 (radio 1.0) para no dejar hueco con los muros y su escalera orientable con `R` permite subir hasta 4 toxotes por subida circular exterior.
 - Montados ganan +2 de alcance; clic derecho en suelo o enemigo los desmonta.
+- Orientación al montar: el toxote siempre queda mirando en la dirección contraria a la cara de la escalera (escalera a la espalda, mirando al campo); vale para muros, para la torre y tras trasladarse a otro tramo.
 - `BuildingRangedAttack`: las torres disparan flechas visibles a enemigos en rango (10 de daño, alcance 9). El muro en sí no dispara.
 - Los toxotes (psiloi) tienen alcance 9.
 - Inmunidad cuerpo a cuerpo: un toxote montado no recibe daño melee. Los atacantes melee (Infantry/Cavalry) no lo fijan como objetivo y redirigen su ataque al muro; solo los arqueros enemigos pueden dañarlo. Al caer el muro (o al ordenarle bajar), se desmonta y vuelve a ser vulnerable.
@@ -478,6 +479,16 @@ Estado: los clips y controladores están preparados; la asignación del `Animato
 - Mientras lleva materiales camina con la animación `Transporte` (parámetro `Carrying` → estado `Transporte`); al detenerse vuelve a la pose estática.
 - Los clips `Transporte.anim` y `Recoleccion2.anim` ahora están en loop: el golpeo y la carga se repiten en vez de congelarse al terminar el primer ciclo.
 - Cargamento visible: al talar madera carga un haz de 3 troncos acostado en triángulo, cruzado al frente como llevándolo con ambas manos (con material de madera) y al minar carga un racimo de menas redondas de bronce ("Ore Vein": esferas achatadas con material Bronze mate, para que no refleje el cielo y se vea blanco); el cargamento aparece cuando el obrero hace la animación de carga, vive en espacio de metros junto a la raíz de la unidad y se pega cada frame al hueso de la mano derecha del rig (`RightHand`), no al nodo Martillo (que quedó mal ubicado tras el cambio de modelo). Tamaño relativo al personaje, ajustable en el inspector (`logLengthFactor`, `oreSizeFactor`). Si faltan las referencias de material en el inspector, el código usa materiales de respaldo (marrón para madera, bronce para mena).
+
+### Expansión del mapa (Pure Poly)
+
+- Montaña nueva en la esquina suroeste del mapa: instancia de `PP_Forest_Mountain_Moss_01` a escala 4 en (-150, -150), ligeramente enterrada para que la base no flote. Sus paredes empinadas quedan fuera del NavMesh (pendiente > 45 grados) y actúan de frontera natural.
+- Lago natural en el noroeste: instancia de `Lake` del pack Skyden_Games "Low Poly Environment" (Assets/Skyden_Games) a escala 1 en (-140, 140), rotado 330 grados. Es una superficie de agua plana de ~54 x 82 m con ligera ondulación; su MeshCollider viene desactivado en la instancia para que el NavMesh no genere agua caminable y las unidades crucen vadeando.
+- El lago usa el material propio `AguaCeleste` (Assets/_Project/Materials/AguaCeleste.mat), celeste opaco con brillo suave, aplicado como override en la instancia: el material original del pack trae un shader Built-in que se ve magenta bajo URP. El color se puede ajustar en el inspector del material.
+- Orilla del lago decorada con 5 rocas del pack Pure Poly (`PP_Rock_Moss_Grown_09/11`, colliders desactivados) que asoman entre el agua, y 4 árboles decorativos `PP_Tree_02` cerca del lago y de la montaña, ahora recolectables como madera (400 unidades cada uno).
+- 8 nodos de bronce nuevos (roca + 4 vetas de mena, 400 unidades cada uno) en zonas vacías: noreste (115,115) y (150,85), noroeste (-135,90), sur (-65,-150) y (95,-145), este (150,-25), oeste (-160,-30) y norte (-90,165).
+- 8 nodos de madera nuevos (abedul con componente `ResourceNode`, 400 unidades) repartidos por el resto del mapa, lejos de los grupos existentes.
+- Todo el escenografía nueva vive bajo un contenedor "Entorno" en la raíz de la escena; los nodos nuevos se agregaron al contenedor "Resource Nodes" existente. Sin NavMesh horneado: el sistema lo hornea en runtime y ya incluye los colliders nuevos.
 
 ## Siguiente paso
 
