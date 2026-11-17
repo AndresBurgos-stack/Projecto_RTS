@@ -12,9 +12,9 @@ using UnityEngine;
 /// Para lograrlo copia cada malla rigida a un asset nuevo con bindposes y
 /// boneWeights calculados:
 ///
-/// - Piezas rigidas (arco, escudo, gladius, casco): peso total en el primer
-///   ancestro de la pieza que sea hueso del esqueleto, de modo que conserva la
-///   pose ajustada a mano y sigue ese hueso durante la animacion.
+/// - Piezas rigidas (arco, escudo, gladius, casco, martillo): peso total en el
+///   primer ancestro de la pieza que sea hueso del esqueleto, de modo que
+///   conserva la pose ajustada a mano y sigue ese hueso durante la animacion.
 /// - Armaduras: reparten pesos por proximidad entre los huesos del torso
 ///   (Hips, Spine, Chest, UpperChest y hombros), de modo que la coraza se
 ///   deforme con el torso igual que la piel del personaje.
@@ -22,6 +22,7 @@ using UnityEngine;
 /// Cada unidad declara su prefab y sus piezas en las configs de abajo. Se
 /// ejecuta desde: Herramientas > Psiloi: Auto-rig skinned (arco y armadura) /
 /// Herramientas > Auxiliar: Auto-rig skinned (armadura y armas) /
+/// Herramientas > Trabajador: Auto-rig skinned (tunica y martillo) /
 /// Herramientas > Unidades: Auto-rig todas.
 /// Si despues se mueve o rota una pieza en el editor, volver a ejecutar el menu
 /// para rehornear la pose de referencia.
@@ -87,6 +88,18 @@ public static class AutoRigUnidades
         },
     };
 
+    static readonly Unidad Trabajador = new Unidad
+    {
+        nombre = "Trabajador",
+        prefab = "Assets/_Project/Prefabs/Units/Trabajador.prefab",
+        piezas = new Pieza[]
+        {
+            new Pieza { objeto = "M Citizen Side Robe", malla = "Circle.043", asset = "Tunica_Trabajador_Skinned", tipo = TipoPieza.Torso },
+            new Pieza { objeto = "Hammer Handle", malla = "Cylinder", asset = "Mango_Martillo_Skinned", tipo = TipoPieza.Rigida },
+            new Pieza { objeto = "Hammer Head", malla = "Cube", asset = "Cabeza_Martillo_Skinned", tipo = TipoPieza.Rigida },
+        },
+    };
+
     [MenuItem("Herramientas/Psiloi: Auto-rig skinned (arco y armadura)")]
     public static void PsiloiDesdeMenu()
     {
@@ -99,11 +112,18 @@ public static class AutoRigUnidades
         Ejecutar(Auxiliar);
     }
 
+    [MenuItem("Herramientas/Trabajador: Auto-rig skinned (tunica y martillo)")]
+    public static void TrabajadorDesdeMenu()
+    {
+        Ejecutar(Trabajador);
+    }
+
     [MenuItem("Herramientas/Unidades: Auto-rig todas")]
     public static void TodasDesdeMenu()
     {
         Ejecutar(Psiloi);
         Ejecutar(Auxiliar);
+        Ejecutar(Trabajador);
     }
 
     static void Ejecutar(Unidad unidad)
