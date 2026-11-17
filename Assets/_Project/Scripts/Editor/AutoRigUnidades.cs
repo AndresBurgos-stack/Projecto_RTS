@@ -155,7 +155,7 @@ public static class AutoRigUnidades
         piezas = new Pieza[]
         {
             new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.008", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
-            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.Piernas, desplazamiento = new Vector3(0f, 0.05f, 0f) },
+            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.Piernas },
             new Pieza { objeto = "Casco romano", malla = "Cube.004", asset = "Casco_Leginario_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Leginario_Skinned", tipo = TipoPieza.Rigida },
         },
