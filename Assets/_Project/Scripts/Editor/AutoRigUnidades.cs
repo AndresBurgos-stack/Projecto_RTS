@@ -67,7 +67,7 @@ public static class AutoRigUnidades
     {
         nombre = "Psiloi",
         prefab = "Assets/_Project/Prefabs/Units/Psiloi.prefab",
-        piezas =
+        piezas = new Pieza[]
         {
             new Pieza { objeto = "Bow", malla = "Bow", asset = "Bow_Psiloi_Skinned", tipo = TipoPieza.Rigida, recurrirAMano = true },
             new Pieza { objeto = "Mcitizen_Chest", malla = "Circle.043", asset = "Armadura_Psiloi_Skinned", tipo = TipoPieza.Torso },
@@ -78,7 +78,7 @@ public static class AutoRigUnidades
     {
         nombre = "Auxiliar",
         prefab = "Assets/_Project/Prefabs/Units/Auxiliar.prefab",
-        piezas =
+        piezas = new Pieza[]
         {
             new Pieza { objeto = "Armadura", malla = "Cube.001", asset = "Armadura_Auxiliar_Skinned", tipo = TipoPieza.Torso },
             new Pieza { objeto = "Roman Shield", malla = "Plane.013", asset = "Escudo_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
@@ -164,6 +164,61 @@ public static class AutoRigUnidades
     static string Etiqueta(Unidad unidad)
     {
         return $"AutoRig {unidad.nombre}";
+    }
+
+    // El cuerpo es el SMR con mas huesos dentro del prefab (el Maniqui).
+    static SkinnedMeshRenderer BuscarCuerpo(GameObject raiz)
+    {
+        SkinnedMeshRenderer mejor = null;
+        foreach (SkinnedMeshRenderer smr in raiz.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+        {
+            if (smr.sharedMesh == null) continue;
+            int huesos = smr.bones != null ? smr.bones.Length : 0;
+            if (huesos < 10) continue; // los accesorios tienen 0 o 1 hueso
+            if (mejor == null || huesos > mejor.bones.Length) mejor = smr;
+        }
+        return mejor;
+    }
+
+    static Transform Buscar(GameObject raiz, string nombre)
+    {
+        foreach (Transform t in raiz.GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name == nombre) return t;
+        }
+        return null;
+    }
+
+    static Dictionary<string, Transform> MapaDeHuesos(Transform[] huesos)
+    {
+        var mapa = new Dictionary<string, Transform>();
+        foreach (Transform h in huesos)
+        {
+            if (h == null || mapa.ContainsKey(h.name)) continue;
+            mapa[h.name] = h;
+            string limpio = SinSufijo(h.name, "Model");
+            limpio = SinSufijo(limpio, "Geometry");
+            if (!mapa.ContainsKey(limpio)) mapa[limpio] = h;
+        }
+        return mapa;
+    }
+
+    static string SinSufijo(string nombre, string sufijo)
+    {
+        return nombre.EndsWith(sufijo, StringComparison.Ordinal) && nombre.Length > sufijo.Length
+            ? nombre.Substring(0, nombre.Length - sufijo.Length)
+            : nombre;
+    }
+
+    static Transform BuscarHueso(Dictionary<string, Transform> mapa, string patron)
+    {
+        if (mapa.TryGetValue(patron, out Transform exacto)) return exacto;
+        if (mapa.TryGetValue(patron + "Model", out Transform conModelo)) return conModelo;
+        foreach (KeyValuePair<string, Transform> kv in mapa)
+        {
+            if (kv.Key.Contains(patron)) return kv.Value;
+        }
+        return null;
     }
 
     // Resuelve, ANTES de abrir el prefab en modo edicion, el FBX de cada pieza
