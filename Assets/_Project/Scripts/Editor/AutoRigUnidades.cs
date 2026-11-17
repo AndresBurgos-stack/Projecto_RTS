@@ -15,9 +15,11 @@ using UnityEngine;
 /// - Piezas rigidas (arco, escudo, gladius, casco, martillo): peso total en el
 ///   primer ancestro de la pieza que sea hueso del esqueleto, de modo que
 ///   conserva la pose ajustada a mano y sigue ese hueso durante la animacion.
-/// - Armaduras: reparten pesos por proximidad entre los huesos del torso
-///   (Hips, Spine, Chest, UpperChest y hombros), de modo que la coraza se
-///   deforme con el torso igual que la piel del personaje.
+/// - Piezas que se deforman (corazas, tunica, falda): reparten pesos por
+///   proximidad entre los tramos del cuerpo segun su preseteo: Torso (tronco y
+///   claviculas), TorsoConBrazos (agrega los brazos, para hombreras) y Piernas
+///   (cadera y piernas, para faldas), de modo que sigan al cuerpo igual que la
+///   piel del personaje.
 ///
 /// Cada unidad declara su prefab y sus piezas en las configs de abajo. Se
 /// ejecuta desde: Herramientas > Psiloi: Auto-rig skinned (arco y armadura) /
@@ -37,12 +39,23 @@ public static class AutoRigUnidades
 
     enum TipoPieza { Rigida, Torso }
 
+    // Que tramos del cuerpo reciben pesos por proximidad en una pieza que se
+    // deforma. Cada segmento va de un hueso al hueso que le sigue: la distancia
+    // de cada vertice se mide a esos tramos.
+    enum Preseteo
+    {
+        Torso,          // tronco y claviculas (corazas cortas, tunica)
+        TorsoConBrazos, // agrega los brazos: hombreras que bajan por el brazo
+        Piernas,        // cadera y piernas: faldas y pantalones que siguen las piernas
+    }
+
     class Pieza
     {
         public string objeto;      // nombre del GO raiz de la pieza dentro del prefab
         public string malla;       // nombre (parcial) de la malla, para ubicar el render correcto
         public string asset;       // nombre del asset horneado en Assets/_Project/Meshes
         public TipoPieza tipo;
+        public Preseteo preseteo;  // tramos de proximidad para piezas de tipo Torso
         public bool recurrirAMano; // si no cuelga de un hueso, usar la mano derecha y luego la izquierda
     }
 
@@ -53,9 +66,9 @@ public static class AutoRigUnidades
         public Pieza[] piezas;
     }
 
-    // Huesos del torso que reciben pesos de la armadura y el hueso que marca
-    // el fin de cada segmento para medir la distancia de cada vertice.
-    static readonly (string hueso, string finSegmento)[] Torso =
+    // Segmentos por preseteo: el hueso de partida y el hueso que marca el fin
+    // de cada tramo para medir la distancia de cada vertice.
+    static readonly (string hueso, string finSegmento)[] SegmentosTorso =
     {
         ("Hips", "Spine"),
         ("Spine", "Chest"),
@@ -65,6 +78,39 @@ public static class AutoRigUnidades
         ("RightShoulder", "RightUpperArm"),
     };
 
+    static readonly (string hueso, string finSegmento)[] SegmentosTorsoConBrazos =
+    {
+        ("Hips", "Spine"),
+        ("Spine", "Chest"),
+        ("Chest", "UpperChest"),
+        ("UpperChest", "Neck"),
+        ("LeftShoulder", "LeftUpperArm"),
+        ("RightShoulder", "RightUpperArm"),
+        ("LeftUpperArm", "LeftLowerArm"),
+        ("RightUpperArm", "RightLowerArm"),
+    };
+
+    static readonly (string hueso, string finSegmento)[] SegmentosPiernas =
+    {
+        ("Hips", "Spine"),
+        ("Hips", "LeftUpperLeg"),
+        ("Hips", "RightUpperLeg"),
+        ("LeftUpperLeg", "LeftLowerLeg"),
+        ("LeftLowerLeg", "LeftFoot"),
+        ("RightUpperLeg", "RightLowerLeg"),
+        ("RightLowerLeg", "RightFoot"),
+    };
+
+    static (string hueso, string finSegmento)[] SegmentosDe(Preseteo preseteo)
+    {
+        switch (preseteo)
+        {
+            case Preseteo.TorsoConBrazos: return SegmentosTorsoConBrazos;
+            case Preseteo.Piernas: return SegmentosPiernas;
+            default: return SegmentosTorso;
+        }
+    }
+
     static readonly Unidad Psiloi = new Unidad
     {
         nombre = "Psiloi",
@@ -72,7 +118,7 @@ public static class AutoRigUnidades
         piezas = new Pieza[]
         {
             new Pieza { objeto = "Bow", malla = "Bow", asset = "Bow_Psiloi_Skinned", tipo = TipoPieza.Rigida, recurrirAMano = true },
-            new Pieza { objeto = "Mcitizen_Chest", malla = "Circle.043", asset = "Armadura_Psiloi_Skinned", tipo = TipoPieza.Torso },
+            new Pieza { objeto = "Mcitizen_Chest", malla = "Circle.043", asset = "Armadura_Psiloi_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
         },
     };
 
@@ -82,7 +128,7 @@ public static class AutoRigUnidades
         prefab = "Assets/_Project/Prefabs/Units/Auxiliar.prefab",
         piezas = new Pieza[]
         {
-            new Pieza { objeto = "Armadura", malla = "Cube.001", asset = "Armadura_Auxiliar_Skinned", tipo = TipoPieza.Torso },
+            new Pieza { objeto = "Armadura", malla = "Cube.001", asset = "Armadura_Auxiliar_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
             new Pieza { objeto = "Roman Shield", malla = "Plane.013", asset = "Escudo_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Casco romano", malla = "Cube.001", asset = "Casco_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
@@ -107,8 +153,8 @@ public static class AutoRigUnidades
         prefab = "Assets/_Project/Prefabs/Units/Legionario.prefab",
         piezas = new Pieza[]
         {
-            new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.001", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso },
-            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso },
+            new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.001", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
+            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.Piernas },
             new Pieza { objeto = "Casco romano 1", malla = "Cube.004", asset = "Casco_Leginario_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Leginario_Skinned", tipo = TipoPieza.Rigida },
         },
@@ -385,7 +431,7 @@ public static class AutoRigUnidades
         Transform huesoPadre = BuscarHuesoAncestro(pieza, esqueleto);
 
         var segmentos = new List<(Transform hueso, Vector3 a, Vector3 b)>();
-        foreach (var (nombre, fin) in Torso)
+        foreach (var (nombre, fin) in SegmentosDe(cfg.preseteo))
         {
             Transform h = BuscarHueso(mapa, nombre);
             if (h == null) continue;
