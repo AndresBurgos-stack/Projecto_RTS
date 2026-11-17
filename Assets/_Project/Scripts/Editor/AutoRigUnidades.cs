@@ -224,9 +224,18 @@ public static class AutoRigUnidades
                     Debug.LogWarning($"[{Etiqueta(unidad)}] No encontre el objeto '{pieza.objeto}' en el prefab.");
                     continue;
                 }
-                bool ok = pieza.tipo == TipoPieza.Torso
-                    ? RiggearTorso(unidad, t, pieza, esqueleto, mapa)
-                    : RiggearRigida(unidad, t, pieza, esqueleto, mapa);
+                bool ok;
+                try
+                {
+                    ok = pieza.tipo == TipoPieza.Torso
+                        ? RiggearTorso(unidad, t, pieza, esqueleto, mapa)
+                        : RiggearRigida(unidad, t, pieza, esqueleto, mapa);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[{Etiqueta(unidad)}] Error riggeando '{pieza.objeto}': {e.GetType().Name}: {e.Message}");
+                    ok = false;
+                }
                 cambios |= ok;
             }
 
@@ -411,7 +420,7 @@ public static class AutoRigUnidades
         horneada.bindposes = new[] { hueso.worldToLocalMatrix * render.transform.localToWorldMatrix };
 
         string ruta = GuardarAsset(horneada, cfg.asset);
-        AplicarSkinned(unidad, render, horneada, new[] { hueso }, hueso, SkinQuality.Bone1);
+        if (!AplicarSkinned(unidad, render, horneada, new[] { hueso }, hueso, SkinQuality.Bone1)) return false;
 
         Debug.Log($"[{Etiqueta(unidad)}] Pieza rigida '{pieza.name}': {horneada.vertexCount} vertices amarrados al hueso '{hueso.name}' con peso total. Malla: {ruta}");
         return true;
@@ -469,7 +478,7 @@ public static class AutoRigUnidades
         horneada.bindposes = bindposes;
 
         string ruta = GuardarAsset(horneada, cfg.asset);
-        AplicarSkinned(unidad, render, horneada, huesos, huesoPadre != null ? huesoPadre : huesos[0], SkinQuality.Bone4);
+        if (!AplicarSkinned(unidad, render, horneada, huesos, huesoPadre != null ? huesoPadre : huesos[0], SkinQuality.Bone4)) return false;
 
         string nombres = string.Join(", ", huesos.Select(h => h.name));
         Debug.Log($"[{Etiqueta(unidad)}] Armadura '{pieza.name}': {horneada.vertexCount} vertices repartidos entre {huesos.Length} huesos ({nombres}). Malla: {ruta}");
@@ -489,7 +498,7 @@ public static class AutoRigUnidades
 
     // Reemplaza (o reutiliza) el renderer de la pieza con un SkinnedMeshRenderer,
     // conservando el material.
-    static void AplicarSkinned(Unidad unidad, RenderPieza render, Mesh horneada, Transform[] huesos, Transform rootBone, SkinQuality calidad)
+    static bool AplicarSkinned(Unidad unidad, RenderPieza render, Mesh horneada, Transform[] huesos, Transform rootBone, SkinQuality calidad)
     {
         Material[] mats = null;
         if (render.mr != null) mats = render.mr.sharedMaterials;
@@ -502,6 +511,11 @@ public static class AutoRigUnidades
 
         SkinnedMeshRenderer smr = render.smr;
         if (smr == null) smr = render.transform.gameObject.AddComponent<SkinnedMeshRenderer>();
+        if (smr == null)
+        {
+            Debug.LogError($"[{Etiqueta(unidad)}] No pude agregar SkinnedMeshRenderer a '{render.transform.name}' (la instancia del prefab esta rota o es inmutable). Revisa el prefab y vuelve a correr el menu.");
+            return false;
+        }
         if (render.mr != null)
         {
             UnityEngine.Object.DestroyImmediate(render.mr);
@@ -514,6 +528,7 @@ public static class AutoRigUnidades
         smr.quality = calidad;
         smr.updateWhenOffscreen = true;
         if (mats != null && mats.Length > 0) smr.sharedMaterials = mats;
+        return true;
     }
 
     // Peso del vertice repartido entre los 3 huesos mas cercanos (1/d^2 normalizado).
