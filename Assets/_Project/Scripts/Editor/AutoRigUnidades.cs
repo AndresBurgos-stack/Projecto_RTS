@@ -23,6 +23,7 @@ using UnityEngine;
 /// ejecuta desde: Herramientas > Psiloi: Auto-rig skinned (arco y armadura) /
 /// Herramientas > Auxiliar: Auto-rig skinned (armadura y armas) /
 /// Herramientas > Trabajador: Auto-rig skinned (tunica y martillo) /
+/// Herramientas > Legionario: Auto-rig skinned (armadura y armas) /
 /// Herramientas > Unidades: Auto-rig todas.
 /// Si despues se mueve o rota una pieza en el editor, volver a ejecutar el menu
 /// para rehornear la pose de referencia.
@@ -100,6 +101,19 @@ public static class AutoRigUnidades
         },
     };
 
+    static readonly Unidad Legionario = new Unidad
+    {
+        nombre = "Legionario",
+        prefab = "Assets/_Project/Prefabs/Units/Legionario.prefab",
+        piezas = new Pieza[]
+        {
+            new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.001", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso },
+            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso },
+            new Pieza { objeto = "Casco romano 1", malla = "Cube.004", asset = "Casco_Leginario_Skinned", tipo = TipoPieza.Rigida },
+            new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Leginario_Skinned", tipo = TipoPieza.Rigida },
+        },
+    };
+
     [MenuItem("Herramientas/Psiloi: Auto-rig skinned (arco y armadura)")]
     public static void PsiloiDesdeMenu()
     {
@@ -118,12 +132,19 @@ public static class AutoRigUnidades
         Ejecutar(Trabajador);
     }
 
+    [MenuItem("Herramientas/Legionario: Auto-rig skinned (armadura y armas)")]
+    public static void LegionarioDesdeMenu()
+    {
+        Ejecutar(Legionario);
+    }
+
     [MenuItem("Herramientas/Unidades: Auto-rig todas")]
     public static void TodasDesdeMenu()
     {
         Ejecutar(Psiloi);
         Ejecutar(Auxiliar);
         Ejecutar(Trabajador);
+        Ejecutar(Legionario);
     }
 
     static void Ejecutar(Unidad unidad)
