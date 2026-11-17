@@ -56,6 +56,7 @@ public static class AutoRigUnidades
         public string asset;       // nombre del asset horneado en Assets/_Project/Meshes
         public TipoPieza tipo;
         public Preseteo preseteo;  // tramos de proximidad para piezas de tipo Torso
+        public Vector3 desplazamiento; // se suman a los vertices de la malla horneada, en metros de mundo
         public bool recurrirAMano; // si no cuelga de un hueso, usar la mano derecha y luego la izquierda
     }
 
@@ -154,7 +155,7 @@ public static class AutoRigUnidades
         piezas = new Pieza[]
         {
             new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.008", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
-            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.Piernas },
+            new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.Piernas, desplazamiento = new Vector3(0f, 0.05f, 0f) },
             new Pieza { objeto = "Casco romano", malla = "Cube.004", asset = "Casco_Leginario_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Leginario_Skinned", tipo = TipoPieza.Rigida },
         },
@@ -410,6 +411,7 @@ public static class AutoRigUnidades
 
         Mesh horneada = CopiarMalla(render.malla, cfg.asset);
         if (horneada == null) return false;
+        DesplazarMalla(horneada, render.transform, cfg.desplazamiento);
 
         var pesos = new BoneWeight[horneada.vertexCount];
         for (int i = 0; i < pesos.Length; i++)
@@ -459,6 +461,7 @@ public static class AutoRigUnidades
 
         Mesh horneada = CopiarMalla(render.malla, cfg.asset);
         if (horneada == null) return false;
+        DesplazarMalla(horneada, render.transform, cfg.desplazamiento);
 
         Transform[] huesos = segmentos.Select(s => s.hueso).ToArray();
         var bindposes = new Matrix4x4[huesos.Length];
@@ -494,6 +497,19 @@ public static class AutoRigUnidades
             if (Array.IndexOf(esqueleto, t) >= 0) return t;
         }
         return null;
+    }
+
+    // Suma a los vertices de la malla horneada un desplazamiento expresado en
+    // el espacio del mundo (se convierte al espacio local de la malla). Se
+    // aplica sobre la copia, nunca sobre la malla original; como el fuente de
+    // cada horneado es siempre la malla cruda, el efecto es idempotente.
+    static void DesplazarMalla(Mesh horneada, Transform pieza, Vector3 mundo)
+    {
+        if (mundo == Vector3.zero) return;
+        Vector3 local = pieza.worldToLocalMatrix.MultiplyVector(mundo);
+        Vector3[] vertices = horneada.vertices;
+        for (int i = 0; i < vertices.Length; i++) vertices[i] += local;
+        horneada.vertices = vertices;
     }
 
     // Reemplaza (o reutiliza) el renderer de la pieza con un SkinnedMeshRenderer,
