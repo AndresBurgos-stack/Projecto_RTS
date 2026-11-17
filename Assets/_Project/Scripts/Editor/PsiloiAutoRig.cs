@@ -210,7 +210,7 @@ public static class PsiloiAutoRig
         AssetDatabase.DeleteAsset(ruta);
         AssetDatabase.CreateAsset(horneada, ruta);
 
-        if (smr == null) smr = arco.AddComponent<SkinnedMeshRenderer>();
+        if (smr == null) smr = arco.gameObject.AddComponent<SkinnedMeshRenderer>();
         Material[] mats = smr.sharedMaterials;
         if (mats == null || mats.Length == 0 || mats.All(m => m == null))
         {
@@ -313,8 +313,8 @@ public static class PsiloiAutoRig
             if (equipo != null) mats = new[] { equipo };
         }
 
-        if (smr == null) smr = renderT.AddComponent<SkinnedMeshRenderer>();
-        if (mr != null) DestroyImmediate(mr);
+        if (smr == null) smr = renderT.gameObject.AddComponent<SkinnedMeshRenderer>();
+        if (mr != null) UnityEngine.Object.DestroyImmediate(mr);
 
         smr.sharedMesh = horneada;
         smr.bones = huesos;
