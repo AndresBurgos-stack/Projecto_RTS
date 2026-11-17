@@ -131,7 +131,7 @@ public static class AutoRigUnidades
             new Pieza { objeto = "Armadura", malla = "Cube.001", asset = "Armadura_Auxiliar_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
             new Pieza { objeto = "Roman Shield", malla = "Plane.013", asset = "Escudo_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
-            new Pieza { objeto = "Casco romano", malla = "Cube.001", asset = "Casco_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
+            new Pieza { objeto = "Casco romano", malla = "Cube.004", asset = "Casco_Auxiliar_Skinned", tipo = TipoPieza.Rigida },
         },
     };
 
@@ -153,9 +153,9 @@ public static class AutoRigUnidades
         prefab = "Assets/_Project/Prefabs/Units/Legionario.prefab",
         piezas = new Pieza[]
         {
-            new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.001", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
+            new Pieza { objeto = "ArmaduraLeginario", malla = "Cube.008", asset = "Armadura_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.TorsoConBrazos },
             new Pieza { objeto = "PantalonesLegionario", malla = "Cube.002", asset = "Pantalones_Leginario_Skinned", tipo = TipoPieza.Torso, preseteo = Preseteo.Piernas },
-            new Pieza { objeto = "Casco romano 1", malla = "Cube.004", asset = "Casco_Leginario_Skinned", tipo = TipoPieza.Rigida },
+            new Pieza { objeto = "Casco romano", malla = "Cube.004", asset = "Casco_Leginario_Skinned", tipo = TipoPieza.Rigida },
             new Pieza { objeto = "Gladius Variant", malla = "Cylinder.001", asset = "Gladius_Leginario_Skinned", tipo = TipoPieza.Rigida },
         },
     };
