@@ -510,6 +510,10 @@ public static class AutoRigUnidades
         }
 
         SkinnedMeshRenderer smr = render.smr;
+        // En re-ejecuciones ya existe un SkinnedMeshRenderer sobre el mismo
+        // objeto aunque el descubrimiento haya venido por el MeshFilter
+        // original; preferirlo en vez de intentar agregar otro.
+        if (smr == null) smr = render.transform.GetComponent<SkinnedMeshRenderer>();
         if (smr == null) smr = render.transform.gameObject.AddComponent<SkinnedMeshRenderer>();
         if (smr == null)
         {
