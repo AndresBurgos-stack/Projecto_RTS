@@ -21,7 +21,7 @@ MonoBehaviour:
   attackRange: 14
   attackInterval: 1.8
   damageReduction: 0
-  moveSpeed: 3.8
+  moveSpeed: 3.4
   turnSpeed: 720
   stoppingDistance: 0.5
   woodCost: 20
