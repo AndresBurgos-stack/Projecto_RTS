@@ -235,7 +235,6 @@ GameObject:
   - component: {fileID: 2101728868658699352}
   - component: {fileID: 8094957376153928418}
   - component: {fileID: 8524798331834158951}
-  - component: {fileID: 5687983741733507881}
   - component: {fileID: 6253351117826918364}
   m_Layer: 0
   m_Name: Xifista
@@ -362,48 +361,6 @@ MonoBehaviour:
   buildingReach: 2.5
   aggroRadius: 9
   autoAcquire: 1
---- !u!114 &5687983741733507881
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7286954970806266342}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e49f14f31e262ae46b8fd07ad7c8dd4f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectoRTS.Units.HopliteProceduralAnimator
-  armDownAngle: 78
-  elbowBendAngle: 15
-  shieldArmDownAngle: 72
-  shieldElbowBendAngle: 38
-  shieldForwardX: 0
-  shieldForwardZ: 10
-  legSwingAngle: 30
-  armSwingAngle: 14
-  bobHeight: 0.035
-  strideRate: 6
-  attackDuration: 0.62
-  hitTime: 0.27
-  windupEnd: 0.18
-  thrustEnd: 0.34
-  windupArmAngle: 22
-  thrustArmAngle: 70
-  thrustElbowAngle: -5
-  spineLeanAngle: 10
-  windupArmTwist: 15
-  thrustArmTwist: 55
-  windupElbowTwist: 10
-  thrustElbowTwist: 20
-  variationDuration: 0.06
-  variationHeight: 0.18
-  variationLateral: 0.12
-  lungeDistance: 0.14
-  fingerCurl: 55
-  thumbCurl: 40
-  shieldMountEuler: {x: 0, y: 0, z: 0}
-  shieldMountOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &6253351117826918364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,7 +656,11 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: a869611afa12fa846b47fc7c64b5cb25, type: 2}
+      objectReference: {fileID: 9100000, guid: fc89a55bcda658d49990e4de98913230, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
+      propertyPath: m_WarningMessage
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
