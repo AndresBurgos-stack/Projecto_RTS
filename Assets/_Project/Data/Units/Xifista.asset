@@ -19,12 +19,12 @@ MonoBehaviour:
   maxHealth: 105
   attackDamage: 16
   attackRange: 1.5
-  attackInterval: 1.2
+  attackInterval: 1.05
   damageReduction: 0.2
   moveSpeed: 3.2
   turnSpeed: 720
   stoppingDistance: 0.5
-  woodCost: 20
-  bronzeCost: 30
+  woodCost: 30
+  bronzeCost: 35
   trainTime: 4
   populationCost: 1
