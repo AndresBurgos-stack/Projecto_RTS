@@ -18,5 +18,8 @@ MonoBehaviour:
   - unit: {fileID: 11400000, guid: 376a14dbcf79585408dc8957ca2dcd3e, type: 2}
     count: 7
     delay: 0
+  - unit: {fileID: 11400000, guid: c4e8a1d95b2f4e7d8a3c6b0f9e2d5174, type: 2}
+    count: 2
+    delay: 0
   spawnInterval: 2
   restAfterWave: 20
