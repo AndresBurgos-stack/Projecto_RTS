@@ -296,7 +296,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 749e5fd668c7fad448e898f3ae567ece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  definition: {fileID: 11400000, guid: 376a14dbcf79585408dc8957ca2dcd3e, type: 2}
+  definition: {fileID: 11400000, guid: a7f3c9d21e5b4c8f9d0a6b3e2c7f1485, type: 2}
   currentHealth: 0
   destroyOnDeath: 1
   corpseDuration: 1.1
