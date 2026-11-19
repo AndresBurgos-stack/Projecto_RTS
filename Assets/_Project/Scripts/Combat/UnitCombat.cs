@@ -496,6 +496,15 @@ namespace ProjectoRTS.Combat
                 }
 
                 _lastAttackStartTime = Time.time;
+
+                // Controllers with more than one attack animation (for example
+                // a sword slash and a shield bash) expose an AttackVariant int.
+                // Pick one at random so the unit does not repeat the same swing.
+                if (HasAnimatorParameter("AttackVariant"))
+                {
+                    _animator.SetInteger("AttackVariant", Random.Range(0, 2));
+                }
+
                 _animator.SetTrigger("Attack");
 
                 // The attack clip lasts ~1.02s and its OnAttackHit event fires
