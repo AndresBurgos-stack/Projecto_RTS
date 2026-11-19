@@ -21,6 +21,7 @@ MonoBehaviour:
   attackRange: 11
   attackInterval: 2.4
   damageReduction: 0
+  projectilePrefab: {fileID: 7123456789012345601, guid: cde70c7e05954e058f904dc2cc2b0a52, type: 3}
   moveSpeed: 3.4
   turnSpeed: 720
   stoppingDistance: 0.5

@@ -4,10 +4,11 @@ using UnityEngine;
 namespace ProjectoRTS.Combat
 {
     /// <summary>
-    /// Visible arrow that flies from a shooter to a unit target and applies
-    /// damage on impact. The arrow always despawns: on hit, when the target
-    /// dies mid-flight, or after a maximum lifetime, so arrows never
-    /// accumulate in the scene.
+    /// Visible projectile that flies from a shooter to a unit target and applies
+    /// damage on impact. Uses a simple arrow cube by default, or a custom visual
+    /// prefab (for example a javelin) when one is supplied. The projectile always
+    /// despawns: on hit, when the target dies mid-flight, or after a maximum
+    /// lifetime, so projectiles never accumulate in the scene.
     /// </summary>
     public sealed class ArrowProjectile : MonoBehaviour
     {
@@ -25,44 +26,50 @@ namespace ProjectoRTS.Combat
         private float _spawnTime;
         private Vector3 _lastTargetPoint;
 
-        /// <summary>Spawns an arrow that damages the target on impact.</summary>
+        /// <summary>Spawns a projectile that damages the target on impact.</summary>
         public static void Spawn(
             Vector3 origin,
             UnitRuntime target,
             float damage,
             UnitRuntime attacker = null,
-            float speed = DefaultSpeed)
+            float speed = DefaultSpeed,
+            GameObject visualPrefab = null)
         {
             if (target == null || !target.IsAlive || damage <= 0f)
             {
                 return;
             }
 
-            GameObject arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            arrow.name = "Arrow";
+            GameObject projectileObject = visualPrefab != null
+                ? Instantiate(visualPrefab)
+                : GameObject.CreatePrimitive(PrimitiveType.Cube);
+            projectileObject.name = visualPrefab != null ? visualPrefab.name : "Arrow";
 
-            Collider collider = arrow.GetComponent<Collider>();
-            if (collider != null)
+            foreach (Collider collider in projectileObject.GetComponentsInChildren<Collider>(true))
             {
                 Destroy(collider);
             }
 
-            MeshRenderer renderer = arrow.GetComponent<MeshRenderer>();
-            if (renderer != null)
+            if (visualPrefab == null)
             {
-                renderer.sharedMaterial = ResolveArrowMaterial();
+                MeshRenderer renderer = projectileObject.GetComponent<MeshRenderer>();
+                if (renderer != null)
+                {
+                    renderer.sharedMaterial = ResolveArrowMaterial();
+                }
+
+                projectileObject.transform.localScale = new Vector3(0.09f, 0.09f, 0.9f);
             }
 
-            arrow.transform.position = origin;
-            arrow.transform.localScale = new Vector3(0.09f, 0.09f, 0.9f);
+            projectileObject.transform.position = origin;
 
             Vector3 toTarget = TargetPoint(target) - origin;
             if (toTarget.sqrMagnitude > 0.0001f)
             {
-                arrow.transform.rotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+                projectileObject.transform.rotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
             }
 
-            ArrowProjectile projectile = arrow.AddComponent<ArrowProjectile>();
+            ArrowProjectile projectile = projectileObject.AddComponent<ArrowProjectile>();
             projectile._target = target;
             projectile._attacker = attacker;
             projectile._damage = damage;

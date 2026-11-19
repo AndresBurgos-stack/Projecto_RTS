@@ -53,6 +53,7 @@ namespace ProjectoRTS.Combat
         private float _attackDamage;
         private float _attackInterval;
         private float _rangeBonus;
+        private GameObject _projectilePrefab;
 
         public UnitRuntime Target => _target;
         public PantheonObjective ObjectiveTarget => _objectiveTarget;
@@ -168,6 +169,7 @@ namespace ProjectoRTS.Combat
             _attackRange = definition.AttackRange;
             _attackDamage = definition.AttackDamage;
             _attackInterval = Mathf.Max(0.05f, definition.AttackInterval);
+            _projectilePrefab = definition.ProjectilePrefab;
             _nextAttackTime = 0f;
         }
 
@@ -546,7 +548,8 @@ namespace ProjectoRTS.Combat
                         transform.position + Vector3.up * 1.2f,
                         _pendingUnitTarget,
                         _attackDamage,
-                        runtime);
+                        runtime,
+                        visualPrefab: _projectilePrefab);
                 }
             }
             else if (_pendingBuildingTarget != null && _pendingBuildingTarget.IsAlive)

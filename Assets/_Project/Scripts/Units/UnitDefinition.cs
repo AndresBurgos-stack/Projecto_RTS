@@ -40,6 +40,9 @@ namespace ProjectoRTS.Units
         [SerializeField, Min(0.05f)] private float attackInterval = 1f;
         [SerializeField, Range(0f, 0.95f)] private float damageReduction;
 
+        [Header("Projectile")]
+        [SerializeField] private GameObject projectilePrefab;
+
         [Header("Movement")]
         [SerializeField, Min(0f)] private float moveSpeed = 3.5f;
         [SerializeField, Min(0f)] private float turnSpeed = 720f;
@@ -56,6 +59,7 @@ namespace ProjectoRTS.Units
         public Faction Faction => faction;
         public UnitRole Role => role;
         public GameObject Prefab => prefab;
+        public GameObject ProjectilePrefab => projectilePrefab;
 
         public float MaxHealth => maxHealth;
         public float AttackDamage => attackDamage;
