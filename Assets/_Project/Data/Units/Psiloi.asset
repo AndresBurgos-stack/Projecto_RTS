@@ -16,9 +16,9 @@ MonoBehaviour:
   faction: 1
   role: 1
   prefab: {fileID: 1553898182154806581, guid: 6baa9caa506f5b048b5db54537f333c0, type: 3}
-  maxHealth: 70
-  attackDamage: 8
-  attackRange: 14
+  maxHealth: 75
+  attackDamage: 10
+  attackRange: 15
   attackInterval: 1.8
   damageReduction: 0
   moveSpeed: 3.4
