@@ -68,6 +68,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 90ca9abc7f0850047ae985155b9dcdca, type: 2}
   - {fileID: 11400000, guid: 2f80d1f7157378d4da0a49ff9c84f052, type: 2}
   - {fileID: 11400000, guid: a7f3c9d21e5b4c8f9d0a6b3e2c7f1485, type: 2}
+  - {fileID: 11400000, guid: 7a7a934850d9452d8e0fc0ae5d1a9827, type: 2}
   spawnPoint: {fileID: 3302915434038438430}
   spawnSpacing: 0.8
 --- !u!1 &8470696620904943209
