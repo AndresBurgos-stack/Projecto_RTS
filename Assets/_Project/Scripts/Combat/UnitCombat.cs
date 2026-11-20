@@ -29,6 +29,16 @@ namespace ProjectoRTS.Combat
         [SerializeField, Min(0f)] private float aggroRadius = 9f;
         [SerializeField] private bool autoAcquire = true;
 
+        [Header("Pilum Visuals")]
+        [SerializeField] private Transform pilumHandVisual;
+        [SerializeField] private Transform[] pilumBackVisuals;
+
+        [Header("Sword Visuals")]
+        [SerializeField] private Transform gladiusVisual;
+        [SerializeField] private Transform gladiusHandBone;
+        [SerializeField] private Vector3 gladiusHandLocalPosition = new Vector3(0.02f, 0.081f, -0.003f);
+        [SerializeField] private Vector3 gladiusHandLocalEuler = new Vector3(0f, 0f, -90f);
+
         private UnitRuntime _target;
         private PantheonObjective _objectiveTarget;
         private BuildingRuntime _buildingTarget;
@@ -54,18 +64,39 @@ namespace ProjectoRTS.Combat
         private float _attackInterval;
         private float _rangeBonus;
         private GameObject _projectilePrefab;
+        private int _remainingPilums;
+        private bool _usesPilumVolley;
+        private float _pilumDamage;
+        private float _pilumRange;
+        private float _pilumInterval;
+        private bool _pendingAttackUsesProjectile;
+        private bool _pendingAttackConsumesPilum;
+        private float _pendingAttackDamage;
+        private bool _drawSwordOnFirstMelee;
+        private bool _swordDrawn;
+        private bool _pendingDrawSword;
 
         public UnitRuntime Target => _target;
         public PantheonObjective ObjectiveTarget => _objectiveTarget;
         public BuildingRuntime BuildingTarget => _buildingTarget;
 
         /// <summary>
-        /// True when this unit fights in melee (Infantry or Cavalry).
+        /// True when this unit fights in melee. Infantry and cavalry units with
+        /// pilums still count as ranged attackers until the volley is spent.
         /// Melee units cannot damage archers mounted on walls.
         /// </summary>
         public bool IsMeleeAttacker =>
             runtime != null &&
-            (runtime.Role == UnitRole.Infantry || runtime.Role == UnitRole.Cavalry);
+            (runtime.Role == UnitRole.Infantry || runtime.Role == UnitRole.Cavalry) &&
+            _remainingPilums <= 0;
+
+        /// <summary>
+        /// Attack range used for chasing and acquiring targets. A unit with
+        /// pilums keeps its throwing range until the last pilum is spent.
+        /// </summary>
+        public float CurrentAttackRange =>
+            (_remainingPilums > 0 ? Mathf.Max(_attackRange, _pilumRange) : _attackRange) +
+            _rangeBonus;
 
         public bool HasTarget =>
             (_target != null && _target.IsAlive) ||
@@ -170,7 +201,24 @@ namespace ProjectoRTS.Combat
             _attackDamage = definition.AttackDamage;
             _attackInterval = Mathf.Max(0.05f, definition.AttackInterval);
             _projectilePrefab = definition.ProjectilePrefab;
+            _pilumDamage = definition.PilumDamage > 0f
+                ? definition.PilumDamage
+                : definition.AttackDamage;
+            _pilumRange = definition.PilumRange > 0f
+                ? definition.PilumRange
+                : definition.AttackRange;
+            _pilumInterval = Mathf.Max(
+                0.05f,
+                definition.PilumInterval > 0f
+                    ? definition.PilumInterval
+                    : definition.AttackInterval);
+            _remainingPilums = Mathf.Max(0, definition.PilumCount);
+            _usesPilumVolley = _remainingPilums > 0;
+            _drawSwordOnFirstMelee = definition.DrawSwordOnFirstMelee;
+            _swordDrawn = false;
+            _pendingDrawSword = false;
             _nextAttackTime = 0f;
+            RefreshPilumVisuals();
         }
 
         /// <summary>Enables or disables automatic enemy acquisition.</summary>
@@ -380,7 +428,7 @@ namespace ProjectoRTS.Combat
 
                 if (movement == null || !movement.IsMoving)
                 {
-                    float radius = Mathf.Max(aggroRadius, _attackRange + _rangeBonus + rangePadding);
+                    float radius = Mathf.Max(aggroRadius, CurrentAttackRange + rangePadding);
                     _target = UnitRegistry.FindNearestEnemy(
                         transform.position,
                         runtime.Faction,
@@ -430,7 +478,7 @@ namespace ProjectoRTS.Combat
             Vector3 delta = _target.transform.position - transform.position;
             delta.y = 0f;
             float distance = delta.magnitude;
-            float attackDistance = _attackRange + _rangeBonus + rangePadding;
+            float attackDistance = CurrentAttackRange + rangePadding;
 
             if (distance > attackDistance)
             {
@@ -469,11 +517,21 @@ namespace ProjectoRTS.Combat
         /// </summary>
         private void BeginAttack()
         {
-            _nextAttackTime = Time.time + _attackInterval;
             _pendingUnitTarget = _target;
             _pendingBuildingTarget = _buildingTarget;
             _pendingObjectiveTarget = _objectiveTarget;
-            _pendingHitDeadline = Time.time + Mathf.Max(0.5f, _attackInterval * 1.2f);
+
+            // Only living units can be hit by a pilum. Buildings and the
+            // objective are always attacked in melee, so the volley is kept.
+            bool usesProjectile = !IsMeleeAttacker && _pendingUnitTarget != null;
+            bool consumesPilum = usesProjectile && _usesPilumVolley;
+            float interval = consumesPilum ? _pilumInterval : _attackInterval;
+
+            _nextAttackTime = Time.time + interval;
+            _pendingAttackUsesProjectile = usesProjectile;
+            _pendingAttackConsumesPilum = consumesPilum;
+            _pendingAttackDamage = consumesPilum ? _pilumDamage : _attackDamage;
+            _pendingHitDeadline = Time.time + Mathf.Max(0.5f, interval * 1.2f);
             _hitAppliedThisAttack = false;
 
             if (_proceduralAnimator != null)
@@ -482,40 +540,68 @@ namespace ProjectoRTS.Combat
                 return;
             }
 
-            if (_animator != null && HasAnimatorParameter("Attack"))
+            if (_animator == null)
             {
-                // The attack clip is about one second long: never re-trigger
-                // while it is still playing, or the animation would restart
-                // mid-play without a new shot.
-                const float minAttackSpacing = 1.05f;
-
-                if (Time.time - _lastAttackStartTime < minAttackSpacing)
-                {
-                    _nextAttackTime = _lastAttackStartTime + minAttackSpacing;
-                    return;
-                }
-
-                _lastAttackStartTime = Time.time;
-
-                // Controllers with more than one attack animation (for example
-                // a sword slash and a shield bash) expose an AttackVariant int.
-                // Pick one at random so the unit does not repeat the same swing.
-                if (HasAnimatorParameter("AttackVariant"))
-                {
-                    _animator.SetInteger("AttackVariant", Random.Range(0, 2));
-                }
-
-                _animator.SetTrigger("Attack");
-
-                // The attack clip lasts ~1.02s and its OnAttackHit event fires
-                // mid-clip, so the fallback only needs to outlive the clip, not
-                // the whole attack interval.
-                _pendingHitDeadline = Time.time + 1.2f;
+                // Units without an attack clip keep the previous instant-hit behaviour.
+                ApplyAttackHit();
                 return;
             }
 
-            // Units without an attack clip keep the previous instant-hit behaviour.
-            ApplyAttackHit();
+            // The attack clips are about one second long: never re-trigger
+            // while one is still playing, or the animation would restart
+            // mid-play without a new shot.
+            const float minAttackSpacing = 1.05f;
+
+            if (Time.time - _lastAttackStartTime < minAttackSpacing)
+            {
+                _nextAttackTime = _lastAttackStartTime + minAttackSpacing;
+                ClearPendingTargets();
+                return;
+            }
+
+            if (usesProjectile && HasAnimatorParameter("Throw"))
+            {
+                _lastAttackStartTime = Time.time;
+                _animator.SetTrigger("Throw");
+
+                // The throw clip is longer than the melee swing: its hit event
+                // fires around 1.15 s at normal speed.
+                _pendingHitDeadline = Time.time + 1.6f;
+                return;
+            }
+
+            if (!HasAnimatorParameter("Attack"))
+            {
+                ApplyAttackHit();
+                return;
+            }
+
+            _lastAttackStartTime = Time.time;
+
+            // Controllers with more than one attack animation (for example
+            // a sword slash and a shield bash) expose an AttackVariant int.
+            // Pick one at random so the unit does not repeat the same swing.
+            // The first melee attack of a sheathed unit uses variant 2, the
+            // draw animation, and only then the normal variants are rolled.
+            if (HasAnimatorParameter("AttackVariant"))
+            {
+                int variant = Random.Range(0, 2);
+
+                if (_drawSwordOnFirstMelee && !_swordDrawn)
+                {
+                    variant = 2;
+                    _pendingDrawSword = true;
+                }
+
+                _animator.SetInteger("AttackVariant", variant);
+            }
+
+            _animator.SetTrigger("Attack");
+
+            // The attack clip lasts ~1.1s and its OnAttackHit event fires
+            // mid-clip, so the fallback only needs to outlive the clip, not
+            // the whole attack interval.
+            _pendingHitDeadline = Time.time + 1.2f;
         }
 
         /// <summary>
@@ -547,30 +633,97 @@ namespace ProjectoRTS.Combat
 
             if (_pendingUnitTarget != null && _pendingUnitTarget.IsAlive)
             {
-                if (IsMeleeAttacker)
-                {
-                    _pendingUnitTarget.ApplyDamage(_attackDamage, true, runtime);
-                }
-                else
+                if (_pendingAttackUsesProjectile)
                 {
                     ArrowProjectile.Spawn(
                         transform.position + Vector3.up * 1.2f,
                         _pendingUnitTarget,
-                        _attackDamage,
+                        _pendingAttackDamage,
                         runtime,
                         visualPrefab: _projectilePrefab);
+                }
+                else
+                {
+                    _pendingUnitTarget.ApplyDamage(_pendingAttackDamage, true, runtime);
                 }
             }
             else if (_pendingBuildingTarget != null && _pendingBuildingTarget.IsAlive)
             {
-                _pendingBuildingTarget.ApplyDamage(_attackDamage);
+                _pendingBuildingTarget.ApplyDamage(_pendingAttackDamage);
             }
             else if (_pendingObjectiveTarget != null && _pendingObjectiveTarget.IsAlive)
             {
-                _pendingObjectiveTarget.ApplyDamage(_attackDamage);
+                _pendingObjectiveTarget.ApplyDamage(_pendingAttackDamage);
+            }
+
+            if (_pendingAttackConsumesPilum)
+            {
+                _remainingPilums = Mathf.Max(0, _remainingPilums - 1);
+                _usesPilumVolley = _remainingPilums > 0;
+                RefreshPilumVisuals();
+            }
+
+            if (_pendingDrawSword)
+            {
+                AttachGladiusToHand();
             }
 
             ClearPendingTargets();
+        }
+
+        /// <summary>
+        /// Shows the pilum held in hand while the volley lasts and hides the
+        /// spare pilums on the back one by one as they are thrown.
+        /// </summary>
+        private void RefreshPilumVisuals()
+        {
+            if (pilumHandVisual != null)
+            {
+                pilumHandVisual.gameObject.SetActive(
+                    _remainingPilums > 0 && !_swordDrawn);
+            }
+
+            if (pilumBackVisuals == null)
+            {
+                return;
+            }
+
+            int visibleBackPilums = Mathf.Max(0, _remainingPilums - 1);
+
+            for (int i = 0; i < pilumBackVisuals.Length; i++)
+            {
+                Transform visual = pilumBackVisuals[i];
+
+                if (visual != null)
+                {
+                    visual.gameObject.SetActive(i < visibleBackPilums);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Moves the sheathed gladius from the hip to the hand when the draw
+        /// animation reaches its hit frame. The local offset matches the
+        /// Legionario prefab so the grip lines up with the same hand bone.
+        /// </summary>
+        private void AttachGladiusToHand()
+        {
+            _pendingDrawSword = false;
+            _swordDrawn = true;
+
+            if (pilumHandVisual != null)
+            {
+                pilumHandVisual.gameObject.SetActive(false);
+            }
+
+            if (gladiusVisual == null || gladiusHandBone == null)
+            {
+                return;
+            }
+
+            gladiusVisual.SetParent(gladiusHandBone, false);
+            gladiusVisual.localPosition = gladiusHandLocalPosition;
+            gladiusVisual.localRotation = Quaternion.Euler(gladiusHandLocalEuler);
         }
 
         private void ClearPendingTargets()
@@ -578,6 +731,10 @@ namespace ProjectoRTS.Combat
             _pendingUnitTarget = null;
             _pendingBuildingTarget = null;
             _pendingObjectiveTarget = null;
+            _pendingAttackUsesProjectile = false;
+            _pendingAttackConsumesPilum = false;
+            _pendingAttackDamage = 0f;
+            _pendingDrawSword = false;
             _pendingHitDeadline = float.MaxValue;
         }
 

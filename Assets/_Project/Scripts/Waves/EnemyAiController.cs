@@ -55,6 +55,24 @@ namespace ProjectoRTS.Waves
         private float _lockedUntil;
         private PantheonObjective _objective;
 
+        /// <summary>
+        /// Detection radius extended by the unit's actual attack range, so a
+        /// pilum-armed unit can acquire archers standing on walls.
+        /// </summary>
+        private float EffectiveDetectionRadius =>
+            combat != null
+                ? Mathf.Max(detectionRadius, combat.CurrentAttackRange + 1f)
+                : detectionRadius;
+
+        /// <summary>
+        /// Leash radius extended by the attack range, otherwise a target on a
+        /// wall would be dropped as soon as the unit stopped to throw.
+        /// </summary>
+        private float EffectiveLeashRadius =>
+            combat != null
+                ? Mathf.Max(leashRadius, combat.CurrentAttackRange + 4f)
+                : leashRadius;
+
         private void Awake()
         {
             if (runtime == null)
@@ -179,10 +197,11 @@ namespace ProjectoRTS.Waves
             }
 
             Vector3 targetPosition = combat.Target.transform.position;
+            float effectiveLeash = EffectiveLeashRadius;
             bool targetOutOfLeash =
-                (targetPosition - _home).sqrMagnitude > leashRadius * leashRadius;
+                (targetPosition - _home).sqrMagnitude > effectiveLeash * effectiveLeash;
             bool selfOutOfLeash =
-                (transform.position - _home).sqrMagnitude > leashRadius * leashRadius;
+                (transform.position - _home).sqrMagnitude > effectiveLeash * effectiveLeash;
 
             if (targetOutOfLeash || selfOutOfLeash)
             {
@@ -263,7 +282,7 @@ namespace ProjectoRTS.Waves
             UnitRuntime enemy = UnitRegistry.FindNearestEnemy(
                 transform.position,
                 runtime.Faction,
-                detectionRadius,
+                EffectiveDetectionRadius,
                 combat != null && combat.IsMeleeAttacker);
 
             if (enemy == null)

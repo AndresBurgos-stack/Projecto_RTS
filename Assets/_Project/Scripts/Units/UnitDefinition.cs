@@ -43,6 +43,15 @@ namespace ProjectoRTS.Units
         [Header("Projectile")]
         [SerializeField] private GameObject projectilePrefab;
 
+        [Header("Pilum Volley")]
+        [SerializeField, Min(0)] private int pilumCount;
+        [SerializeField, Min(0f)] private float pilumDamage = 16f;
+        [SerializeField, Min(0f)] private float pilumRange = 18f;
+        [SerializeField, Min(0.05f)] private float pilumInterval = 1.8f;
+
+        [Header("Sword")]
+        [SerializeField] private bool drawSwordOnFirstMelee;
+
         [Header("Movement")]
         [SerializeField, Min(0f)] private float moveSpeed = 3.5f;
         [SerializeField, Min(0f)] private float turnSpeed = 720f;
@@ -60,6 +69,12 @@ namespace ProjectoRTS.Units
         public UnitRole Role => role;
         public GameObject Prefab => prefab;
         public GameObject ProjectilePrefab => projectilePrefab;
+
+        public int PilumCount => pilumCount;
+        public float PilumDamage => pilumDamage;
+        public float PilumRange => pilumRange;
+        public float PilumInterval => pilumInterval;
+        public bool DrawSwordOnFirstMelee => drawSwordOnFirstMelee;
 
         public float MaxHealth => maxHealth;
         public float AttackDamage => attackDamage;
