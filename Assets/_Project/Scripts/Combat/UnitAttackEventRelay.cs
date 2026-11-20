@@ -25,5 +25,14 @@ namespace ProjectoRTS.Combat
                 _combat.ApplyAttackHit();
             }
         }
+
+        // Fired by the DrawSword clip when the gladius leaves the scabbard.
+        public void OnDrawSword()
+        {
+            if (_combat != null)
+            {
+                _combat.ApplyDrawSword();
+            }
+        }
     }
 }

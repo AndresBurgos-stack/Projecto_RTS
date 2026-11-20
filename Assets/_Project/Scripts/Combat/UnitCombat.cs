@@ -74,7 +74,9 @@ namespace ProjectoRTS.Combat
         private float _pendingAttackDamage;
         private bool _drawSwordOnFirstMelee;
         private bool _swordDrawn;
-        private bool _pendingDrawSword;
+        private bool _drawingSword;
+        private float _drawSwordReadyTime;
+        private float _drawSwordDeadline;
 
         public UnitRuntime Target => _target;
         public PantheonObjective ObjectiveTarget => _objectiveTarget;
@@ -216,7 +218,9 @@ namespace ProjectoRTS.Combat
             _usesPilumVolley = _remainingPilums > 0;
             _drawSwordOnFirstMelee = definition.DrawSwordOnFirstMelee;
             _swordDrawn = false;
-            _pendingDrawSword = false;
+            _drawingSword = false;
+            _drawSwordReadyTime = 0f;
+            _drawSwordDeadline = 0f;
             _nextAttackTime = 0f;
             RefreshPilumVisuals();
         }
@@ -442,6 +446,15 @@ namespace ProjectoRTS.Combat
                 }
             }
 
+            // The draw is a visible action that happens before committing to
+            // melee: wait for the last throw to finish, stop, sheathe/unsheathe
+            // and only then chase or attack.
+            if (_drawingSword || ShouldDrawSwordBeforeAttacking())
+            {
+                UpdateDrawSword();
+                return;
+            }
+
             if (_buildingTarget != null)
             {
                 UpdateBuildingAttack();
@@ -581,19 +594,9 @@ namespace ProjectoRTS.Combat
             // Controllers with more than one attack animation (for example
             // a sword slash and a shield bash) expose an AttackVariant int.
             // Pick one at random so the unit does not repeat the same swing.
-            // The first melee attack of a sheathed unit uses variant 2, the
-            // draw animation, and only then the normal variants are rolled.
             if (HasAnimatorParameter("AttackVariant"))
             {
-                int variant = Random.Range(0, 2);
-
-                if (_drawSwordOnFirstMelee && !_swordDrawn)
-                {
-                    variant = 2;
-                    _pendingDrawSword = true;
-                }
-
-                _animator.SetInteger("AttackVariant", variant);
+                _animator.SetInteger("AttackVariant", Random.Range(0, 2));
             }
 
             _animator.SetTrigger("Attack");
@@ -661,11 +664,13 @@ namespace ProjectoRTS.Combat
                 _remainingPilums = Mathf.Max(0, _remainingPilums - 1);
                 _usesPilumVolley = _remainingPilums > 0;
                 RefreshPilumVisuals();
-            }
 
-            if (_pendingDrawSword)
-            {
-                AttachGladiusToHand();
+                if (_remainingPilums <= 0 && _drawSwordOnFirstMelee && !_swordDrawn)
+                {
+                    // Do not interrupt the throw clip: the draw starts once the
+                    // last pilum animation has had time to finish.
+                    _drawSwordReadyTime = Mathf.Max(_nextAttackTime, Time.time + 0.9f);
+                }
             }
 
             ClearPendingTargets();
@@ -702,14 +707,122 @@ namespace ProjectoRTS.Combat
         }
 
         /// <summary>
-        /// Moves the sheathed gladius from the hip to the hand when the draw
-        /// animation reaches its hit frame. The local offset matches the
-        /// Legionario prefab so the grip lines up with the same hand bone.
+        /// True when the unit must stop and draw its gladius before chasing or
+        /// attacking. Only melee-ready units with a live target qualify.
         /// </summary>
-        private void AttachGladiusToHand()
+        private bool ShouldDrawSwordBeforeAttacking()
         {
-            _pendingDrawSword = false;
+            return _drawSwordOnFirstMelee &&
+                !_swordDrawn &&
+                IsMeleeAttacker &&
+                HasTarget;
+        }
+
+        /// <summary>
+        /// Drives the pre-attack draw: waits for the last pilum throw to end,
+        /// plays the DrawSword clip and blocks movement and attacks until the
+        /// animation event (or the deadline fallback) equips the gladius.
+        /// </summary>
+        private void UpdateDrawSword()
+        {
+            Transform targetTransform = GetDrawTargetTransform();
+
+            if (_drawingSword)
+            {
+                StopAndFace(targetTransform);
+
+                if (Time.time >= _drawSwordDeadline)
+                {
+                    ApplyDrawSword();
+                }
+
+                return;
+            }
+
+            if (Time.time < _drawSwordReadyTime)
+            {
+                StopAndFace(targetTransform);
+                return;
+            }
+
+            BeginDrawSword(targetTransform);
+        }
+
+        private void BeginDrawSword(Transform targetTransform)
+        {
+            _drawingSword = true;
+            _drawSwordDeadline = Time.time + 1f;
+            StopAndFace(targetTransform);
+
+            if (_animator != null && HasAnimatorParameter("DrawSword"))
+            {
+                _animator.ResetTrigger("DrawSword");
+                _animator.SetTrigger("DrawSword");
+                return;
+            }
+
+            // Controllers without a draw clip equip the sword instantly.
+            ApplyDrawSword();
+        }
+
+        private void StopAndFace(Transform targetTransform)
+        {
+            if (movement == null)
+            {
+                return;
+            }
+
+            movement.Stop();
+
+            if (targetTransform != null)
+            {
+                movement.FaceTowards(targetTransform.position);
+            }
+        }
+
+        private Transform GetDrawTargetTransform()
+        {
+            if (_buildingTarget != null)
+            {
+                return _buildingTarget.transform;
+            }
+
+            if (_objectiveTarget != null)
+            {
+                return _objectiveTarget.transform;
+            }
+
+            if (_target != null)
+            {
+                return _target.transform;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Called by the DrawSword animation event (or by the fallback
+        /// deadline): moves the gladius from the hip to the hand. The local
+        /// offset matches the Legionario prefab so the grip lines up with the
+        /// same hand bone.
+        /// </summary>
+        public void ApplyDrawSword()
+        {
+            _drawingSword = false;
+            _drawSwordDeadline = 0f;
+
+            if (_animator != null && HasAnimatorParameter("DrawSword"))
+            {
+                _animator.ResetTrigger("DrawSword");
+            }
+
+            if (_swordDrawn)
+            {
+                return;
+            }
+
             _swordDrawn = true;
+            _drawSwordReadyTime = 0f;
 
             if (pilumHandVisual != null)
             {
@@ -724,6 +837,9 @@ namespace ProjectoRTS.Combat
             gladiusVisual.SetParent(gladiusHandBone, false);
             gladiusVisual.localPosition = gladiusHandLocalPosition;
             gladiusVisual.localRotation = Quaternion.Euler(gladiusHandLocalEuler);
+
+            // Let the draw clip finish before the next attack can interrupt it.
+            _nextAttackTime = Mathf.Max(_nextAttackTime, Time.time + 0.15f);
         }
 
         private void ClearPendingTargets()
@@ -734,7 +850,6 @@ namespace ProjectoRTS.Combat
             _pendingAttackUsesProjectile = false;
             _pendingAttackConsumesPilum = false;
             _pendingAttackDamage = 0f;
-            _pendingDrawSword = false;
             _pendingHitDeadline = float.MaxValue;
         }
 
