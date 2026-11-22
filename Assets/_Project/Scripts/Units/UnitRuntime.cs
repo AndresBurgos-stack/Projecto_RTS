@@ -17,6 +17,7 @@ namespace ProjectoRTS.Units
         [SerializeField] private UnitDefinition definition;
         [SerializeField] private float currentHealth;
         [SerializeField] private bool destroyOnDeath = true;
+        [SerializeField, Min(0f)] private float deathLingerDuration = 4.2f;
         [SerializeField, Min(0f)] private float corpseDuration = 1.1f;
 
         private bool _registered;
@@ -167,9 +168,17 @@ namespace ProjectoRTS.Units
             Died?.Invoke(this);
 
             Animator animator = GetComponentInChildren<Animator>(true);
-            if (animator != null && HasAnimatorParameter(animator, "Dead"))
+            if (animator != null)
             {
-                animator.SetTrigger("Dead");
+                if (HasAnimatorParameter(animator, "DeathVariant"))
+                {
+                    animator.SetInteger("DeathVariant", UnityEngine.Random.Range(0, 2));
+                }
+
+                if (HasAnimatorParameter(animator, "Dead"))
+                {
+                    animator.SetTrigger("Dead");
+                }
             }
 
             if (destroyOnDeath)
@@ -213,6 +222,15 @@ namespace ProjectoRTS.Units
             foreach (Collider collider in GetComponentsInChildren<Collider>())
             {
                 collider.enabled = false;
+            }
+
+            // Let the death animation play before the corpse sinks and fades.
+            float linger = deathLingerDuration;
+
+            while (linger > 0f)
+            {
+                linger -= Time.deltaTime;
+                yield return null;
             }
 
             Vector3 startScale = transform.localScale;

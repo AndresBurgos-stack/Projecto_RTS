@@ -56,6 +56,7 @@ namespace ProjectoRTS.Units
 
         private Animator _animator;
         private UnitMovement _movement;
+        private UnitRuntime _runtime;
 
         private Transform _hips, _spine, _chest;
         private Transform _leftUpperArm, _leftLowerArm, _rightUpperArm, _rightLowerArm;
@@ -154,6 +155,44 @@ namespace ProjectoRTS.Units
 
             // The procedural animator owns the pose from now on.
             _animator.enabled = false;
+        }
+
+        private void OnEnable()
+        {
+            if (_runtime == null)
+            {
+                _runtime = GetComponent<UnitRuntime>();
+            }
+
+            if (_runtime != null)
+            {
+                _runtime.Died += HandleDied;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_runtime != null)
+            {
+                _runtime.Died -= HandleDied;
+            }
+        }
+
+        private void HandleDied(UnitRuntime unit)
+        {
+            if (_animator == null)
+            {
+                return;
+            }
+
+            if (_modelRoot != null)
+            {
+                _modelRoot.localPosition = _modelRestPosition;
+            }
+
+            // Hand the rig back to the Animator so the death clip can play.
+            _animator.enabled = true;
+            enabled = false;
         }
 
         private void LateUpdate()
