@@ -490,6 +490,9 @@ Estado: los clips y controladores están preparados; la asignación del `Animato
 - 8 nodos de bronce nuevos (roca + 4 vetas de mena, 400 unidades cada uno) en zonas vacías: noreste (115,115) y (150,85), noroeste (-135,90), sur (-65,-150) y (95,-145), este (150,-25), oeste (-160,-30) y norte (-90,165).
 - 8 nodos de madera nuevos (abedul con componente `ResourceNode`, 400 unidades) repartidos por el resto del mapa, lejos de los grupos existentes.
 - Todo el escenografía nueva vive bajo un contenedor "Entorno" en la raíz de la escena; los nodos nuevos se agregaron al contenedor "Resource Nodes" existente. Sin NavMesh horneado: el sistema lo hornea en runtime y ya incluye los colliders nuevos.
+- Decoración ambiental nueva bajo `Entorno > Decoracion Ambiental`: 38 matas de pasto (`PP_Grass_15` y `PP_Grass_11`), 12 rocas (`PP_Rock_Pile_Forest_Moss_05/10`) agrupadas en 5 conjuntos de 2-3 y 6 hongos (`PP_Mushroom_Fantasy_Orange_09`). Cada instancia tiene escala uniforme aleatoria entre 0.85 y 1.2 y rotación Y aleatoria de 0 a 360 grados para romper el patrón.
+- El pasto y los hongos no son recolectables ni bloquean el paso: se desactivó el `MeshCollider` de cada instancia y se marcaron como Static para aprovechar el batching. Las rocas conservan su `MeshCollider` y llevan un `NavMeshObstacle` con carve para excluir su huella del NavMesh.
+- La distribución evita el Panteón, el spawn romano, la montaña, el lago, los nodos de recursos existentes y el edificio colocado, con márgenes de seguridad.
 
 ## Siguiente paso
 
