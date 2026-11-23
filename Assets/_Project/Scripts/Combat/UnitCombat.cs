@@ -1,3 +1,4 @@
+using ProjectoRTS.Audio;
 using ProjectoRTS.Buildings;
 using ProjectoRTS.Units;
 using ProjectoRTS.Waves;
@@ -638,24 +639,48 @@ namespace ProjectoRTS.Combat
             {
                 if (_pendingAttackUsesProjectile)
                 {
+                    if (_pendingAttackDamage > 0f)
+                    {
+                        GameAudio.PlayArrowRelease(transform.position + Vector3.up * 1.2f);
+                    }
+
                     ArrowProjectile.Spawn(
                         transform.position + Vector3.up * 1.2f,
                         _pendingUnitTarget,
                         _pendingAttackDamage,
                         runtime,
-                        visualPrefab: _projectilePrefab);
+                        visualPrefab: _projectilePrefab,
+                        heavyImpact: _pendingAttackConsumesPilum);
                 }
                 else
                 {
+                    if (_pendingAttackDamage > 0f)
+                    {
+                        GameAudio.PlaySwordStrike(
+                            _pendingUnitTarget.transform.position + Vector3.up * 1.1f);
+                    }
+
                     _pendingUnitTarget.ApplyDamage(_pendingAttackDamage, true, runtime);
                 }
             }
             else if (_pendingBuildingTarget != null && _pendingBuildingTarget.IsAlive)
             {
+                if (_pendingAttackDamage > 0f)
+                {
+                    GameAudio.PlaySwordStrike(
+                        _pendingBuildingTarget.transform.position + Vector3.up * 1.2f);
+                }
+
                 _pendingBuildingTarget.ApplyDamage(_pendingAttackDamage);
             }
             else if (_pendingObjectiveTarget != null && _pendingObjectiveTarget.IsAlive)
             {
+                if (_pendingAttackDamage > 0f)
+                {
+                    GameAudio.PlaySwordStrike(
+                        _pendingObjectiveTarget.transform.position + Vector3.up * 1.5f);
+                }
+
                 _pendingObjectiveTarget.ApplyDamage(_pendingAttackDamage);
             }
 

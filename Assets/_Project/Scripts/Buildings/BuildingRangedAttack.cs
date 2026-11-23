@@ -1,4 +1,5 @@
 using System.Collections;
+using ProjectoRTS.Audio;
 using ProjectoRTS.Units;
 using UnityEngine;
 
@@ -94,6 +95,7 @@ namespace ProjectoRTS.Buildings
                 yield break;
             }
 
+            GameAudio.PlayArrowRelease(transform.position + Vector3.up * muzzleHeight);
             target.ApplyDamage(attackDamage);
             StartCoroutine(FlyArrow(target));
         }
@@ -146,6 +148,7 @@ namespace ProjectoRTS.Buildings
                 yield return null;
             }
 
+            GameAudio.PlayArrowImpact(end);
             Destroy(arrow);
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ProjectoRTS.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -35,6 +36,7 @@ namespace ProjectoRTS.Buildings
         private Image _fill;
         private Text _label;
         private Camera _camera;
+        private AudioSource _constructionAudio;
         private float _progress;
         private bool _completed;
 
@@ -66,10 +68,13 @@ namespace ProjectoRTS.Buildings
         private void OnDisable()
         {
             Sites.Remove(this);
+            StopConstructionAudio();
         }
 
         private void OnDestroy()
         {
+            StopConstructionAudio();
+
             if (_ghostMaterial != null)
             {
                 Destroy(_ghostMaterial);
@@ -116,6 +121,7 @@ namespace ProjectoRTS.Buildings
 
             EnsureBar();
             RefreshBar();
+            StartConstructionAudio();
         }
 
         /// <summary>
@@ -192,6 +198,7 @@ namespace ProjectoRTS.Buildings
         {
             _completed = true;
             _progress = 1f;
+            StopConstructionAudio();
 
             for (int i = 0; i < _renderers.Count; i++)
             {
@@ -211,6 +218,27 @@ namespace ProjectoRTS.Buildings
 
             Sites.Remove(this);
             Completed?.Invoke(this);
+        }
+
+        private void StartConstructionAudio()
+        {
+            if (_constructionAudio == null)
+            {
+                _constructionAudio = GameAudio.CreateConstructionSource(gameObject);
+            }
+
+            if (_constructionAudio != null && !_constructionAudio.isPlaying)
+            {
+                _constructionAudio.Play();
+            }
+        }
+
+        private void StopConstructionAudio()
+        {
+            if (_constructionAudio != null)
+            {
+                _constructionAudio.Stop();
+            }
         }
 
         private void CacheParts()

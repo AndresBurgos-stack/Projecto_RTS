@@ -1,3 +1,4 @@
+using ProjectoRTS.Audio;
 using ProjectoRTS.Units;
 using UnityEngine;
 
@@ -25,6 +26,7 @@ namespace ProjectoRTS.Combat
         private float _speed = DefaultSpeed;
         private float _spawnTime;
         private Vector3 _lastTargetPoint;
+        private bool _heavyImpact;
 
         /// <summary>Spawns a projectile that damages the target on impact.</summary>
         public static void Spawn(
@@ -33,7 +35,8 @@ namespace ProjectoRTS.Combat
             float damage,
             UnitRuntime attacker = null,
             float speed = DefaultSpeed,
-            GameObject visualPrefab = null)
+            GameObject visualPrefab = null,
+            bool heavyImpact = false)
         {
             if (target == null || !target.IsAlive || damage <= 0f)
             {
@@ -76,6 +79,7 @@ namespace ProjectoRTS.Combat
             projectile._speed = Mathf.Max(1f, speed);
             projectile._spawnTime = Time.time;
             projectile._lastTargetPoint = TargetPoint(target);
+            projectile._heavyImpact = heavyImpact;
         }
 
         private void Update()
@@ -114,6 +118,15 @@ namespace ProjectoRTS.Combat
             if (_target != null && _target.IsAlive)
             {
                 _target.ApplyDamage(_damage, false, _attacker);
+            }
+
+            if (_heavyImpact)
+            {
+                GameAudio.PlayPilumImpact(transform.position);
+            }
+            else
+            {
+                GameAudio.PlayArrowImpact(transform.position);
             }
 
             Destroy(gameObject);
