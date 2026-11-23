@@ -26,7 +26,7 @@ namespace ProjectoRTS.Combat
         private float _speed = DefaultSpeed;
         private float _spawnTime;
         private Vector3 _lastTargetPoint;
-        private bool _heavyImpact;
+        private bool _spearImpact;
 
         /// <summary>Spawns a projectile that damages the target on impact.</summary>
         public static void Spawn(
@@ -36,7 +36,7 @@ namespace ProjectoRTS.Combat
             UnitRuntime attacker = null,
             float speed = DefaultSpeed,
             GameObject visualPrefab = null,
-            bool heavyImpact = false)
+            bool spearImpact = false)
         {
             if (target == null || !target.IsAlive || damage <= 0f)
             {
@@ -79,7 +79,7 @@ namespace ProjectoRTS.Combat
             projectile._speed = Mathf.Max(1f, speed);
             projectile._spawnTime = Time.time;
             projectile._lastTargetPoint = TargetPoint(target);
-            projectile._heavyImpact = heavyImpact;
+            projectile._spearImpact = spearImpact;
         }
 
         private void Update()
@@ -120,7 +120,7 @@ namespace ProjectoRTS.Combat
                 _target.ApplyDamage(_damage, false, _attacker);
             }
 
-            if (_heavyImpact)
+            if (_spearImpact)
             {
                 GameAudio.PlayPilumImpact(transform.position);
             }

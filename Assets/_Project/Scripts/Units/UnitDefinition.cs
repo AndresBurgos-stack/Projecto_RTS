@@ -52,6 +52,9 @@ namespace ProjectoRTS.Units
         [Header("Sword")]
         [SerializeField] private bool drawSwordOnFirstMelee;
 
+        [Header("Audio")]
+        [SerializeField] private bool usesSpearImpact;
+
         [Header("Movement")]
         [SerializeField, Min(0f)] private float moveSpeed = 3.5f;
         [SerializeField, Min(0f)] private float turnSpeed = 720f;
@@ -75,6 +78,7 @@ namespace ProjectoRTS.Units
         public float PilumRange => pilumRange;
         public float PilumInterval => pilumInterval;
         public bool DrawSwordOnFirstMelee => drawSwordOnFirstMelee;
+        public bool UsesSpearImpact => usesSpearImpact;
 
         public float MaxHealth => maxHealth;
         public float AttackDamage => attackDamage;

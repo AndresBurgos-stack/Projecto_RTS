@@ -21,6 +21,7 @@ MonoBehaviour:
   attackRange: 1.5
   attackInterval: 1.2
   damageReduction: 0.2
+  usesSpearImpact: 1
   moveSpeed: 3.2
   turnSpeed: 720
   stoppingDistance: 0.5

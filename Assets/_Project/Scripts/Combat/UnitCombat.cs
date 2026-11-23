@@ -73,6 +73,7 @@ namespace ProjectoRTS.Combat
         private bool _pendingAttackUsesProjectile;
         private bool _pendingAttackConsumesPilum;
         private float _pendingAttackDamage;
+        private bool _usesSpearImpact;
         private bool _drawSwordOnFirstMelee;
         private bool _swordDrawn;
         private bool _drawingSword;
@@ -218,6 +219,7 @@ namespace ProjectoRTS.Combat
             _remainingPilums = Mathf.Max(0, definition.PilumCount);
             _usesPilumVolley = _remainingPilums > 0;
             _drawSwordOnFirstMelee = definition.DrawSwordOnFirstMelee;
+            _usesSpearImpact = definition.UsesSpearImpact;
             _swordDrawn = false;
             _drawingSword = false;
             _drawSwordReadyTime = 0f;
@@ -650,36 +652,27 @@ namespace ProjectoRTS.Combat
                         _pendingAttackDamage,
                         runtime,
                         visualPrefab: _projectilePrefab,
-                        heavyImpact: _pendingAttackConsumesPilum);
+                        spearImpact: _usesSpearImpact || _pendingAttackConsumesPilum);
                 }
                 else
                 {
-                    if (_pendingAttackDamage > 0f)
-                    {
-                        GameAudio.PlaySwordStrike(
-                            _pendingUnitTarget.transform.position + Vector3.up * 1.1f);
-                    }
+                    PlayMeleeImpact(
+                        _pendingUnitTarget.transform.position + Vector3.up * 1.1f);
 
                     _pendingUnitTarget.ApplyDamage(_pendingAttackDamage, true, runtime);
                 }
             }
             else if (_pendingBuildingTarget != null && _pendingBuildingTarget.IsAlive)
             {
-                if (_pendingAttackDamage > 0f)
-                {
-                    GameAudio.PlaySwordStrike(
-                        _pendingBuildingTarget.transform.position + Vector3.up * 1.2f);
-                }
+                PlayMeleeImpact(
+                    _pendingBuildingTarget.transform.position + Vector3.up * 1.2f);
 
                 _pendingBuildingTarget.ApplyDamage(_pendingAttackDamage);
             }
             else if (_pendingObjectiveTarget != null && _pendingObjectiveTarget.IsAlive)
             {
-                if (_pendingAttackDamage > 0f)
-                {
-                    GameAudio.PlaySwordStrike(
-                        _pendingObjectiveTarget.transform.position + Vector3.up * 1.5f);
-                }
+                PlayMeleeImpact(
+                    _pendingObjectiveTarget.transform.position + Vector3.up * 1.5f);
 
                 _pendingObjectiveTarget.ApplyDamage(_pendingAttackDamage);
             }
@@ -699,6 +692,27 @@ namespace ProjectoRTS.Combat
             }
 
             ClearPendingTargets();
+        }
+
+        /// <summary>
+        /// Plays the correct impact sound for a melee hit. Spear units use the
+        /// pilum impact clip; everyone else keeps the sword strike.
+        /// </summary>
+        private void PlayMeleeImpact(Vector3 position)
+        {
+            if (_pendingAttackDamage <= 0f)
+            {
+                return;
+            }
+
+            if (_usesSpearImpact)
+            {
+                GameAudio.PlayPilumImpact(position);
+            }
+            else
+            {
+                GameAudio.PlaySwordStrike(position);
+            }
         }
 
         /// <summary>
