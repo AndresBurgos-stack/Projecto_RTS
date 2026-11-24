@@ -9,6 +9,11 @@
 [Mm]emoryCaptures/
 [Rr]ecordings/
 
+# Herramientas
+gcm-diagnose.log
+state.txt
+rendimiento.data
+
 # Visual Studio / Rider
 .vs/
 .idea/
