@@ -15,6 +15,12 @@ namespace ProjectoRTS.Buildings
     [DisallowMultipleComponent]
     public sealed class BuildingPlacementController : MonoBehaviour
     {
+        /// <summary>
+        /// Diferencia maxima de altura entre el punto del cursor y el plano
+        /// del grid para considerar el terreno construible. Evita construir
+        /// sobre montanas y otros relieves que son solo decoracion.
+        /// </summary>
+        private const float MaxGroundHeightDelta = 1.5f;
         [Header("References")]
         [SerializeField] private BuildGrid grid;
         [SerializeField] private Camera raycastCamera;
@@ -310,11 +316,14 @@ namespace ProjectoRTS.Buildings
                 : cursorCell;
 
             _originCell = originCell;
-            _canPlace = grid.CanPlace(_definition, originCell) &&
-                PlayerEconomy.CanAfford(_definition.WoodCost, _definition.BronzeCost);
 
             Vector3 position = grid.FootprintCenterWorld(originCell, footprint);
             position.y = grid.Origin.y + _bottomOffset;
+            bool terrainIsFlat = Mathf.Abs(groundPoint.y - position.y) <= MaxGroundHeightDelta;
+            _canPlace = grid.CanPlace(_definition, originCell) &&
+                PlayerEconomy.CanAfford(_definition.WoodCost, _definition.BronzeCost) &&
+                terrainIsFlat;
+
             _preview.transform.SetPositionAndRotation(position, PlacementRotation);
 
             _ghost.SetMaterial(_canPlace ? _validMaterial : _invalidMaterial);
