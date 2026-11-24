@@ -361,6 +361,12 @@ MonoBehaviour:
   buildingReach: 2.5
   aggroRadius: 9
   autoAcquire: 1
+  pilumHandVisual: {fileID: 0}
+  pilumBackVisuals: []
+  gladiusVisual: {fileID: 0}
+  gladiusHandBone: {fileID: 0}
+  gladiusHandLocalPosition: {x: 0.02, y: 0.081, z: -0.003}
+  gladiusHandLocalEuler: {x: 0, y: 0, z: -90}
 --- !u!114 &6253351117826918364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -955,11 +961,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1498824e66eb2464dbdb9862a5cc7b68, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.60322475
+      value: 0.6323605
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1498824e66eb2464dbdb9862a5cc7b68, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1498824e66eb2464dbdb9862a5cc7b68, type: 3}
       propertyPath: m_LocalPosition.y
@@ -967,7 +973,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1498824e66eb2464dbdb9862a5cc7b68, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.051
+      value: -0.0657
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1498824e66eb2464dbdb9862a5cc7b68, type: 3}
       propertyPath: m_LocalRotation.w
