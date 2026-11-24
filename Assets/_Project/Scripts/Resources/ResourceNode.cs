@@ -204,9 +204,11 @@ namespace ProjectoRTS.Resources
             }
         }
 
+        private static readonly string[] OreChildNames = { "Bronze", "Cobre", "Estaño" };
+
         /// <summary>
         /// Resolves the point workers should gather from. An explicit
-        /// <see cref="gatherPoint"/> wins; otherwise the bronze rock child is
+        /// <see cref="gatherPoint"/> wins; otherwise the ore rock child is
         /// used, and any other node falls back to its own pivot.
         /// </summary>
         private void RefreshGatherFocus()
@@ -220,12 +222,15 @@ namespace ProjectoRTS.Resources
                 return;
             }
 
-            Transform bronze = transform.Find("Bronze");
-
-            if (bronze != null)
+            for (int i = 0; i < OreChildNames.Length; i++)
             {
-                _gatherPoint = ComputeGatherFocus(bronze, out _gatherRadius);
-                return;
+                Transform ore = transform.Find(OreChildNames[i]);
+
+                if (ore != null)
+                {
+                    _gatherPoint = ComputeGatherFocus(ore, out _gatherRadius);
+                    return;
+                }
             }
 
             _gatherPoint = transform.position;
@@ -289,11 +294,15 @@ namespace ProjectoRTS.Resources
             }
             else
             {
-                Transform bronze = transform.Find("Bronze");
-
-                if (bronze != null)
+                for (int i = 0; i < OreChildNames.Length; i++)
                 {
-                    point = ComputeGatherFocus(bronze, out radius);
+                    Transform ore = transform.Find(OreChildNames[i]);
+
+                    if (ore != null)
+                    {
+                        point = ComputeGatherFocus(ore, out radius);
+                        break;
+                    }
                 }
             }
 

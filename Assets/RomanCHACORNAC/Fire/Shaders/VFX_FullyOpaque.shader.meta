@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5ccad69a82203e04f9a2d4be3a54927b
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 312221
+  packageName: Fully Opaque Fire, Stylized Campfire VFX
+  packageVersion: 2.0.0
+  assetPath: Assets/RomanCHACORNAC/Fire/Shaders/VFX_FullyOpaque.shader
+  uploadId: 1058462

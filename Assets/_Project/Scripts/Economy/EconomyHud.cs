@@ -86,14 +86,20 @@ namespace ProjectoRTS.Economy
             _label.text =
                 "Madera: " + PlayerEconomy.Wood +
                 "\nBronce: " + PlayerEconomy.Bronze +
+                "\nCobre: " + PlayerEconomy.Copper +
+                "\nEstaño: " + PlayerEconomy.Tin +
                 "\nPoblación: " + PopulationSystem.CurrentPopulation + "/" + PopulationSystem.MaxPopulation +
                 "\nTrabajadores: " + WorkerBuilder.Count +
                 "\nPriorizan madera: " + WorkerBuilder.CountPreferred(ResourceType.Wood) +
-                "\nPriorizan bronce: " + WorkerBuilder.CountPreferred(ResourceType.Bronze) +
+                "\nPriorizan cobre: " + WorkerBuilder.CountPreferred(ResourceType.Copper) +
+                "\nPriorizan estaño: " + WorkerBuilder.CountPreferred(ResourceType.Tin) +
+                "\nRepartidores: " + WorkerBuilder.CountHauling() +
                 "\nSin prioridad: " + (
                     WorkerBuilder.Count -
                     WorkerBuilder.CountPreferred(ResourceType.Wood) -
-                    WorkerBuilder.CountPreferred(ResourceType.Bronze));
+                    WorkerBuilder.CountPreferred(ResourceType.Copper) -
+                    WorkerBuilder.CountPreferred(ResourceType.Tin) -
+                    WorkerBuilder.CountHauling());
         }
 
         private void BuildUi()

@@ -50,6 +50,8 @@ namespace ProjectoRTS.Buildings
         [Header("Cargo Visuals")]
         [SerializeField] private Material woodLogMaterial;
         [SerializeField] private Material bronzeOreMaterial;
+        [SerializeField] private Material copperOreMaterial;
+        [SerializeField] private Material tinOreMaterial;
         [Tooltip("Log bundle length as a fraction of the worker's own size.")]
         [SerializeField, Min(0.05f)] private float logLengthFactor = 0.28f;
         [Tooltip("Ore cluster diameter as a fraction of the worker's own size.")]
@@ -69,6 +71,9 @@ namespace ProjectoRTS.Buildings
 
         private ResourceNode _resourceNode;
         private ResourceDropOff _dropOff;
+        private SmeltingForge _forge;
+        private bool _haulForForge;
+        private float _haulPickupTimer;
         private ResourceType _cargoType;
         private int _cargoAmount;
         private ResourceType _nextGatherType = ResourceType.Wood;
@@ -94,13 +99,16 @@ namespace ProjectoRTS.Buildings
         private GameObject _hammerVisual;
         private GameObject _logsHolder;
         private GameObject _rockHolder;
+        private readonly List<MeshRenderer> _oreRenderers = new List<MeshRenderer>(3);
+        private ResourceType _oreVisualType = ResourceType.Bronze;
         private bool _cargoVisualReady;
         private bool _cargoVisualMissing;
         private readonly List<Renderer> _hammerRenderers = new List<Renderer>(4);
         private bool _hammerVisible = true;
 
         private static Material _woodFallbackMaterial;
-        private static Material _oreFallbackMaterial;
+        private static readonly Dictionary<ResourceType, Material> _oreMaterials =
+            new Dictionary<ResourceType, Material>(3);
         private Transform _leftLegBone;
         private Transform _rightLegBone;
         private float _bodyYawError;
@@ -130,6 +138,9 @@ namespace ProjectoRTS.Buildings
 
                 _preferredResource = value;
                 _nextGatherType = value;
+                _haulForForge = false;
+                _haulPickupTimer = 0f;
+                _forge = null;
 
                 if (_cargoAmount <= 0)
                 {
@@ -138,6 +149,37 @@ namespace ProjectoRTS.Buildings
                     _atNode = false;
                     _gatherTimer = 0f;
                     _resourceRepathTimer = 0f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// True cuando el trabajador es un repartidor de la fundicion:
+        /// retira cobre/estano del banco y lo acarrea al horno.
+        /// </summary>
+        public bool HaulForForge
+        {
+            get => _haulForForge;
+            set
+            {
+                if (_haulForForge == value)
+                {
+                    return;
+                }
+
+                _haulForForge = value;
+                _haulPickupTimer = 0f;
+                _forge = null;
+                _dropOff = null;
+
+                if (_cargoAmount <= 0)
+                {
+                    ReleaseNodeClaim();
+                    _resourceNode = null;
+                    _atNode = false;
+                    _gatherTimer = 0f;
+                    _resourceRepathTimer = 0f;
+                    _outOfRangeTimer = 0f;
                 }
             }
         }
@@ -175,6 +217,26 @@ namespace ProjectoRTS.Buildings
                 if (worker != null &&
                     (worker._runtime == null || worker._runtime.IsAlive) &&
                     worker._preferredResource == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>Number of living workers assigned as forge haulers.</summary>
+        public static int CountHauling()
+        {
+            int count = 0;
+
+            for (int i = 0; i < Workers.Count; i++)
+            {
+                WorkerBuilder worker = Workers[i];
+
+                if (worker != null &&
+                    (worker._runtime == null || worker._runtime.IsAlive) &&
+                    worker._haulForForge)
                 {
                     count++;
                 }
@@ -290,7 +352,7 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            if (_site == null)
+            if (_site == null && !_haulForForge)
             {
                 _site = FindBestSite(transform.position, AutoAssignRange, null);
 
@@ -307,6 +369,12 @@ namespace ProjectoRTS.Buildings
             if (_site != null)
             {
                 UpdateConstruction();
+                return;
+            }
+
+            if (_haulForForge)
+            {
+                UpdateHaul();
                 return;
             }
 
@@ -419,6 +487,22 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
+            // El repartidor entrega el mineral en la fundicion mas cercana.
+            if (_haulForForge &&
+                (_cargoType == ResourceType.Copper || _cargoType == ResourceType.Tin))
+            {
+                if (_forge == null || !_forge.isActiveAndEnabled)
+                {
+                    _forge = SmeltingForge.FindNearest(transform.position, AutoAssignRange);
+                }
+
+                if (_forge != null)
+                {
+                    DepositAt(_forge.transform.position, _forge.Deposit);
+                    return;
+                }
+            }
+
             if (_dropOff == null || !_dropOff.isActiveAndEnabled)
             {
                 _dropOff = ResourceDropOff.FindNearest(transform.position, AutoAssignRange);
@@ -431,7 +515,12 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            if (!IsInDepositRange())
+            DepositAt(_dropOff.transform.position, _dropOff.Deposit);
+        }
+
+        private void DepositAt(Vector3 targetPosition, System.Action<ResourceType, int> deposit)
+        {
+            if (!IsInDepositRangeOf(targetPosition))
             {
                 _resourceRepathTimer -= Time.deltaTime;
                 _outOfRangeTimer += Time.deltaTime;
@@ -444,7 +533,7 @@ namespace ProjectoRTS.Buildings
                 {
                     _resourceRepathTimer = resourceRepathInterval;
                     _outOfRangeTimer = 0f;
-                    WalkToDropOff();
+                    WalkToDepositTarget(targetPosition);
                 }
 
                 return;
@@ -458,8 +547,166 @@ namespace ProjectoRTS.Buildings
                 _agent.ResetPath();
             }
 
-            _dropOff.Deposit(_cargoType, _cargoAmount);
+            deposit(_cargoType, _cargoAmount);
             CompleteDeposit();
+        }
+
+        /// <summary>
+        /// Repartidor: retira cobre/estano del almacen y lo lleva a la
+        /// fundicion. Sin carga busca el almacen mas cercano; con carga,
+        /// camina al horno y entrega en su stock local.
+        /// </summary>
+        private void UpdateHaul()
+        {
+            if (_cargoAmount <= 0)
+            {
+                UpdateHaulPickup();
+                return;
+            }
+
+            if (_forge == null || !_forge.isActiveAndEnabled)
+            {
+                _forge = SmeltingForge.FindNearest(transform.position, AutoAssignRange);
+            }
+
+            if (_forge == null)
+            {
+                UpdateDeposit();
+                return;
+            }
+
+            DepositAt(_forge.transform.position, _forge.Deposit);
+        }
+
+        /// <summary>
+        /// Sin carga: camina al almacen mas cercano, hace una pausa de
+        /// carga y retira del banco el mineral que necesita la fundicion.
+        /// </summary>
+        private void UpdateHaulPickup()
+        {
+            if (_dropOff == null || !_dropOff.isActiveAndEnabled)
+            {
+                _dropOff = ResourceDropOff.FindNearest(transform.position, AutoAssignRange);
+            }
+
+            if (_dropOff == null)
+            {
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                }
+
+                return;
+            }
+
+            if (!IsInDepositRangeOf(_dropOff.transform.position))
+            {
+                _resourceRepathTimer -= Time.deltaTime;
+                _outOfRangeTimer += Time.deltaTime;
+
+                bool pathMissing = _agent != null &&
+                    _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath;
+                bool timedOut = _outOfRangeTimer >= stuckRepathTimeout;
+
+                if ((_resourceRepathTimer <= 0f && pathMissing) || timedOut)
+                {
+                    _resourceRepathTimer = resourceRepathInterval;
+                    _outOfRangeTimer = 0f;
+                    WalkToDepositTarget(_dropOff.transform.position);
+                }
+
+                return;
+            }
+
+            _outOfRangeTimer = 0f;
+
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+            }
+
+            // Pequena pausa de carga antes de retirar del banco.
+            _haulPickupTimer -= Time.deltaTime;
+
+            if (_haulPickupTimer > 0f)
+            {
+                return;
+            }
+
+            if (!TryTakeOreFromBank())
+            {
+                _haulPickupTimer = 0.75f;
+                return;
+            }
+
+            _haulPickupTimer = 0.6f;
+            _forge = null;
+            _resourceRepathTimer = 0f;
+        }
+
+        /// <summary>
+        /// Retira del banco el mineral que la fundicion necesita, cuidando
+        /// la proporcion 2 cobre : 1 estano de la receta.
+        /// </summary>
+        private bool TryTakeOreFromBank()
+        {
+            if (_forge == null || !_forge.isActiveAndEnabled)
+            {
+                _forge = SmeltingForge.FindNearest(transform.position, AutoAssignRange);
+            }
+
+            // Sin fundicion construida no tiene sentido acarrear mineral.
+            if (_forge == null)
+            {
+                return false;
+            }
+
+            ResourceType type = ChooseHaulType();
+            int available = PlayerEconomy.Amount(type);
+
+            if (available <= 0)
+            {
+                ResourceType other = type == ResourceType.Copper
+                    ? ResourceType.Tin
+                    : ResourceType.Copper;
+                int otherAvailable = PlayerEconomy.Amount(other);
+
+                if (otherAvailable <= 0)
+                {
+                    return false;
+                }
+
+                type = other;
+                available = otherAvailable;
+            }
+
+            int amount = Mathf.Min(carryCapacity, available);
+
+            if (amount <= 0 || !PlayerEconomy.TrySpend(type, amount))
+            {
+                return false;
+            }
+
+            _cargoType = type;
+            _cargoAmount = amount;
+            _dropOff = null;
+            _resourceRepathTimer = 0f;
+            _outOfRangeTimer = 0f;
+            return true;
+        }
+
+        private ResourceType ChooseHaulType()
+        {
+            int copper = _forge != null ? _forge.CopperStock : 0;
+            int tin = _forge != null ? _forge.TinStock : 0;
+
+            if (copper <= 0 && tin <= 0)
+            {
+                return ResourceType.Copper;
+            }
+
+            return copper >= tin * 2 ? ResourceType.Tin : ResourceType.Copper;
         }
 
         private void HarvestNode()
@@ -490,6 +737,7 @@ namespace ProjectoRTS.Buildings
             ReleaseNodeClaim();
             _resourceNode = null;
             _dropOff = null;
+            _forge = null;
             Resume();
         }
 
@@ -497,6 +745,7 @@ namespace ProjectoRTS.Buildings
         {
             _cargoAmount = 0;
             _dropOff = null;
+            _forge = null;
             _resourceRepathTimer = 0f;
             _nextGatherType = _preferredResource;
             Resume();
@@ -535,15 +784,10 @@ namespace ProjectoRTS.Buildings
             TryWalkTo(GetApproachPoint(_resourceNode.GatherPoint, standDistance));
         }
 
-        private void WalkToDropOff()
+        private void WalkToDepositTarget(Vector3 targetPosition)
         {
-            if (_dropOff == null)
-            {
-                return;
-            }
-
             SetGathering(false);
-            TryWalkTo(GetApproachPoint(_dropOff.transform.position, depositRange * 0.75f));
+            TryWalkTo(GetApproachPoint(targetPosition, depositRange * 0.75f));
         }
 
         private bool IsInGatherRange()
@@ -559,14 +803,9 @@ namespace ProjectoRTS.Buildings
             return delta.sqrMagnitude <= range * range;
         }
 
-        private bool IsInDepositRange()
+        private bool IsInDepositRangeOf(Vector3 targetPosition)
         {
-            if (_dropOff == null)
-            {
-                return false;
-            }
-
-            Vector3 delta = _dropOff.transform.position - transform.position;
+            Vector3 delta = targetPosition - transform.position;
             delta.y = 0f;
             return delta.sqrMagnitude <= depositRange * depositRange;
         }
@@ -962,7 +1201,12 @@ namespace ProjectoRTS.Buildings
 
             bool carrying = _cargoAmount > 0;
             bool showLogs = carrying && _cargoType == ResourceType.Wood;
-            bool showRock = carrying && _cargoType == ResourceType.Bronze;
+            bool showRock = carrying && _cargoType != ResourceType.Wood;
+
+            if (showRock)
+            {
+                ApplyOreMaterial(_cargoType);
+            }
 
             // The cargo is only synced to the hammer's pose; the hammer itself
             // stays active and just swaps its renderers out while carrying.
@@ -1059,65 +1303,114 @@ namespace ProjectoRTS.Buildings
         }
 
         /// <summary>
-        /// Builds a small "ore vein" cluster out of squashed spheres with the
-        /// bronze material, matching the round ore chunks shown on the
-        /// resource nodes. Centred on the grip so the chunk sits in the palm.
-        /// The ore copy is matte so it reads as mineral instead of a mirror.
+        /// Builds a small "ore vein" cluster out of squashed spheres,
+        /// matching the round ore chunks shown on the resource nodes. The
+        /// material follows the carried resource (copper, tin or bronze) and
+        /// is swapped whenever the cargo type changes. Centred on the grip so
+        /// the chunk sits in the palm. The ore copy is matte so it reads as
+        /// mineral instead of a mirror.
         /// </summary>
         private GameObject BuildOreVein(float oreDiameter)
         {
-            GameObject holder = new GameObject("Cargo Bronze");
+            GameObject holder = new GameObject("Cargo Ore");
             Transform holderTransform = holder.transform;
             holderTransform.SetParent(_cargoRoot.transform, false);
             holderTransform.localPosition = Vector3.zero;
 
-            Material oreMaterial = GetOreMaterial(bronzeOreMaterial);
+            Material oreMaterial = GetOreMaterial(bronzeOreMaterial, ResourceType.Bronze);
             float diameter = oreDiameter;
             float squash = 0.78f;
 
-            CreateOreChunk(holderTransform, oreMaterial,
-                new Vector3(0f, 0.06f, 0f) * diameter, diameter, squash);
-            CreateOreChunk(holderTransform, oreMaterial,
-                new Vector3(0.55f, -0.28f, 0.3f) * diameter, diameter * 0.55f, squash);
-            CreateOreChunk(holderTransform, oreMaterial,
-                new Vector3(-0.45f, -0.34f, -0.35f) * diameter, diameter * 0.45f, squash);
+            _oreRenderers.Clear();
+            _oreRenderers.Add(CreateOreChunk(holderTransform, oreMaterial,
+                new Vector3(0f, 0.06f, 0f) * diameter, diameter, squash));
+            _oreRenderers.Add(CreateOreChunk(holderTransform, oreMaterial,
+                new Vector3(0.55f, -0.28f, 0.3f) * diameter, diameter * 0.55f, squash));
+            _oreRenderers.Add(CreateOreChunk(holderTransform, oreMaterial,
+                new Vector3(-0.45f, -0.34f, -0.35f) * diameter, diameter * 0.45f, squash));
 
+            _oreVisualType = ResourceType.Bronze;
             return holder;
         }
 
         /// <summary>
-        /// Clones the bronze material with a much lower metallic value: raw
-        /// metal reflects the sky and reads as a plain white blob in-game.
+        /// Clones the ore material of the given resource with a much lower
+        /// metallic value: raw metal reflects the sky and reads as a plain
+        /// white blob in-game. One clone is cached per resource type.
         /// </summary>
-        private static Material GetOreMaterial(Material source)
+        private static Material GetOreMaterial(Material source, ResourceType type)
         {
-            if (_oreFallbackMaterial == null)
+            if (_oreMaterials.TryGetValue(type, out Material cached) && cached != null)
             {
-                if (source != null)
-                {
-                    _oreFallbackMaterial = new Material(source);
-                }
-                else
-                {
-                    _oreFallbackMaterial = new Material(
-                        Shader.Find("Universal Render Pipeline/Lit"));
-                    _oreFallbackMaterial.SetColor(
-                        "_BaseColor", new Color(0.72f, 0.52f, 0.2f, 1f));
-                }
-
-                _oreFallbackMaterial.name = "Worker Ore";
-                if (_oreFallbackMaterial.HasProperty("_Metallic"))
-                {
-                    _oreFallbackMaterial.SetFloat("_Metallic", 0.35f);
-                }
-
-                if (_oreFallbackMaterial.HasProperty("_Smoothness"))
-                {
-                    _oreFallbackMaterial.SetFloat("_Smoothness", 0.4f);
-                }
+                return cached;
             }
 
-            return _oreFallbackMaterial;
+            Material material;
+            if (source != null)
+            {
+                material = new Material(source);
+            }
+            else
+            {
+                material = new Material(
+                    Shader.Find("Universal Render Pipeline/Lit"));
+                material.SetColor("_BaseColor", GetOreFallbackColor(type));
+            }
+
+            material.name = "Worker Ore " + type;
+            if (material.HasProperty("_Metallic"))
+            {
+                material.SetFloat("_Metallic", 0.35f);
+            }
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", 0.4f);
+            }
+
+            _oreMaterials[type] = material;
+            return material;
+        }
+
+        /// <summary>Node colours used when a resource material is missing.</summary>
+        private static Color GetOreFallbackColor(ResourceType type)
+        {
+            switch (type)
+            {
+                case ResourceType.Copper:
+                    return new Color(0.85f, 0.42f, 0.1f, 1f);
+                case ResourceType.Tin:
+                    return new Color(0.72f, 0.76f, 0.8f, 1f);
+                default:
+                    return new Color(0.72f, 0.52f, 0.2f, 1f);
+            }
+        }
+
+        /// <summary>Applies the material that matches the carried resource.</summary>
+        private void ApplyOreMaterial(ResourceType type)
+        {
+            if (_oreVisualType == type)
+            {
+                return;
+            }
+
+            _oreVisualType = type;
+
+            Material source = type == ResourceType.Copper
+                ? copperOreMaterial
+                : type == ResourceType.Tin
+                    ? tinOreMaterial
+                    : bronzeOreMaterial;
+            Material material = GetOreMaterial(source, type);
+
+            for (int i = 0; i < _oreRenderers.Count; i++)
+            {
+                MeshRenderer renderer = _oreRenderers[i];
+                if (renderer != null)
+                {
+                    renderer.sharedMaterial = material;
+                }
+            }
         }
 
         /// <summary>Brown material used when the wood reference is missing.</summary>
@@ -1135,7 +1428,7 @@ namespace ProjectoRTS.Buildings
             return _woodFallbackMaterial;
         }
 
-        private static void CreateOreChunk(
+        private static MeshRenderer CreateOreChunk(
             Transform parent,
             Material material,
             Vector3 offset,
@@ -1151,6 +1444,7 @@ namespace ProjectoRTS.Buildings
 
             MeshRenderer chunkRenderer = chunk.GetComponent<MeshRenderer>();
             chunkRenderer.sharedMaterial = material;
+            return chunkRenderer;
         }
 
         private static Transform FindDeepChild(Transform root, string childName)

@@ -395,6 +395,8 @@ MonoBehaviour:
   fleeRepathInterval: 1
   woodLogMaterial: {fileID: 2100000, guid: dcb7b49c17c5fdf40b48f1ed7d532597, type: 2}
   bronzeOreMaterial: {fileID: 2100000, guid: b60f86a683d73e84883d85916a29d8d4, type: 2}
+  copperOreMaterial: {fileID: 2100000, guid: 84547d6c02f5409db8087d512b1bd38b, type: 2}
+  tinOreMaterial: {fileID: 2100000, guid: 33ec4695f0874e9095fc0730630a325a, type: 2}
   logLengthFactor: 0.28
   oreSizeFactor: 0.17
 --- !u!54 &3986358633568735706

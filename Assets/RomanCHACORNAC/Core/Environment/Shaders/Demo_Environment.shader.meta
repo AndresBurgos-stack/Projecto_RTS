@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 66f5d4a966c7d9a4890f7f9e55e99259
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 312221
+  packageName: Fully Opaque Fire, Stylized Campfire VFX
+  packageVersion: 2.0.0
+  assetPath: Assets/RomanCHACORNAC/Core/Environment/Shaders/Demo_Environment.shader
+  uploadId: 1058462

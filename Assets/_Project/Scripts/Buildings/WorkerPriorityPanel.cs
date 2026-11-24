@@ -24,9 +24,13 @@ namespace ProjectoRTS.Buildings
         private UnitSelectionController _selection;
         private GameObject _root;
         private Image _woodImage;
-        private Image _bronzeImage;
+        private Image _copperImage;
+        private Image _tinImage;
+        private Image _forgeImage;
         private Text _woodLabel;
-        private Text _bronzeLabel;
+        private Text _copperLabel;
+        private Text _tinLabel;
+        private Text _forgeLabel;
         private Text _stateLabel;
         private float _nextRefresh;
 
@@ -149,7 +153,7 @@ namespace ProjectoRTS.Buildings
             rect.anchorMax = new Vector2(1f, 0.5f);
             rect.pivot = new Vector2(1f, 0.5f);
             rect.anchoredPosition = new Vector2(-24f, 0f);
-            rect.sizeDelta = new Vector2(220f, 200f);
+            rect.sizeDelta = new Vector2(220f, 400f);
 
             Image background = _root.AddComponent<Image>();
             background.color = new Color(0.08f, 0.09f, 0.12f, 0.92f);
@@ -169,30 +173,46 @@ namespace ProjectoRTS.Buildings
             stateRect.anchoredPosition = new Vector2(0f, -36f);
             stateRect.sizeDelta = new Vector2(200f, 20f);
 
-            CreatePriorityButton(
+            CreatePanelButton(
                 _root.transform,
                 font,
-                10f,
+                90f,
                 "Madera",
-                ResourceType.Wood,
+                () => SetPriority(ResourceType.Wood),
                 out _woodImage,
                 out _woodLabel);
-            CreatePriorityButton(
+            CreatePanelButton(
                 _root.transform,
                 font,
-                -55f,
-                "Bronce",
-                ResourceType.Bronze,
-                out _bronzeImage,
-                out _bronzeLabel);
+                25f,
+                "Cobre",
+                () => SetPriority(ResourceType.Copper),
+                out _copperImage,
+                out _copperLabel);
+            CreatePanelButton(
+                _root.transform,
+                font,
+                -40f,
+                "Estaño",
+                () => SetPriority(ResourceType.Tin),
+                out _tinImage,
+                out _tinLabel);
+            CreatePanelButton(
+                _root.transform,
+                font,
+                -105f,
+                "Fundir",
+                SetHaul,
+                out _forgeImage,
+                out _forgeLabel);
         }
 
-        private void CreatePriorityButton(
+        private void CreatePanelButton(
             Transform parent,
             Font font,
             float y,
             string title,
-            ResourceType type,
+            UnityEngine.Events.UnityAction action,
             out Image image,
             out Text label)
         {
@@ -212,7 +232,7 @@ namespace ProjectoRTS.Buildings
 
             Button button = go.AddComponent<Button>();
             button.targetGraphic = image;
-            button.onClick.AddListener(() => SetPriority(type));
+            button.onClick.AddListener(action);
 
             GameObject labelObject = new GameObject("Text");
             labelObject.transform.SetParent(go.transform, false);
@@ -257,7 +277,41 @@ namespace ProjectoRTS.Buildings
 
                 if (worker != null)
                 {
+                    worker.HaulForForge = false;
                     worker.PreferredResource = type;
+                }
+            }
+
+            RefreshState();
+        }
+
+        private void SetHaul()
+        {
+            if (_selection == null)
+            {
+                _selection = FindFirstObjectByType<UnitSelectionController>();
+            }
+
+            IReadOnlyList<UnitMovement> selected = _selection != null
+                ? _selection.SelectedUnits
+                : null;
+
+            if (selected == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < selected.Count; i++)
+            {
+                UnitMovement unit = selected[i];
+                WorkerBuilder worker = unit != null
+                    ? unit.GetComponent<WorkerBuilder>()
+                    : null;
+
+                if (worker != null)
+                {
+                    worker.PreferredResource = ResourceType.None;
+                    worker.HaulForForge = true;
                 }
             }
 
@@ -268,6 +322,7 @@ namespace ProjectoRTS.Buildings
         {
             ResourceType state = ResourceType.Wood;
             bool found = false;
+            bool hauling = false;
 
             IReadOnlyList<UnitMovement> selected = _selection != null
                 ? _selection.SelectedUnits
@@ -285,23 +340,36 @@ namespace ProjectoRTS.Buildings
                     if (worker != null)
                     {
                         state = worker.PreferredResource;
+                        hauling = worker.HaulForForge;
                         found = true;
                         break;
                     }
                 }
             }
 
-            bool woodActive = found && state == ResourceType.Wood;
-            bool bronzeActive = found && state == ResourceType.Bronze;
+            bool woodActive = found && !hauling && state == ResourceType.Wood;
+            bool copperActive = found && !hauling && state == ResourceType.Copper;
+            bool tinActive = found && !hauling && state == ResourceType.Tin;
+            bool forgeActive = found && hauling;
 
             if (_woodImage != null)
             {
                 _woodImage.color = woodActive ? OnColor : OffColor;
             }
 
-            if (_bronzeImage != null)
+            if (_copperImage != null)
             {
-                _bronzeImage.color = bronzeActive ? OnColor : OffColor;
+                _copperImage.color = copperActive ? OnColor : OffColor;
+            }
+
+            if (_tinImage != null)
+            {
+                _tinImage.color = tinActive ? OnColor : OffColor;
+            }
+
+            if (_forgeImage != null)
+            {
+                _forgeImage.color = forgeActive ? OnColor : OffColor;
             }
 
             if (_woodLabel != null)
@@ -310,15 +378,35 @@ namespace ProjectoRTS.Buildings
                     (woodActive ? " - Activa" : "");
             }
 
-            if (_bronzeLabel != null)
+            if (_copperLabel != null)
             {
-                _bronzeLabel.text = "Bronce (" + WorkerBuilder.CountPreferred(ResourceType.Bronze) + ")" +
-                    (bronzeActive ? " - Activa" : "");
+                _copperLabel.text = "Cobre (" + WorkerBuilder.CountPreferred(ResourceType.Copper) + ")" +
+                    (copperActive ? " - Activa" : "");
+            }
+
+            if (_tinLabel != null)
+            {
+                _tinLabel.text = "Estaño (" + WorkerBuilder.CountPreferred(ResourceType.Tin) + ")" +
+                    (tinActive ? " - Activa" : "");
+            }
+
+            if (_forgeLabel != null)
+            {
+                _forgeLabel.text = "Fundir (" + WorkerBuilder.CountHauling() + ")" +
+                    (forgeActive ? " - Activa" : "");
             }
 
             if (_stateLabel != null)
             {
-                if (!found || state == ResourceType.None)
+                if (!found)
+                {
+                    _stateLabel.text = "Sin prioridad";
+                }
+                else if (hauling)
+                {
+                    _stateLabel.text = "Repartidor de fundición";
+                }
+                else if (state == ResourceType.None)
                 {
                     _stateLabel.text = "Sin prioridad";
                 }
@@ -326,9 +414,17 @@ namespace ProjectoRTS.Buildings
                 {
                     _stateLabel.text = "Priorizan madera";
                 }
+                else if (state == ResourceType.Copper)
+                {
+                    _stateLabel.text = "Priorizan cobre";
+                }
+                else if (state == ResourceType.Tin)
+                {
+                    _stateLabel.text = "Priorizan estaño";
+                }
                 else
                 {
-                    _stateLabel.text = "Priorizan bronce";
+                    _stateLabel.text = "Sin prioridad";
                 }
             }
         }

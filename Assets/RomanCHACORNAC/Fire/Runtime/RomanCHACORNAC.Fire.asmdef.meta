@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 33a423926564db24d9df97aec8583b3e
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 312221
+  packageName: Fully Opaque Fire, Stylized Campfire VFX
+  packageVersion: 2.0.0
+  assetPath: Assets/RomanCHACORNAC/Fire/Runtime/RomanCHACORNAC.Fire.asmdef
+  uploadId: 1058462

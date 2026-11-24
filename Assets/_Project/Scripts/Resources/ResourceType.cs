@@ -4,6 +4,8 @@ namespace ProjectoRTS.Resources
     {
         Wood = 0,
         Bronze = 1,
-        None = 2
+        None = 2,
+        Copper = 3,
+        Tin = 4
     }
 }
