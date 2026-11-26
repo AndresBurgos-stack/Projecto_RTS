@@ -33,12 +33,16 @@ namespace ProjectoRTS.Waves
         [Header("Timing")]
         [SerializeField, Min(0f)] private float spawnInterval = 1.5f;
         [SerializeField, Min(0f)] private float restAfterWave = 20f;
+        [SerializeField] private bool suppressWarning;
 
         public string DisplayName => displayName;
         public int Day => day;
         public IReadOnlyList<WaveGroup> Groups => groups;
         public float SpawnInterval => spawnInterval;
         public float RestAfterWave => restAfterWave;
+
+        /// <summary>True when the wave skips the advance warning and spawn marker.</summary>
+        public bool SuppressWarning => suppressWarning;
 
         /// <summary>Total units in the wave, used for the advance warning.</summary>
         public int TotalUnits

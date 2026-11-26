@@ -236,6 +236,7 @@ GameObject:
   - component: {fileID: 8094957376153928418}
   - component: {fileID: 8524798331834158951}
   - component: {fileID: 6253351117826918364}
+  - component: {fileID: 396707254590068097}
   m_Layer: 0
   m_Name: GuerreroBarbaro
   m_TagString: Untagged
@@ -296,7 +297,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 749e5fd668c7fad448e898f3ae567ece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  definition: {fileID: 11400000, guid: a7f3c9d21e5b4c8f9d0a6b3e2c7f1485, type: 2}
+  definition: {fileID: 11400000, guid: fa14795380264e67a16efc250b9ccf92, type: 2}
   currentHealth: 0
   destroyOnDeath: 1
   deathLingerDuration: 4.2
@@ -420,6 +421,34 @@ MonoBehaviour:
   - {fileID: 0}
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   flashDuration: 0.12
+--- !u!114 &396707254590068097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7286954970806266342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8066428517e737459b28b4568c6a90e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  runtime: {fileID: 0}
+  movement: {fileID: 0}
+  combat: {fileID: 0}
+  patrolRadius: 5
+  patrolWaitMin: 1.5
+  patrolWaitMax: 4
+  repathInterval: 0.35
+  patrolEnabled: 1
+  detectionRadius: 10
+  leashRadius: 14
+  objectiveDetectionRadius: 30
+  attackObjective: 1
+  buildingDetectionRadius: 30
+  buildingScanInterval: 0.5
+  blockedDuration: 4
+  targetSwitchCooldown: 2
 --- !u!1 &8066830372180046551
 GameObject:
   m_ObjectHideFlags: 0
@@ -908,11 +937,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f798dc80cbcc3f547a4d5d9cc110bd5d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.429
+      value: -1.58
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f798dc80cbcc3f547a4d5d9cc110bd5d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.046584
+      value: -0.047
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f798dc80cbcc3f547a4d5d9cc110bd5d, type: 3}
       propertyPath: m_LocalRotation.w

@@ -229,7 +229,11 @@ namespace ProjectoRTS.Waves
             if (nextIsTomorrow && timeLeft <= warningLeadTime)
             {
                 _warningRaised = true;
-                WaveWarning?.Invoke(next);
+
+                if (!next.SuppressWarning)
+                {
+                    WaveWarning?.Invoke(next);
+                }
             }
         }
 

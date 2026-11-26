@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f5ed1ea072118548b3f4c7cb4fc72f6, type: 3}
+  m_Name: WavePruebaBarbaros
+  m_EditorClassIdentifier: 
+  displayName: Dia 2 - Prueba de barbaros
+  day: 2
+  groups:
+  - unit: {fileID: 11400000, guid: a9e6cb274ff04d2b88363e966065a135, type: 2}
+    count: 1
+    delay: 0
+  - unit: {fileID: 11400000, guid: fa14795380264e67a16efc250b9ccf92, type: 2}
+    count: 1
+    delay: 0
+  - unit: {fileID: 11400000, guid: c63588b1a3d64cf7add974502618439d, type: 2}
+    count: 1
+    delay: 0
+  - unit: {fileID: 11400000, guid: f1591559582648e6bc10f52c8b736af4, type: 2}
+    count: 1
+    delay: 0
+  spawnInterval: 1
+  restAfterWave: 20
+  suppressWarning: 1

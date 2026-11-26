@@ -74,6 +74,7 @@ namespace ProjectoRTS.Combat
         private bool _pendingAttackConsumesPilum;
         private float _pendingAttackDamage;
         private bool _usesSpearImpact;
+        private bool _heavyImpactSound;
         private bool _drawSwordOnFirstMelee;
         private bool _swordDrawn;
         private bool _drawingSword;
@@ -220,6 +221,7 @@ namespace ProjectoRTS.Combat
             _usesPilumVolley = _remainingPilums > 0;
             _drawSwordOnFirstMelee = definition.DrawSwordOnFirstMelee;
             _usesSpearImpact = definition.UsesSpearImpact;
+            _heavyImpactSound = definition.HeavyImpactSound;
             _swordDrawn = false;
             _drawingSword = false;
             _drawSwordReadyTime = 0f;
@@ -233,6 +235,46 @@ namespace ProjectoRTS.Combat
                 // immediately, no draw animation and no first-melee delay.
                 ApplyDrawSword();
             }
+
+            ApplyWeaponVariant(definition.WeaponVariant);
+        }
+
+        private static readonly string[] WeaponVariantNames = { "Martillo", "Hacha", "Espada" };
+
+        /// <summary>
+        /// Toggles the two-handed weapon of a unit between its variants
+        /// (hammer, axe, sword) so one prefab can serve several spawns.
+        /// </summary>
+        private void ApplyWeaponVariant(int variant)
+        {
+            for (int i = 0; i < WeaponVariantNames.Length; i++)
+            {
+                Transform weapon = FindChildByName(transform, WeaponVariantNames[i]);
+                if (weapon != null)
+                {
+                    weapon.gameObject.SetActive(variant == i);
+                }
+            }
+        }
+
+        private static Transform FindChildByName(Transform root, string name)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name)
+                {
+                    return child;
+                }
+
+                Transform nested = FindChildByName(child, name);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Enables or disables automatic enemy acquisition.</summary>
@@ -715,6 +757,10 @@ namespace ProjectoRTS.Combat
             if (_usesSpearImpact)
             {
                 GameAudio.PlayPilumImpact(position);
+            }
+            else if (_heavyImpactSound)
+            {
+                GameAudio.PlayHeavyStrike(position);
             }
             else
             {

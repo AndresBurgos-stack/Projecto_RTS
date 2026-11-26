@@ -26,7 +26,7 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Recursos: **implementados** (nodos de madera y bronce repartidos por el mapa, recolección por trabajadores y depósito solo en la choza de obreros o el almacén).
 - Trabajadores: **implementados** (construcción de 1 trabajador por obra, recolección con prioridad Madera/Bronce asignable desde el panel derecho, huida de enemigos).
 - Muros y arqueros: **implementados** (toxotes montables sobre muros con clic derecho, traslado entre tramos conectados, torres con ataque a distancia, almenas y rampa con rotación).
-- Mapa ampliado a 300x300 con cámara RTS ajustada para recorrerlo.
+- Mapa ampliado a **400×400 de cuadrícula** (suelo 520×520) con cámara RTS ajustada (±200) y spawn romano en el borde sur.
 - Escena de juego: `Assets/Scenes/Gameplay.unity` (recursos, oleadas y Panteón).
 - Edificios a escala de muralla: **implementado** (muro elevado a la altura de la torre, cuartel/casa/almacén/choza/puerta agrandados; la torre llena su huella para eliminar el hueco con el muro).
 - Construcción de edificios: **implementada** (obra translúcida, barra de porcentaje pegada a la cima y 1 obrero por obra; los obreros ya construyen bien los edificios rotados con `R`).
@@ -39,6 +39,9 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Sonido: muertes aleatorias (3 clips) y golpes de espada aleatorios (3 clips), además de golpe de martillo sincronizado con la animación.
 - Trabajadores: se acercan a la **pared real** del edificio (huella por colliders), con distancia mínima garantizada (radio del agente + margen) para que nunca den vueltas ni construyan lejos.
 - **MCP for Unity** (CoplayDev v10.0.0) instalado como paquete UPM; configuración de cliente OpenCode en `opencode.json` (servidor remoto `http://127.0.0.1:8080/mcp`).
+- Mapa con más vida: 138 props nuevos (pasto, flores, arbustos, guijarros, rocas y árboles) repartidos en 6 zonas nuevas, sumando 528 objetos de decoración ambiental.
+- Nuevo mineral **piedra**: 8 nodos de 400 unidades (rocas `PP_Rock_Moss_Grown_09` con hijo `Piedra`), recogible por trabajadores con prioridad "Piedra" en el panel; se acumula y se muestra en el HUD.
+- **Cuellos de botella naturales**: 7 montañas nuevas forman 2 líneas al sur de la base. La línea 1 (z=135) deja solo 2 pasos angostos (oeste 12 m, este 19 m) con los flancos cerrados hasta el borde del mapa; la línea 2 (z=70) bloquea el centro y obliga a una S-curva. Cada montaña lleva su `NavMeshObstacle` (cápsula, carve en runtime) para que las unidades solo pasen por los cuellos, que puedes cerrar con muros y torres.
 
 La primera importación puede tardar varios minutos porque UPM extrae URP, Shader Graph y sus dependencias. Las siguientes aperturas son mucho más rápidas.
 
@@ -404,7 +407,7 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 
 ### Recursos
 
-- `ResourceNode`: nodos finitos de madera (árboles) y bronce (rocas) repartidos en clusters por el mapa de 300x300. Se ocultan al agotarse.
+- `ResourceNode`: nodos finitos de madera (árboles), bronce (rocas), cobre, estaño y **piedra** repartidos en clusters por el mapa de 300x300. Se ocultan al agotarse.
 - `ResourceDropOff`: puntos de depósito en la **choza de obreros** y el **almacén** (la caserna ya no acepta entregas). Los trabajadores entregan en el más cercano de esos dos.
 - Cada trabajador carga 10 recursos y tarda 2 segundos en recolectar.
 

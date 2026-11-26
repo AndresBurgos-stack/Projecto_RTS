@@ -57,6 +57,7 @@ namespace ProjectoRTS.Buildings
         [SerializeField] private Material bronzeOreMaterial;
         [SerializeField] private Material copperOreMaterial;
         [SerializeField] private Material tinOreMaterial;
+        [SerializeField] private Material stoneOreMaterial;
         [Tooltip("Log bundle length as a fraction of the worker's own size.")]
         [SerializeField, Min(0.05f)] private float logLengthFactor = 0.28f;
         [Tooltip("Ore cluster diameter as a fraction of the worker's own size.")]
@@ -1590,6 +1591,8 @@ namespace ProjectoRTS.Buildings
                     return new Color(0.85f, 0.42f, 0.1f, 1f);
                 case ResourceType.Tin:
                     return new Color(0.72f, 0.76f, 0.8f, 1f);
+                case ResourceType.Stone:
+                    return new Color(0.55f, 0.56f, 0.6f, 1f);
                 default:
                     return new Color(0.72f, 0.52f, 0.2f, 1f);
             }
@@ -1609,7 +1612,9 @@ namespace ProjectoRTS.Buildings
                 ? copperOreMaterial
                 : type == ResourceType.Tin
                     ? tinOreMaterial
-                    : bronzeOreMaterial;
+                    : type == ResourceType.Stone
+                        ? stoneOreMaterial
+                        : bronzeOreMaterial;
             Material material = GetOreMaterial(source, type);
 
             for (int i = 0; i < _oreRenderers.Count; i++)

@@ -57,6 +57,7 @@ namespace ProjectoRTS.Waves
         private Coroutine _sequence;
         private bool _running;
         private bool _arrivedRaised;
+        private bool _suppressNextWarning;
         private float _nextRepathTime;
         private Vector3 _destination;
 
@@ -98,6 +99,8 @@ namespace ProjectoRTS.Waves
             {
                 return;
             }
+
+            _suppressNextWarning = wave.SuppressWarning;
 
             squad.Clear();
             for (int i = 0; i < wave.Groups.Count; i++)
@@ -226,10 +229,11 @@ namespace ProjectoRTS.Waves
             }
 
             Vector3 origin = SamplePosition(point.position);
-            GameObject marker = CreateMarker(origin);
+            bool warn = !_suppressNextWarning;
+            GameObject marker = warn ? CreateMarker(origin) : null;
 
             float elapsed = 0f;
-            while (elapsed < warningTime)
+            while (warn && elapsed < warningTime)
             {
                 elapsed += Time.deltaTime;
                 PulseMarker(marker, elapsed, warningTime);

@@ -110,6 +110,25 @@ namespace ProjectoRTS.Audio
                 Random.Range(0.92f, 1.08f));
         }
 
+        /// <summary>Plays a heavy two-handed weapon hit (mace/axe): hammer thud or pilum-like thunk.</summary>
+        public static void PlayHeavyStrike(Vector3 position)
+        {
+            bool hammer = Random.value < 0.5f;
+            AudioClip clip = hammer
+                ? LoadClip(ConstructionPath, ref _construction)
+                : LoadClip(PilumImpactPath, ref _pilumImpact);
+            float startTime = hammer ? ConstructionHitOffset : 0f;
+
+            PlayOneShot(
+                clip,
+                position,
+                0.7f,
+                Random.Range(0.9f, 1.1f),
+                UnitMinDistance,
+                UnitMaxDistance,
+                startTime);
+        }
+
         /// <summary>Plays a random death groan at the fallen unit.</summary>
         public static void PlayDeath(Vector3 position)
         {
@@ -130,7 +149,7 @@ namespace ProjectoRTS.Audio
             PlayOneShot(
                 clip,
                 position,
-                0.5f,
+                0.65f,
                 Random.Range(0.9f, 1.1f),
                 UnitMinDistance,
                 UnitMaxDistance);
@@ -155,7 +174,7 @@ namespace ProjectoRTS.Audio
             source.clip = clip;
             source.loop = false;
             source.time = Mathf.Clamp(startTime, 0f, Mathf.Max(0f, clip.length - 0.01f));
-            source.volume = volume;
+            source.volume = volume * GameSettings.SfxVolume;
             source.pitch = pitch;
             source.spatialBlend = 1f;
             source.minDistance = minDistance;

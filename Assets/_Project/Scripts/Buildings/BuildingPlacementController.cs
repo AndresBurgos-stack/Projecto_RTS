@@ -187,6 +187,11 @@ namespace ProjectoRTS.Buildings
 
         private void HandleInput()
         {
+            if (ProjectoRTS.UI.PauseMenu.IsPaused)
+            {
+                return;
+            }
+
             bool shiftHeld = Keyboard.current != null && Keyboard.current.shiftKey.isPressed;
 
             if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && CanRotate())

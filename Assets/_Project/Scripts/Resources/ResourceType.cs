@@ -6,6 +6,7 @@ namespace ProjectoRTS.Resources
         Bronze = 1,
         None = 2,
         Copper = 3,
-        Tin = 4
+        Tin = 4,
+        Stone = 5
     }
 }

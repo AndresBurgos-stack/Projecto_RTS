@@ -68,6 +68,11 @@ namespace ProjectoRTS.Units
 
         private void Update()
         {
+            if (ProjectoRTS.UI.PauseMenu.IsPaused)
+            {
+                return;
+            }
+
             if (placement != null && placement.IsPlacing)
             {
                 if (!_wasPlacing)

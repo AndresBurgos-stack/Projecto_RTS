@@ -204,7 +204,7 @@ namespace ProjectoRTS.Resources
             }
         }
 
-        private static readonly string[] OreChildNames = { "Bronze", "Cobre", "Estaño" };
+        private static readonly string[] OreChildNames = { "Bronze", "Cobre", "Estaño", "Piedra" };
 
         /// <summary>
         /// Resolves the point workers should gather from. An explicit

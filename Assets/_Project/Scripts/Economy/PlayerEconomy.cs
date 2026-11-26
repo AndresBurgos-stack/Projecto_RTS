@@ -14,11 +14,13 @@ namespace ProjectoRTS.Economy
         public const int StartingBronze = 300;
         public const int StartingCopper = 100;
         public const int StartingTin = 50;
+        public const int StartingStone = 100;
 
         public static int Wood { get; private set; }
         public static int Bronze { get; private set; }
         public static int Copper { get; private set; }
         public static int Tin { get; private set; }
+        public static int Stone { get; private set; }
 
         /// <summary>Raised whenever the resource amounts change.</summary>
         public static event Action Changed;
@@ -30,6 +32,7 @@ namespace ProjectoRTS.Economy
             Bronze = StartingBronze;
             Copper = StartingCopper;
             Tin = StartingTin;
+            Stone = StartingStone;
             Changed = null;
         }
 
@@ -65,6 +68,8 @@ namespace ProjectoRTS.Economy
                     return Copper;
                 case ResourceType.Tin:
                     return Tin;
+                case ResourceType.Stone:
+                    return Stone;
                 default:
                     return Bronze;
             }
@@ -83,6 +88,8 @@ namespace ProjectoRTS.Economy
                     return Copper >= amount;
                 case ResourceType.Tin:
                     return Tin >= amount;
+                case ResourceType.Stone:
+                    return Stone >= amount;
                 default:
                     return Bronze >= amount;
             }
@@ -108,6 +115,9 @@ namespace ProjectoRTS.Economy
                     break;
                 case ResourceType.Tin:
                     Tin -= amount;
+                    break;
+                case ResourceType.Stone:
+                    Stone -= amount;
                     break;
                 default:
                     Bronze -= amount;
@@ -145,6 +155,9 @@ namespace ProjectoRTS.Economy
                     break;
                 case ResourceType.Tin:
                     Tin += amount;
+                    break;
+                case ResourceType.Stone:
+                    Stone += amount;
                     break;
                 default:
                     Bronze += amount;

@@ -26,10 +26,12 @@ namespace ProjectoRTS.Buildings
         private Image _woodImage;
         private Image _copperImage;
         private Image _tinImage;
+        private Image _stoneImage;
         private Image _forgeImage;
         private Text _woodLabel;
         private Text _copperLabel;
         private Text _tinLabel;
+        private Text _stoneLabel;
         private Text _forgeLabel;
         private Text _stateLabel;
         private float _nextRefresh;
@@ -201,6 +203,14 @@ namespace ProjectoRTS.Buildings
                 _root.transform,
                 font,
                 -105f,
+                "Piedra",
+                () => SetPriority(ResourceType.Stone),
+                out _stoneImage,
+                out _stoneLabel);
+            CreatePanelButton(
+                _root.transform,
+                font,
+                -170f,
                 "Fundir",
                 SetHaul,
                 out _forgeImage,
@@ -350,6 +360,7 @@ namespace ProjectoRTS.Buildings
             bool woodActive = found && !hauling && state == ResourceType.Wood;
             bool copperActive = found && !hauling && state == ResourceType.Copper;
             bool tinActive = found && !hauling && state == ResourceType.Tin;
+            bool stoneActive = found && !hauling && state == ResourceType.Stone;
             bool forgeActive = found && hauling;
 
             if (_woodImage != null)
@@ -365,6 +376,11 @@ namespace ProjectoRTS.Buildings
             if (_tinImage != null)
             {
                 _tinImage.color = tinActive ? OnColor : OffColor;
+            }
+
+            if (_stoneImage != null)
+            {
+                _stoneImage.color = stoneActive ? OnColor : OffColor;
             }
 
             if (_forgeImage != null)
@@ -388,6 +404,12 @@ namespace ProjectoRTS.Buildings
             {
                 _tinLabel.text = "Estaño (" + WorkerBuilder.CountPreferred(ResourceType.Tin) + ")" +
                     (tinActive ? " - Activa" : "");
+            }
+
+            if (_stoneLabel != null)
+            {
+                _stoneLabel.text = "Piedra (" + WorkerBuilder.CountPreferred(ResourceType.Stone) + ")" +
+                    (stoneActive ? " - Activa" : "");
             }
 
             if (_forgeLabel != null)
@@ -421,6 +443,10 @@ namespace ProjectoRTS.Buildings
                 else if (state == ResourceType.Tin)
                 {
                     _stateLabel.text = "Priorizan estaño";
+                }
+                else if (state == ResourceType.Stone)
+                {
+                    _stateLabel.text = "Priorizan piedra";
                 }
                 else
                 {

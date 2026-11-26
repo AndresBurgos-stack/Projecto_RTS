@@ -30,6 +30,7 @@ namespace ProjectoRTS.Audio
         private AudioSource _battleSource;
         private Coroutine _fadeRoutine;
         private WaveManager _waves;
+        private bool _battleActive;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -65,6 +66,7 @@ namespace ProjectoRTS.Audio
             _ambientSource = CreateMusicSource(null);
             _battleSource = CreateMusicSource(null);
 
+            GameSettings.Changed += HandleSettingsChanged;
             PlayAmbientMusic();
         }
 
@@ -83,6 +85,8 @@ namespace ProjectoRTS.Audio
 
         private void OnDestroy()
         {
+            GameSettings.Changed -= HandleSettingsChanged;
+
             if (_waves != null)
             {
                 _waves.WaveStarted -= HandleWaveStarted;
@@ -123,7 +127,8 @@ namespace ProjectoRTS.Audio
                 _battleSource.Play();
             }
 
-            RestartFade(_battleSource, BattleVolume, _ambientSource, 0f);
+            _battleActive = true;
+            ApplyTargets();
         }
 
         private void HandleWaveCleared(WaveDefinition wave)
@@ -136,9 +141,57 @@ namespace ProjectoRTS.Audio
             PlayAmbientMusic();
         }
 
+        private void HandleSettingsChanged()
+        {
+            // Apply the new music volume instantly instead of crossfading
+            // again: restarting the fade on every slider tick made the music
+            // cut out while adjusting it.
+            if (_fadeRoutine != null)
+            {
+                StopCoroutine(_fadeRoutine);
+                _fadeRoutine = null;
+            }
+
+            if (_ambientSource == null || _battleSource == null)
+            {
+                return;
+            }
+
+            if (_battleActive)
+            {
+                _battleSource.volume = BattleVolume * GameSettings.MusicVolume;
+                _ambientSource.volume = 0f;
+            }
+            else
+            {
+                _ambientSource.volume = AmbientVolume * GameSettings.MusicVolume;
+                _battleSource.volume = 0f;
+            }
+        }
+
+        /// <summary>Fades the active track in and the inactive one out, honouring the music volume option.</summary>
+        private void ApplyTargets()
+        {
+            if (_ambientSource == null || _battleSource == null)
+            {
+                return;
+            }
+
+            if (_battleActive)
+            {
+                RestartFade(_battleSource, BattleVolume * GameSettings.MusicVolume, _ambientSource, 0f);
+            }
+            else
+            {
+                RestartFade(_ambientSource, AmbientVolume * GameSettings.MusicVolume, _battleSource, 0f);
+            }
+        }
+
         /// <summary>Picks a random ambient track and crossfades into it.</summary>
         private void PlayAmbientMusic()
         {
+            _battleActive = false;
+
             AudioClip clip = UnityEngine.Resources.Load<AudioClip>(
                 AmbientPaths[Random.Range(0, AmbientPaths.Length)]);
             if (clip == null)
@@ -154,7 +207,7 @@ namespace ProjectoRTS.Audio
                 _ambientSource.Play();
             }
 
-            RestartFade(_ambientSource, AmbientVolume, _battleSource, 0f);
+            ApplyTargets();
         }
 
         /// <summary>
