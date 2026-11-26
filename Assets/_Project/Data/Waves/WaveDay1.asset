@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f5ed1ea072118548b3f4c7cb4fc72f6, type: 3}
   m_Name: WaveDay1
   m_EditorClassIdentifier: 
-  displayName: Dia 3 - Auxiliares
+  displayName: Dia 3 - Auxiliares (I)
   day: 3
   groups:
   - unit: {fileID: 11400000, guid: 376a14dbcf79585408dc8957ca2dcd3e, type: 2}

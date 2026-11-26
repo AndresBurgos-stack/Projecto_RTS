@@ -21,7 +21,8 @@ namespace ProjectoRTS.UI
                 case "GreekHouse": return "Casa";
                 case "GreekSmelter": return "Fundición";
                 case "GreekStorage": return "Almacén";
-                case "GreekTower": return "Torre";
+                case "GreekTower": return "Torre de piedra";
+                case "GreekTowerWood": return "Torre de madera";
                 case "GreekTownCenter": return "Choza de obreros";
                 case "GreekWall": return "Muro de madera";
                 default: return definition.DisplayName;
@@ -48,6 +49,13 @@ namespace ProjectoRTS.UI
                 builder.Append(definition.AttackDamage.ToString("0.#"));
                 builder.Append("  ·  Alcance: ");
                 builder.Append(definition.AttackRange.ToString("0.#"));
+            }
+
+            if (definition.RangeBonus > 0f)
+            {
+                builder.Append("  ·  Alcance +");
+                builder.Append(definition.RangeBonus.ToString("0.#"));
+                builder.Append(" (arqueros)");
             }
 
             if (definition.PopulationBonus > 0)
@@ -78,7 +86,9 @@ namespace ProjectoRTS.UI
                 case "GreekStorage":
                     return "Almacén. Los trabajadores depositan aquí los recursos recogidos.";
                 case "GreekTower":
-                    return "Torre defensiva. Dispara flechas a los enemigos que se acercan.";
+                    return "Torre de piedra. Da mucho más alcance a los arqueros montados y resiste más que la de madera.";
+                case "GreekTowerWood":
+                    return "Torre de madera. Caben hasta 4 arqueros con más alcance; más barata y frágil que la de piedra.";
                 case "GreekTownCenter":
                     return "Choza de obreros. Punto de recogida de recursos y centro de la aldea.";
                 case "GreekWall":
@@ -93,7 +103,7 @@ namespace ProjectoRTS.UI
             switch (category)
             {
                 case BuildingCategory.Wall: return "Estructura defensiva que bloquea el paso.";
-                case BuildingCategory.Tower: return "Torre defensiva que ataca a distancia.";
+                case BuildingCategory.Tower: return "Torre que aumenta el alcance de los arqueros montados.";
                 case BuildingCategory.Production: return "Edificio de producción.";
                 case BuildingCategory.Economy: return "Edificio económico.";
                 case BuildingCategory.Defense: return "Edificio defensivo.";

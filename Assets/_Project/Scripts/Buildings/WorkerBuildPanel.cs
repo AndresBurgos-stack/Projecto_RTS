@@ -9,8 +9,9 @@ using UnityEngine.UI;
 namespace ProjectoRTS.Buildings
 {
     /// <summary>
-    /// Permanent construction menu on the bottom-left corner. It lists every
-    /// building definition bound to the number keys in a grid of three
+    /// Permanent construction menu on the bottom-left corner. Roman-numeral
+    /// tabs (I, II...) above the grid switch between building tiers; each
+    /// tier lists its definitions bound to the number keys in a grid of four
     /// columns and starts the normal placement flow, so buildings can be
     /// placed without selecting a worker first.
     /// </summary>
@@ -21,6 +22,16 @@ namespace ProjectoRTS.Buildings
         private const float IconSize = 62f;
         private const float IconStepX = 116f;
         private const float IconStepY = 70f;
+        private const float PanelWidth = 500f;
+        private const float PanelBottomPadding = 12f;
+        private const float TitleBottom = 30f;
+        private const float TabHeight = 24f;
+        private const float TabWidth = 44f;
+        private const float TabGap = 6f;
+        private const float TabRowGap = 6f;
+        private const float ButtonRowTop = TitleBottom + TabHeight + TabRowGap;
+
+        private static readonly string[] TierNumerals = { "I", "II", "III", "IV", "V" };
 
         private static WorkerBuildPanel _instance;
 
@@ -28,8 +39,11 @@ namespace ProjectoRTS.Buildings
         private BuildingPlacementHotkeys _hotkeys;
         private RecruitmentManager _recruitment;
         private GameObject _root;
+        private RectTransform _panelRect;
         private RectTransform _buttonRow;
         private readonly List<GameObject> _buttons = new List<GameObject>();
+        private readonly List<TabEntry> _tabs = new List<TabEntry>(2);
+        private BuildingTier _activeTier = BuildingTier.Wood;
         private float _nextRefresh;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -121,23 +135,133 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            while (_buttons.Count < definitions.Length)
+            // The definitions come sorted by tier, so the tab order is stable.
+            List<BuildingTier> tiers = new List<BuildingTier>(2);
+            for (int i = 0; i < definitions.Length; i++)
             {
-                _buttons.Add(CreateButton(_buttons.Count));
+                BuildingDefinition definition = definitions[i];
+                if (definition != null && !tiers.Contains(definition.Tier))
+                {
+                    tiers.Add(definition.Tier);
+                }
             }
 
-            for (int i = 0; i < _buttons.Count; i++)
+            if (tiers.Count > 0 && !tiers.Contains(_activeTier))
             {
-                bool used = i < definitions.Length && definitions[i] != null;
-                _buttons[i].SetActive(used);
+                _activeTier = tiers[0];
+            }
+
+            RefreshTabs(tiers);
+
+            int usedButtons = 0;
+            for (int i = 0; i < definitions.Length; i++)
+            {
+                BuildingDefinition definition = definitions[i];
+                if (definition == null || definition.Tier != _activeTier)
+                {
+                    continue;
+                }
+
+                GameObject button = GetButton(usedButtons);
+                button.SetActive(true);
+
+                int column = usedButtons % Columns;
+                int rowIndex = usedButtons / Columns;
+                RectTransform rect = button.GetComponent<RectTransform>();
+                rect.anchoredPosition = new Vector2(
+                    45f + column * IconStepX,
+                    -rowIndex * IconStepY);
+
+                ConfigureButton(button, definition, i);
+                usedButtons++;
+            }
+
+            for (int i = usedButtons; i < _buttons.Count; i++)
+            {
+                _buttons[i].SetActive(false);
+            }
+
+            int rows = Mathf.CeilToInt(usedButtons / (float)Columns);
+            float contentHeight = rows > 0 ? rows * IconStepY - 4f : 0f;
+            _buttonRow.sizeDelta = new Vector2(PanelWidth, contentHeight);
+
+            if (_panelRect != null)
+            {
+                _panelRect.sizeDelta = new Vector2(
+                    PanelWidth,
+                    ButtonRowTop + contentHeight + PanelBottomPadding);
+            }
+        }
+
+        private void RefreshTabs(List<BuildingTier> tiers)
+        {
+            while (_tabs.Count < tiers.Count)
+            {
+                _tabs.Add(CreateTab(_tabs.Count));
+            }
+
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                TabEntry tab = _tabs[i];
+                bool used = i < tiers.Count;
+                tab.Button.gameObject.SetActive(used);
 
                 if (!used)
                 {
                     continue;
                 }
 
-                ConfigureButton(_buttons[i], definitions[i], i);
+                BuildingTier tier = tiers[i];
+                bool selected = tier == _activeTier;
+                Color tierColor = GetTierLabelColor(tier);
+
+                tab.Label.text = GetTierNumeral(tier);
+                tab.Background.color = selected
+                    ? tierColor
+                    : new Color(0.13f, 0.15f, 0.19f, 1f);
+                tab.Label.color = selected
+                    ? new Color(0.08f, 0.09f, 0.12f, 1f)
+                    : tierColor;
+
+                tab.Button.onClick.RemoveAllListeners();
+                tab.Button.onClick.AddListener(() => SelectTier(tier));
             }
+        }
+
+        private void SelectTier(BuildingTier tier)
+        {
+            if (_activeTier == tier)
+            {
+                return;
+            }
+
+            _activeTier = tier;
+            RefreshButtons();
+        }
+
+        private GameObject GetButton(int index)
+        {
+            while (_buttons.Count <= index)
+            {
+                _buttons.Add(CreateButton(_buttons.Count));
+            }
+
+            return _buttons[index];
+        }
+
+        private static string GetTierNumeral(BuildingTier tier)
+        {
+            int index = (int)tier;
+            return index >= 0 && index < TierNumerals.Length
+                ? TierNumerals[index]
+                : (index + 1).ToString();
+        }
+
+        private static Color GetTierLabelColor(BuildingTier tier)
+        {
+            return tier == BuildingTier.Stone
+                ? new Color(0.72f, 0.76f, 0.82f, 1f)
+                : new Color(0.78f, 0.6f, 0.35f, 1f);
         }
 
         private void ConfigureButton(
@@ -191,14 +315,15 @@ namespace ProjectoRTS.Buildings
                 : null;
             if (hotkey != null)
             {
-                hotkey.text = (index + 1).ToString();
+                hotkey.text = index < 9 ? (index + 1).ToString() : string.Empty;
             }
 
             TooltipTrigger tooltip = go.GetComponent<TooltipTrigger>();
             if (tooltip != null)
             {
+                string title = BuildingTooltipText.GetTitle(definition);
                 tooltip.Configure(
-                    $"{BuildingTooltipText.GetTitle(definition)}  [{index + 1}]",
+                    index < 9 ? $"{title}  [{index + 1}]" : title,
                     BuildingTooltipText.GetBody(definition));
             }
 
@@ -240,7 +365,8 @@ namespace ProjectoRTS.Buildings
             rect.anchorMax = new Vector2(0f, 0f);
             rect.pivot = new Vector2(0f, 0f);
             rect.anchoredPosition = new Vector2(20f, 20f);
-            rect.sizeDelta = new Vector2(500f, 180f);
+            rect.sizeDelta = new Vector2(PanelWidth, 220f);
+            _panelRect = rect;
 
             Image background = _root.AddComponent<Image>();
             background.color = new Color(0.08f, 0.09f, 0.12f, 0.9f);
@@ -256,8 +382,8 @@ namespace ProjectoRTS.Buildings
             _buttonRow.anchorMin = new Vector2(0f, 1f);
             _buttonRow.anchorMax = new Vector2(0f, 1f);
             _buttonRow.pivot = new Vector2(0f, 1f);
-            _buttonRow.anchoredPosition = new Vector2(0f, -32f);
-            _buttonRow.sizeDelta = new Vector2(500f, 148f);
+            _buttonRow.anchoredPosition = new Vector2(0f, -ButtonRowTop);
+            _buttonRow.sizeDelta = new Vector2(PanelWidth, 136f);
         }
 
         private GameObject CreateButton(int index)
@@ -265,16 +391,11 @@ namespace ProjectoRTS.Buildings
             GameObject go = new GameObject("Build " + index);
             go.transform.SetParent(_buttonRow, false);
 
-            int column = index % Columns;
-            int rowIndex = index / Columns;
-
             RectTransform rect = go.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(
-                45f + column * IconStepX,
-                -4f - rowIndex * IconStepY);
+            rect.anchoredPosition = Vector2.zero;
             rect.sizeDelta = new Vector2(IconSize, IconSize);
 
             Image image = go.AddComponent<Image>();
@@ -328,6 +449,52 @@ namespace ProjectoRTS.Buildings
             return go;
         }
 
+        private TabEntry CreateTab(int index)
+        {
+            GameObject go = new GameObject("Tab");
+            go.transform.SetParent(_root.transform, false);
+
+            RectTransform rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(
+                45f + index * (TabWidth + TabGap),
+                -TitleBottom);
+            rect.sizeDelta = new Vector2(TabWidth, TabHeight);
+
+            Image background = go.AddComponent<Image>();
+            background.color = new Color(0.13f, 0.15f, 0.19f, 1f);
+
+            Button button = go.AddComponent<Button>();
+            button.targetGraphic = background;
+            button.transition = Selectable.Transition.None;
+
+            GameObject labelObject = new GameObject("Label");
+            labelObject.transform.SetParent(go.transform, false);
+
+            RectTransform labelRect = labelObject.AddComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            Text label = labelObject.AddComponent<Text>();
+            label.font = ResolveFont();
+            label.fontSize = 14;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = new Color(0.78f, 0.6f, 0.35f, 1f);
+            label.raycastTarget = false;
+
+            return new TabEntry
+            {
+                Button = button,
+                Background = background,
+                Label = label
+            };
+        }
+
         private static Font ResolveFont()
         {
             return UiFonts.Default;
@@ -353,6 +520,14 @@ namespace ProjectoRTS.Buildings
             label.color = new Color(0.94f, 0.92f, 0.86f, 1f);
             label.raycastTarget = false;
             return label;
+        }
+
+        /// <summary>One roman-numeral tier tab above the construction grid.</summary>
+        private sealed class TabEntry
+        {
+            public Button Button;
+            public Image Background;
+            public Text Label;
         }
     }
 }

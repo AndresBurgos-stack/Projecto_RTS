@@ -297,7 +297,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 749e5fd668c7fad448e898f3ae567ece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  definition: {fileID: 11400000, guid: 7b1f4c2d9e8a4f6b8c0d1e2f3a4b5c6d, type: 2}
+  definition: {fileID: 11400000, guid: 19250ba5dc0248098783d435a8c9485c, type: 2}
   currentHealth: 0
   destroyOnDeath: 1
   deathLingerDuration: 4.2
@@ -838,7 +838,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: baf42714fc06d6946a0ee240943e953a, type: 2}
+  - {fileID: 2100000, guid: dd3e50d6112d3484bbf830f989b881ed, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -962,7 +962,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 9a574613df4220143be2ebd61195453c, type: 2}
+      objectReference: {fileID: 9100000, guid: eeebf4104f6d4e2dbfa47e98b776da94, type: 2}
     - target: {fileID: 5866666021909216657, guid: 60bf463eacf7484448a7f295313d5934, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0

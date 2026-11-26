@@ -12,15 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04294eb3a4fc9a249aae4764250c2bd7, type: 3}
   m_Name: GreekTower
   m_EditorClassIdentifier: 
-  displayName: Greek Tower
+  displayName: Torre de piedra
   category: 1
+  tier: 1
   prefab: {fileID: 2153108217857864503, guid: cf373156cc8f511468fde355e9127f77, type: 3}
   width: 2
   depth: 2
   woodCost: 30
   bronzeCost: 40
   goldCost: 0
-  maxHealth: 350
-  attackDamage: 10
-  attackRange: 9
+  maxHealth: 400
+  attackDamage: 0
+  attackRange: 0
+  rangeBonus: 5
   populationBonus: 0

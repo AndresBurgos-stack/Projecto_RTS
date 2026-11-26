@@ -37,6 +37,8 @@ namespace ProjectoRTS.Buildings
         private Camera _camera;
         private float _progress;
         private bool _completed;
+        private Vector3 _footprintCenterLocal;
+        private Vector2 _footprintHalfLocal;
 
         /// <summary>Raised once when the site reaches full progress.</summary>
         public event Action<ConstructionSite> Completed;
@@ -231,6 +233,98 @@ namespace ProjectoRTS.Buildings
             {
                 _colliders.Add(colliders[i]);
             }
+
+            // Captured while the colliders are still enabled, so the worker
+            // can aim at the real walls instead of a definition-sized box.
+            CacheFootprint(renderers, colliders);
+        }
+
+        /// <summary>XZ footprint of the structure in site-local space.</summary>
+        public bool HasFootprint =>
+            _footprintHalfLocal.x > 0.001f || _footprintHalfLocal.y > 0.001f;
+
+        public Vector3 FootprintCenterLocal => _footprintCenterLocal;
+        public Vector2 FootprintHalfLocal => _footprintHalfLocal;
+
+        private void CacheFootprint(Renderer[] renderers, Collider[] colliders)
+        {
+            _footprintCenterLocal = Vector3.zero;
+            _footprintHalfLocal = Vector2.zero;
+
+            bool hasBounds = false;
+            Bounds world = default;
+
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Collider collider = colliders[i];
+                if (collider == null || collider.isTrigger)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    world = collider.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    world.Encapsulate(collider.bounds);
+                }
+            }
+
+            if (!hasBounds)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Renderer renderer = renderers[i];
+                    if (renderer == null ||
+                        renderer is ParticleSystemRenderer ||
+                        renderer is TrailRenderer ||
+                        renderer is LineRenderer)
+                    {
+                        continue;
+                    }
+
+                    if (!hasBounds)
+                    {
+                        world = renderer.bounds;
+                        hasBounds = true;
+                    }
+                    else
+                    {
+                        world.Encapsulate(renderer.bounds);
+                    }
+                }
+            }
+
+            if (!hasBounds)
+            {
+                return;
+            }
+
+            Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+            Vector3[] corners =
+            {
+                new Vector3(world.min.x, 0f, world.min.z),
+                new Vector3(world.min.x, 0f, world.max.z),
+                new Vector3(world.max.x, 0f, world.min.z),
+                new Vector3(world.max.x, 0f, world.max.z)
+            };
+
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Vector3 local = transform.InverseTransformPoint(corners[i]);
+                min = Vector3.Min(min, local);
+                max = Vector3.Max(max, local);
+            }
+
+            _footprintCenterLocal = new Vector3(
+                (min.x + max.x) * 0.5f, 0f, (min.z + max.z) * 0.5f);
+            _footprintHalfLocal = new Vector2(
+                (max.x - min.x) * 0.5f, (max.z - min.z) * 0.5f);
         }
 
         private void EnsureBar()

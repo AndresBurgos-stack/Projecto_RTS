@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Greek Gate
   category: 4
+  tier: 0
   prefab: {fileID: 4444556428961820255, guid: a59e8cb98c9dfe7419221d36c44ced94, type: 3}
   width: 3
   depth: 1

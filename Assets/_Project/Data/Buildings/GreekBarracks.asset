@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Greek Barracks
   category: 2
+  tier: 0
   prefab: {fileID: 813661351429206949, guid: 7b5252e15771b244d95a201eef7e68d8, type: 3}
   width: 5
   depth: 5

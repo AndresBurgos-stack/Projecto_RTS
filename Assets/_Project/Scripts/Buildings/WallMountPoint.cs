@@ -16,6 +16,8 @@ namespace ProjectoRTS.Buildings
     {
         [SerializeField, Min(1)] private int capacity = 2;
         [SerializeField, Min(0.5f)] private float topHeight = 1.35f;
+        [SerializeField, Min(0.2f)] private float slotSpread = 0.55f;
+        [SerializeField, Min(0f)] private float rangeBonus = 2f;
         [SerializeField] private string climbMarkerName = "Escalera";
         [SerializeField, Min(0.8f)] private float approachDistance = 1.4f;
         [SerializeField, Min(0.3f)] private float climbFaceDistance = 0.55f;
@@ -97,6 +99,9 @@ namespace ProjectoRTS.Buildings
         /// <summary>Distance from the wall center to the ground approach point.</summary>
         public float ApproachDistance => approachDistance;
 
+        /// <summary>Extra attack range granted to archers standing on this structure.</summary>
+        public float RangeBonus => rangeBonus;
+
         /// <summary>
         /// True for round buildings like towers: the climb rises straight up
         /// outside the round body and then steps onto the platform, and
@@ -134,7 +139,7 @@ namespace ProjectoRTS.Buildings
                 case 2:
                     return new Vector3(index % 2 == 0 ? -0.3f : 0.3f, topHeight, 0f);
                 default:
-                    float spread = 0.55f;
+                    float spread = slotSpread;
                     switch (index % 4)
                     {
                         case 0: return new Vector3(spread, topHeight, 0f);

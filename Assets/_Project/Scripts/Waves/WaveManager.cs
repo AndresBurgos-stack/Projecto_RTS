@@ -15,6 +15,8 @@ namespace ProjectoRTS.Waves
     [DisallowMultipleComponent]
     public sealed class WaveManager : MonoBehaviour
     {
+        private const string ExtraWavesFolder = "Waves";
+
         [Header("References")]
         [SerializeField] private DayNightCalendar calendar;
         [SerializeField] private PantheonObjective objective;
@@ -31,6 +33,7 @@ namespace ProjectoRTS.Waves
         private bool _running;
         private bool _gameOver;
         private WaveDefinition _activeWave;
+        private List<WaveDefinition> _runtimeWaves;
 
         public event Action<WaveDefinition> WaveWarning;
         public event Action<WaveDefinition> WaveStarted;
@@ -38,7 +41,9 @@ namespace ProjectoRTS.Waves
         public event Action GameOver;
 
         public WaveDefinition NextWave =>
-            waves.Count > 0 ? waves[Mathf.Clamp(_waveIndex, 0, waves.Count - 1)] : null;
+            RuntimeWaves.Count > 0
+                ? RuntimeWaves[Mathf.Clamp(_waveIndex, 0, RuntimeWaves.Count - 1)]
+                : null;
 
         public int CurrentDay => calendar != null ? calendar.CurrentDay : 1;
         public bool IsRunning => _running;
@@ -46,6 +51,68 @@ namespace ProjectoRTS.Waves
 
         /// <summary>True while a wave is on the field and has not been cleared.</summary>
         public bool HasActiveWave => _activeWave != null;
+
+        /// <summary>
+        /// Serialized waves plus any wave assets stored under Resources/Waves,
+        /// sorted by day. New days can be added without editing the scene.
+        /// </summary>
+        private List<WaveDefinition> RuntimeWaves
+        {
+            get
+            {
+                if (_runtimeWaves == null)
+                {
+                    BuildWaveList();
+                }
+
+                return _runtimeWaves;
+            }
+        }
+
+        private void BuildWaveList()
+        {
+            List<WaveDefinition> merged = new List<WaveDefinition>(
+                waves != null ? waves.Count + 4 : 4);
+
+            if (waves != null)
+            {
+                for (int i = 0; i < waves.Count; i++)
+                {
+                    WaveDefinition wave = waves[i];
+                    if (wave != null && !merged.Contains(wave))
+                    {
+                        merged.Add(wave);
+                    }
+                }
+            }
+
+            WaveDefinition[] extras =
+                UnityEngine.Resources.LoadAll<WaveDefinition>(ExtraWavesFolder);
+            for (int i = 0; i < extras.Length; i++)
+            {
+                WaveDefinition wave = extras[i];
+                if (wave != null && !merged.Contains(wave))
+                {
+                    merged.Add(wave);
+                }
+            }
+
+            // Stable insertion sort by day so the calendar runs in order.
+            for (int i = 1; i < merged.Count; i++)
+            {
+                WaveDefinition current = merged[i];
+                int j = i - 1;
+                while (j >= 0 && merged[j].Day > current.Day)
+                {
+                    merged[j + 1] = merged[j];
+                    j--;
+                }
+
+                merged[j + 1] = current;
+            }
+
+            _runtimeWaves = merged;
+        }
 
         private void Awake()
         {
@@ -63,6 +130,8 @@ namespace ProjectoRTS.Waves
             {
                 romanSpawner = FindFirstObjectByType<RomanSpawner>();
             }
+
+            BuildWaveList();
         }
 
         private void OnEnable()
@@ -123,7 +192,7 @@ namespace ProjectoRTS.Waves
 
         private void HandleDayChanged(int day, DayNightCalendar.Phase phase)
         {
-            if (!_running || _gameOver || waves.Count == 0)
+            if (!_running || _gameOver || RuntimeWaves.Count == 0)
             {
                 return;
             }
@@ -166,14 +235,14 @@ namespace ProjectoRTS.Waves
 
         private void BeginWave()
         {
-            if (waves.Count == 0 || romanSpawner == null)
+            if (RuntimeWaves.Count == 0 || romanSpawner == null)
             {
                 return;
             }
 
-            WaveDefinition wave = waves[Mathf.Clamp(_waveIndex, 0, waves.Count - 1)];
+            WaveDefinition wave = RuntimeWaves[Mathf.Clamp(_waveIndex, 0, RuntimeWaves.Count - 1)];
             _waveIndex++;
-            if (_waveIndex >= waves.Count && loopCalendar)
+            if (_waveIndex >= RuntimeWaves.Count && loopCalendar)
             {
                 _waveIndex = 0;
             }

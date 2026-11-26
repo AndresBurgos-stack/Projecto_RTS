@@ -226,6 +226,13 @@ namespace ProjectoRTS.Combat
             _drawSwordDeadline = 0f;
             _nextAttackTime = 0f;
             RefreshPilumVisuals();
+
+            if (definition.StartWithSwordDrawn && !_swordDrawn)
+            {
+                // Elites that spawn with the gladius already in hand: equip it
+                // immediately, no draw animation and no first-melee delay.
+                ApplyDrawSword();
+            }
         }
 
         /// <summary>Enables or disables automatic enemy acquisition.</summary>

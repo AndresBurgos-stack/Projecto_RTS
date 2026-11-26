@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 7120171789730584}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000016328374, y: 0.00000003565056, z: -0.7335724, w: 0.6796113}
-  m_LocalPosition: {x: -8.059, y: 3.398, z: -17.787}
+  m_LocalPosition: {x: -8.062, y: 3.362, z: -17.787}
   m_LocalScale: {x: 1.0588285, y: 1.0588286, z: 1.0588286}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -280,6 +280,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: 4303db98280ca95409d5ef76d23e72dc, type: 2}
   currentHealth: 0
   destroyOnDeath: 1
+  deathLingerDuration: 4.2
   corpseDuration: 1.1
 --- !u!195 &261325938280819393
 NavMeshAgent:
@@ -339,9 +340,15 @@ MonoBehaviour:
   chaseRefreshInterval: 0.2
   forceRepathInterval: 1.5
   rangePadding: 0.3
-  buildingReach: 2.5
+  buildingReach: 1.5
   aggroRadius: 9
   autoAcquire: 1
+  pilumHandVisual: {fileID: 0}
+  pilumBackVisuals: []
+  gladiusVisual: {fileID: 0}
+  gladiusHandBone: {fileID: 0}
+  gladiusHandLocalPosition: {x: 0.02, y: 0.081, z: -0.003}
+  gladiusHandLocalEuler: {x: 0, y: 0, z: -90}
 --- !u!114 &3690347598746263249
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -375,9 +382,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 090b910ef5396c240bd0166b6b8b9eec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workRange: 2.2
+  workRange: 1.2
   workMultiplier: 1
-  approachDistance: 2
+  approachDistance: 1
   repathInterval: 0.5
   carryCapacity: 10
   gatherTime: 2

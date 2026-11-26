@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Almacen
   category: 3
+  tier: 0
   prefab: {fileID: 4421880188815874129, guid: 9738e3cefb178d340ae1eb451a058873, type: 3}
   width: 3
   depth: 3

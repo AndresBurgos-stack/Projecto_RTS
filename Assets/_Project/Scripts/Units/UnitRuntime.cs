@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using ProjectoRTS.Audio;
 using ProjectoRTS.Buildings;
 using UnityEngine;
 using UnityEngine.AI;
@@ -166,6 +167,7 @@ namespace ProjectoRTS.Units
 
             _died = true;
             Died?.Invoke(this);
+            GameAudio.PlayDeath(transform.position);
 
             Animator animator = GetComponentInChildren<Animator>(true);
             if (animator != null)

@@ -24,13 +24,14 @@ namespace ProjectoRTS.Buildings
         private const float MinHammerFallSpeed = 0.5f;
         private const float HammerHitSpeedFraction = 0.25f;
         private const float MinHammerDrop = 0.08f;
+        private const int MaxApproachAttempts = 2;
 
         private static readonly List<WorkerBuilder> Workers = new List<WorkerBuilder>(16);
 
         [Header("Build")]
-        [SerializeField, Min(0.1f)] private float workRange = 2.2f;
+        [SerializeField, Min(0.1f)] private float workRange = 1.2f;
         [SerializeField, Min(0.1f)] private float workMultiplier = 1f;
-        [SerializeField, Min(0f)] private float approachDistance = 2f;
+        [SerializeField, Min(0f)] private float approachDistance = 0.6f;
         [SerializeField, Min(0.1f)] private float repathInterval = 0.5f;
 
         [Header("Gather")]
@@ -65,6 +66,7 @@ namespace ProjectoRTS.Buildings
         private UnitRuntime _runtime;
         private ConstructionSite _site;
         private bool _stoppedAtSite;
+        private int _approachAttempts;
         private float _repathTimer;
         private float _baseSpeed;
         private bool _fleeing;
@@ -308,6 +310,7 @@ namespace ProjectoRTS.Buildings
         {
             _site = site;
             _stoppedAtSite = false;
+            _approachAttempts = 0;
             _repathTimer = 0f;
             CancelGathering();
             CacheSiteFootprint();
@@ -374,6 +377,7 @@ namespace ProjectoRTS.Buildings
                 {
                     CancelGathering();
                     _stoppedAtSite = false;
+                    _approachAttempts = 0;
                     _repathTimer = 0f;
                     CacheSiteFootprint();
                     WalkToSite();
@@ -402,33 +406,66 @@ namespace ProjectoRTS.Buildings
                 return;
             }
 
-            if (!IsInRange())
-            {
-                SetBuilding(false);
-                _repathTimer -= Time.deltaTime;
-                _outOfRangeTimer += Time.deltaTime;
-
-                bool pathMissing = _agent != null &&
-                    _agent.isOnNavMesh && !_agent.pathPending && !_agent.hasPath;
-                bool timedOut = _outOfRangeTimer >= stuckRepathTimeout;
-
-                if ((_repathTimer <= 0f && pathMissing) || timedOut)
-                {
-                    _repathTimer = repathInterval;
-                    _outOfRangeTimer = 0f;
-                    WalkToSite();
-                }
-
-                return;
-            }
-
-            _outOfRangeTimer = 0f;
+            bool walking = _agent != null && _agent.isOnNavMesh &&
+                (_agent.pathPending || _agent.hasPath);
 
             if (!_stoppedAtSite)
             {
-                StopAtSite();
+                if (walking)
+                {
+                    // Keep walking until the agent reaches the approach spot.
+                    // Stopping as soon as the footprint was in range used to
+                    // freeze the worker up to workRange away from the wall.
+                    SetBuilding(false);
+                    _outOfRangeTimer += Time.deltaTime;
+
+                    if (_outOfRangeTimer >= stuckRepathTimeout)
+                    {
+                        _outOfRangeTimer = 0f;
+                        _approachAttempts++;
+
+                        if (_approachAttempts >= MaxApproachAttempts)
+                        {
+                            // The agent cannot reach the spot (navmesh carve
+                            // of a tight wall): build from where it stands
+                            // instead of stalling forever.
+                            StopAtSite();
+                        }
+                        else
+                        {
+                            WalkToSite();
+                        }
+                    }
+
+                    return;
+                }
+
+                if (IsInRange())
+                {
+                    _approachAttempts = 0;
+                    StopAtSite();
+                }
+                else
+                {
+                    // The agent stopped away from the footprint (the sampled
+                    // spot landed far or the carve moved): retry, then accept.
+                    _approachAttempts++;
+
+                    if (_approachAttempts >= MaxApproachAttempts)
+                    {
+                        StopAtSite();
+                    }
+                    else
+                    {
+                        _repathTimer = repathInterval;
+                        WalkToSite();
+                    }
+
+                    return;
+                }
             }
 
+            _outOfRangeTimer = 0f;
             SetBuilding(true);
             UpdateHammerHit();
             _site.AddProgress(Time.deltaTime * workMultiplier);
@@ -544,7 +581,36 @@ namespace ProjectoRTS.Buildings
 
             _hammerHitThisSwing = true;
             _nextHammerHitTime = Time.time + 0.4f;
-            GameAudio.PlayConstructionHit(_site.transform.position + Vector3.up * 0.5f);
+            GameAudio.PlayConstructionHit(GetHammerImpactPoint());
+        }
+
+        /// <summary>
+        /// Point just in front of the worker against the nearest wall face of
+        /// the site, so the strike sound lands on the structure instead of at
+        /// the site center (far away on big footprints).
+        /// </summary>
+        private Vector3 GetHammerImpactPoint()
+        {
+            if (_site == null)
+            {
+                return transform.position + Vector3.up * 0.7f;
+            }
+
+            Vector3 edgePoint = GetNearestFootprintEdgePoint();
+            Vector3 toEdge = edgePoint - transform.position;
+            toEdge.y = 0f;
+
+            if (toEdge.sqrMagnitude < 0.0001f)
+            {
+                toEdge = Vector3.forward;
+            }
+
+            toEdge.Normalize();
+
+            float distance = DistanceToSiteFootprint();
+            return transform.position +
+                toEdge * Mathf.Max(0f, distance - 0.05f) +
+                Vector3.up * 0.7f;
         }
 
         private void ResetHammerTracking()
@@ -1780,6 +1846,7 @@ namespace ProjectoRTS.Buildings
             if (_site != null && !_site.IsComplete)
             {
                 _stoppedAtSite = false;
+                _approachAttempts = 0;
                 _repathTimer = 0f;
                 WalkToSite();
                 return;
@@ -1865,16 +1932,41 @@ namespace ProjectoRTS.Buildings
                 _agent.ResetPath();
             }
 
-            if (_site != null)
-            {
-                Vector3 look = _site.transform.position - transform.position;
-                look.y = 0f;
+            // Face the nearest wall face (not the site center): at the corners
+            // of a big footprint the center points past the actual wall and the
+            // hammer visibly swings into empty space.
+            Vector3 facePoint = GetNearestFootprintEdgePoint();
+            Vector3 look = facePoint - transform.position;
+            look.y = 0f;
 
-                if (look.sqrMagnitude > 0.0001f)
-                {
-                    transform.rotation = Quaternion.LookRotation(look.normalized);
-                }
+            if (look.sqrMagnitude > 0.0001f)
+            {
+                transform.rotation = Quaternion.LookRotation(look.normalized);
             }
+        }
+
+        /// <summary>
+        /// Point of the site footprint edge (corners included) closest to the
+        /// worker, in world space. This is the wall the hammer should hit.
+        /// </summary>
+        private Vector3 GetNearestFootprintEdgePoint()
+        {
+            if (_site == null)
+            {
+                return transform.position;
+            }
+
+            Vector3 local = _site.transform.InverseTransformPoint(transform.position);
+            float edgeX = Mathf.Clamp(
+                local.x,
+                _siteFootprintCenter.x - _siteFootprintHalf.x,
+                _siteFootprintCenter.x + _siteFootprintHalf.x);
+            float edgeZ = Mathf.Clamp(
+                local.z,
+                _siteFootprintCenter.z - _siteFootprintHalf.y,
+                _siteFootprintCenter.z + _siteFootprintHalf.y);
+
+            return _site.transform.TransformPoint(new Vector3(edgeX, 0f, edgeZ));
         }
 
         private void Resume()
@@ -1937,6 +2029,9 @@ namespace ProjectoRTS.Buildings
                 }
             }
 
+            // Workers must hug the exact approach point (construction, tree,
+            // drop-off); the default stopping distance leaves them short.
+            _agent.stoppingDistance = 0.05f;
             _agent.isStopped = false;
             _agent.updateRotation = true;
             _agent.SetDestination(destination);
@@ -1967,8 +2062,11 @@ namespace ProjectoRTS.Buildings
         }
 
         /// <summary>
-        /// Caches the XZ footprint of the current site from its renderer
-        /// bounds, in site-local space. Called whenever the site changes.
+        /// Caches the XZ footprint of the current site. The grid footprint of
+        /// the placed definition is authoritative: some imported models carry
+        /// stray geometry far from the visible mesh (the house model spans
+        /// thousands of units), which would push workers absurdly far away.
+        /// Renderer bounds remain as a fallback for sites without a definition.
         /// </summary>
         private void CacheSiteFootprint()
         {
@@ -1977,6 +2075,24 @@ namespace ProjectoRTS.Buildings
 
             if (_site == null)
             {
+                return;
+            }
+
+            BuildingRuntime runtime = _site.GetComponent<BuildingRuntime>();
+            BuildingDefinition definition = runtime != null ? runtime.Definition : null;
+
+            if (definition != null)
+            {
+                float cellSize = 1f;
+                BuildGrid grid = FindFirstObjectByType<BuildGrid>();
+                if (grid != null)
+                {
+                    cellSize = Mathf.Max(0.25f, grid.CellSize);
+                }
+
+                _siteFootprintHalf = new Vector2(
+                    definition.Width * cellSize * 0.5f,
+                    definition.Depth * cellSize * 0.5f);
                 return;
             }
 
@@ -2043,6 +2159,26 @@ namespace ProjectoRTS.Buildings
         }
 
         /// <summary>
+        /// Distance the worker keeps from the wall while building. Structures
+        /// whose visible model is smaller or inset (the house) can override it
+        /// with a per-definition value so the hammer lands on the real wall.
+        /// </summary>
+        private float GetEffectiveApproachDistance()
+        {
+            if (_site == null)
+            {
+                return approachDistance;
+            }
+
+            BuildingRuntime runtime = _site.GetComponent<BuildingRuntime>();
+            BuildingDefinition definition = runtime != null ? runtime.Definition : null;
+
+            return definition != null && definition.BuildApproachDistance > 0f
+                ? definition.BuildApproachDistance
+                : approachDistance;
+        }
+
+        /// <summary>
         /// Picks a navmesh point next to the site footprint edge: the point on
         /// the edge closest to the worker, pushed outward by the approach
         /// distance. When that spot is blocked (wall or building right next to
@@ -2077,14 +2213,15 @@ namespace ProjectoRTS.Buildings
 
             outward.Normalize();
 
-            Vector3 candidate = edge + outward * approachDistance;
+            float distance = GetEffectiveApproachDistance();
+            Vector3 candidate = edge + outward * distance;
 
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 3f, NavMesh.AllAreas))
             {
                 return hit.position;
             }
 
-            float radius = Mathf.Max(_siteFootprintHalf.x, _siteFootprintHalf.y) + approachDistance;
+            float radius = Mathf.Max(_siteFootprintHalf.x, _siteFootprintHalf.y) + distance;
 
             for (int i = 0; i < 8; i++)
             {

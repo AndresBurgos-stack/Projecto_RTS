@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4271880538957792038}
   - component: {fileID: 5516009320774658102}
   - component: {fileID: 6631705934026917183}
-  - component: {fileID: 7713826951634509414}
   - component: {fileID: 8821540673012535061}
   m_Layer: 0
   m_Name: GreekTower
@@ -74,24 +73,6 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 2.28, z: -0.02}
   m_TimeToStationary: 0.5
---- !u!114 &7713826951634509414
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2153108217857864503}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9167af0d3b0608c4e892f079ff584f6b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  attackDamage: 10
-  attackRange: 9
-  attackInterval: 1.2
-  muzzleHeight: 4.65
-  flightTime: 0.22
-  windUpTime: 0.5
 --- !u!114 &8821540673012535061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,6 +87,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   capacity: 4
   topHeight: 4.55
+  rangeBonus: 5
   climbMarkerName: Escalera
   approachDistance: 1.3
   climbFaceDistance: 0.9

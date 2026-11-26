@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Fundicion
   category: 2
+  tier: 0
   prefab: {fileID: 901000000000000001, guid: d104bbcc41dc49a1867aaeae57260ab4, type: 3}
   width: 3
   depth: 3

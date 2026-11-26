@@ -107,7 +107,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 749e5fd668c7fad448e898f3ae567ece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  definition: {fileID: 11400000, guid: 2f80d1f7157378d4da0a49ff9c84f052, type: 2}
+  definition: {fileID: 11400000, guid: c2e1584c23bc49d287c6251400e5bb81, type: 2}
   currentHealth: 0
   destroyOnDeath: 1
   deathLingerDuration: 4.2

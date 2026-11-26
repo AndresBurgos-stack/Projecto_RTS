@@ -51,6 +51,7 @@ namespace ProjectoRTS.Units
 
         [Header("Sword")]
         [SerializeField] private bool drawSwordOnFirstMelee;
+        [SerializeField] private bool startWithSwordDrawn;
 
         [Header("Audio")]
         [SerializeField] private bool usesSpearImpact;
@@ -78,6 +79,7 @@ namespace ProjectoRTS.Units
         public float PilumRange => pilumRange;
         public float PilumInterval => pilumInterval;
         public bool DrawSwordOnFirstMelee => drawSwordOnFirstMelee;
+        public bool StartWithSwordDrawn => startWithSwordDrawn;
         public bool UsesSpearImpact => usesSpearImpact;
 
         public float MaxHealth => maxHealth;

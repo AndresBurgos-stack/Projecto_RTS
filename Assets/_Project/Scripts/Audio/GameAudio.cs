@@ -13,7 +13,12 @@ namespace ProjectoRTS.Audio
         private const string ArrowImpactPath = "SFX/ArrowImpact";
         private const string PilumImpactPath = "SFX/ImpactoLanzamp3";
         private const string SwordStrikePath = "SFX/SwordStrike";
+        private const string SwordStrike2Path = "SFX/sword-hit2";
+        private const string SwordStrike3Path = "SFX/sword-hit3";
         private const string ConstructionPath = "SFX/SonidoDeConstruccion";
+        private const string DeathPath1 = "SFX/Death-Sound-1";
+        private const string DeathPath2 = "SFX/Death-Sound-2";
+        private const string DeathPath3 = "SFX/Death-Sound-3";
 
         private const int MaxSources = 32;
         private const float UnitMinDistance = 4f;
@@ -31,7 +36,12 @@ namespace ProjectoRTS.Audio
         private static AudioClip _arrowImpact;
         private static AudioClip _pilumImpact;
         private static AudioClip _swordStrike;
+        private static AudioClip _swordStrike2;
+        private static AudioClip _swordStrike3;
         private static AudioClip _construction;
+        private static AudioClip _death1;
+        private static AudioClip _death2;
+        private static AudioClip _death3;
 
         /// <summary>Plays one hammer strike at the given hit position.</summary>
         public static void PlayConstructionHit(Vector3 position)
@@ -76,14 +86,54 @@ namespace ProjectoRTS.Audio
                 Random.Range(0.97f, 1.03f));
         }
 
-        /// <summary>Plays the sword hit sound at the point of impact.</summary>
+        /// <summary>Plays a random sword hit sound at the point of impact.</summary>
         public static void PlaySwordStrike(Vector3 position)
         {
+            AudioClip clip;
+            switch (Random.Range(0, 3))
+            {
+                case 1:
+                    clip = LoadClip(SwordStrike2Path, ref _swordStrike2);
+                    break;
+                case 2:
+                    clip = LoadClip(SwordStrike3Path, ref _swordStrike3);
+                    break;
+                default:
+                    clip = LoadClip(SwordStrikePath, ref _swordStrike);
+                    break;
+            }
+
             PlayOneShot(
-                LoadClip(SwordStrikePath, ref _swordStrike),
+                clip,
                 position,
                 0.6f,
                 Random.Range(0.92f, 1.08f));
+        }
+
+        /// <summary>Plays a random death groan at the fallen unit.</summary>
+        public static void PlayDeath(Vector3 position)
+        {
+            AudioClip clip;
+            switch (Random.Range(0, 3))
+            {
+                case 1:
+                    clip = LoadClip(DeathPath2, ref _death2);
+                    break;
+                case 2:
+                    clip = LoadClip(DeathPath3, ref _death3);
+                    break;
+                default:
+                    clip = LoadClip(DeathPath1, ref _death1);
+                    break;
+            }
+
+            PlayOneShot(
+                clip,
+                position,
+                0.5f,
+                Random.Range(0.9f, 1.1f),
+                UnitMinDistance,
+                UnitMaxDistance);
         }
 
         private static void PlayOneShot(

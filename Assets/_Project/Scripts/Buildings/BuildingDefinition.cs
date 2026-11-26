@@ -12,6 +12,13 @@ namespace ProjectoRTS.Buildings
         Defense = 4
     }
 
+    /// <summary>Material tier used to group buildings in the construction menu.</summary>
+    public enum BuildingTier
+    {
+        Wood = 0,
+        Stone = 1
+    }
+
     /// <summary>
     /// Designer-authored data for a placeable building.
     /// Create assets from the menu: ProjectoRTS > Buildings > Building Definition.
@@ -24,6 +31,7 @@ namespace ProjectoRTS.Buildings
         [Header("Identity")]
         [SerializeField] private string displayName = "New Building";
         [SerializeField] private BuildingCategory category = BuildingCategory.Wall;
+        [SerializeField] private BuildingTier tier = BuildingTier.Wood;
         [SerializeField] private GameObject prefab;
 
         [Header("Grid Footprint (cells)")]
@@ -40,12 +48,17 @@ namespace ProjectoRTS.Buildings
         [SerializeField, Min(1f)] private float maxHealth = 100f;
         [SerializeField, Min(0f)] private float attackDamage;
         [SerializeField, Min(0f)] private float attackRange;
+        [SerializeField, Min(0f)] private float rangeBonus;
 
         [Header("Population")]
         [SerializeField, Min(0)] private int populationBonus;
 
+        [Header("Construction")]
+        [SerializeField, Min(0f)] private float buildApproachDistance;
+
         public string DisplayName => displayName;
         public BuildingCategory Category => category;
+        public BuildingTier Tier => tier;
         public GameObject Prefab => prefab;
 
         public int Width => width;
@@ -59,9 +72,17 @@ namespace ProjectoRTS.Buildings
         public float MaxHealth => maxHealth;
         public float AttackDamage => attackDamage;
         public float AttackRange => attackRange;
+        public float RangeBonus => rangeBonus;
 
         /// <summary>How much this building raises the population cap when built.</summary>
         public int PopulationBonus => populationBonus;
+
+        /// <summary>
+        /// Per-building override for the builder's approach distance; 0 uses
+        /// the worker's default. Useful when the visible model is smaller or
+        /// offset from its collider (the house).
+        /// </summary>
+        public float BuildApproachDistance => buildApproachDistance;
 
         private void OnValidate()
         {

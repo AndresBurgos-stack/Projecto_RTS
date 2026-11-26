@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Greek House
   category: 3
+  tier: 0
   prefab: {fileID: 7462493490174262651, guid: 532eed28f4f3a0b439ae4688c31aad00, type: 3}
-  width: 2
-  depth: 2
+  width: 3
+  depth: 3
   woodCost: 50
   bronzeCost: 20
   goldCost: 0
@@ -24,3 +25,4 @@ MonoBehaviour:
   attackDamage: 0
   attackRange: 0
   populationBonus: 5
+  buildApproachDistance: 0.3

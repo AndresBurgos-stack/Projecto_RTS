@@ -15,7 +15,7 @@ namespace ProjectoRTS.Buildings
     [DisallowMultipleComponent]
     public sealed class WallArcher : MonoBehaviour
     {
-        [SerializeField, Min(0f)] private float rangeBonus = 2f;
+        [SerializeField, Min(0f)] private float rangeBonus = 2f; // Fallback when the mount point has no bonus configured.
 
         private WallMountPoint _wall;
         private WallMountPoint _targetWall;
@@ -51,7 +51,7 @@ namespace ProjectoRTS.Buildings
 
             if (_combat != null)
             {
-                _combat.SetRangeBonus(rangeBonus);
+                _combat.SetRangeBonus(_wall != null ? _wall.RangeBonus : rangeBonus);
                 _combat.ClearTarget();
             }
 
@@ -320,6 +320,11 @@ namespace ProjectoRTS.Buildings
             _targetWall = null;
             _released = false;
             _transferring = false;
+
+            if (_combat != null)
+            {
+                _combat.SetRangeBonus(target.RangeBonus);
+            }
 
             if (_runtime != null)
             {

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Greek Wall
   category: 0
+  tier: 0
   prefab: {fileID: 8204695237741625792, guid: abe4abcecd616b84c886ffac2bbb7311, type: 3}
   width: 1
   depth: 1

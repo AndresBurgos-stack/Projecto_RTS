@@ -34,6 +34,8 @@ namespace ProjectoRTS.UI
                 case "GreekHouse": return Load("Casa");
                 case "GreekSmelter": return Load("IconoFundicion");
                 case "GreekStorage": return Load("Almacen");
+                case "GreekTower": return Load("TorrePiedra");
+                case "GreekTowerWood": return Load("TorreMadera");
                 case "GreekTownCenter": return Load("ChozadeObreros");
                 case "GreekWall": return Load("MurodeMadera");
                 default: return null;
@@ -52,7 +54,8 @@ namespace ProjectoRTS.UI
                 case "HopliteArcadio": return Load("IconoHoplita");
                 case "Xifista": return Load("IconoXifista");
                 case "Psiloi": return Load("IconoArquero");
-                case "Peltasta": return Load("IconoArquero");
+                case "Peltasta": return Load("Peltasta");
+                case "Trabajador": return Load("Trabajador");
                 default: return null;
             }
         }
