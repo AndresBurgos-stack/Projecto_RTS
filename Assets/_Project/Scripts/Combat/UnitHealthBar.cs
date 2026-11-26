@@ -10,6 +10,10 @@ namespace ProjectoRTS.Combat
     [DisallowMultipleComponent]
     public sealed class UnitHealthBar : MonoBehaviour
     {
+        private const string RomanBarMaterialPath = "Materials/HealthBarFillRoman";
+
+        private static Material _romanBarMaterial;
+
         [Header("References")]
         [SerializeField] private UnitRuntime runtime;
         [SerializeField] private Transform fill;
@@ -58,7 +62,32 @@ namespace ProjectoRTS.Combat
         private void Start()
         {
             _camera = Camera.main;
+            ApplyFactionColor();
             Refresh();
+        }
+
+        /// <summary>
+        /// Roman enemies get a red fill (#c0392b) so they read as hostile at a
+        /// glance; the material swap only touches this renderer and leaves the
+        /// shared green fill of the Greek units untouched.
+        /// </summary>
+        private void ApplyFactionColor()
+        {
+            if (runtime == null || fill == null || runtime.Faction != Faction.Roman)
+            {
+                return;
+            }
+
+            if (_romanBarMaterial == null)
+            {
+                _romanBarMaterial = UnityEngine.Resources.Load<Material>(RomanBarMaterialPath);
+            }
+
+            Renderer fillRenderer = fill.GetComponent<Renderer>();
+            if (_romanBarMaterial != null && fillRenderer != null)
+            {
+                fillRenderer.sharedMaterial = _romanBarMaterial;
+            }
         }
 
         private void LateUpdate()

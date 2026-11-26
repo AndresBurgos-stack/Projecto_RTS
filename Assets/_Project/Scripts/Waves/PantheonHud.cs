@@ -197,7 +197,7 @@ namespace ProjectoRTS.Waves
             _label.fontStyle = FontStyle.Bold;
             _label.alignment = TextAnchor.MiddleCenter;
             _label.color = new Color(1f, 0.93f, 0.78f);
-            _label.text = "Panteon 100%";
+            _label.text = "Partenón 100%";
             _label.raycastTarget = false;
         }
 
@@ -212,7 +212,7 @@ namespace ProjectoRTS.Waves
             int percent = Mathf.RoundToInt(normalized * 100f);
 
             _fill.fillAmount = normalized;
-            _label.text = "Panteon " + percent + "%";
+            _label.text = "Partenón " + percent + "%";
 
             if (normalized < 0.35f)
             {

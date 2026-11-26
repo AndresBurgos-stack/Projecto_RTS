@@ -138,7 +138,7 @@ namespace ProjectoRTS.Waves
         {
             if (warningLabel != null)
             {
-                warningLabel.text = "El Panteón ha caído. Derrota.";
+                warningLabel.text = "El Partenón ha caído. Derrota.";
             }
         }
     }

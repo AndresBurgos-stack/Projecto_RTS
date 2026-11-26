@@ -25,6 +25,7 @@ namespace ProjectoRTS.EditorTools
         private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
         private const string MusicAssetPath = "Assets/_Project/Audio/Musica_portada.mp3";
         private const string MusicSourcePath = "musica juego/Musica_portada.mp3";
+        private const string TitleFontPath = "Assets/_Project/Fonts/Cinzel-Bold.ttf";
 
         [MenuItem("ProjectoRTS/Setup/Create Title Screen")]
         public static void CreateTitleScreenFromMenu()
@@ -296,8 +297,14 @@ namespace ProjectoRTS.EditorTools
                 font = UnityEngine.Resources.GetBuiltinResource<Font>("Arial.ttf");
             }
 
+            Font titleFont = AssetDatabase.LoadAssetAtPath<Font>(TitleFontPath);
+            if (titleFont == null)
+            {
+                titleFont = font;
+            }
+
             CreateBackground(canvasObject.transform);
-            CreateTitle(canvasObject.transform, font);
+            CreateTitle(canvasObject.transform, titleFont);
             Button playButton = CreatePlayButton(canvasObject.transform, font);
             CreateVersionLabel(canvasObject.transform, font);
             loadingOverlay = CreateLoadingOverlay(canvasObject.transform, font, out loadingFill, out loadingLabel);
@@ -357,7 +364,7 @@ namespace ProjectoRTS.EditorTools
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Color.white;
-            text.text = "PROYECTO RTS";
+            text.text = "LA ÚLTIMA FALANGE";
             text.raycastTarget = false;
 
             Shadow shadow = titleObject.GetComponent<Shadow>();
