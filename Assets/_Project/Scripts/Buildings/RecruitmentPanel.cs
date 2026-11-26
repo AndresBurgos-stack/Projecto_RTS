@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ProjectoRTS.Economy;
+using ProjectoRTS.UI;
 using ProjectoRTS.Units;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +20,10 @@ namespace ProjectoRTS.Buildings
         [SerializeField] private Button buttonTemplate;
         [SerializeField] private Text title;
         [SerializeField] private RecruitmentManager manager;
+
+        private const int GridColumns = 2;
+        private static readonly Vector2 GridCellSize = new Vector2(84f, 84f);
+        private static readonly Vector2 GridSpacing = new Vector2(20f, 10f);
 
         private readonly List<GameObject> _buttons = new List<GameObject>();
         private readonly List<UnitDefinition> _buttonUnits = new List<UnitDefinition>();
@@ -46,6 +51,7 @@ namespace ProjectoRTS.Buildings
         public void Show(BarracksBuilding barracks, RecruitmentManager recruitmentManager)
         {
             EnsureInitialized();
+            DisableListLayout();
             manager = recruitmentManager;
             ClearButtons();
 
@@ -60,23 +66,66 @@ namespace ProjectoRTS.Buildings
 
             if (barracks != null && buttonContainer != null && buttonTemplate != null)
             {
+                List<UnitDefinition> recruitable =
+                    new List<UnitDefinition>(barracks.RecruitableUnits.Count);
+
                 foreach (UnitDefinition unit in barracks.RecruitableUnits)
                 {
-                    if (unit == null || unit.Prefab == null)
+                    if (unit != null && unit.Prefab != null)
                     {
-                        continue;
+                        recruitable.Add(unit);
                     }
+                }
 
+                for (int i = 0; i < recruitable.Count; i++)
+                {
+                    UnitDefinition unit = recruitable[i];
                     Button button = Instantiate(buttonTemplate, buttonContainer);
                     button.gameObject.SetActive(true);
+                    PositionButton(
+                        button.transform as RectTransform,
+                        i,
+                        recruitable.Count);
 
                     Text label = button.GetComponentInChildren<Text>(true);
-                    if (label != null)
+                    Sprite sprite = UiIconCatalog.GetUnitIcon(unit);
+
+                    if (sprite != null)
+                    {
+                        Image background = button.GetComponent<Image>();
+                        if (background != null)
+                        {
+                            background.color = new Color(0f, 0f, 0f, 0f);
+                        }
+
+                        Image icon = UiIconFactory.CreateIcon(
+                            button.transform,
+                            "Icon",
+                            sprite);
+                        button.targetGraphic = icon;
+                        button.colors = UiButtonStyle.CreateIconColors();
+
+                        if (label != null)
+                        {
+                            label.gameObject.SetActive(false);
+                        }
+                    }
+                    else if (label != null)
                     {
                         label.fontSize = 14;
                         label.text =
                             $"Reclutar {unit.DisplayName} ({unit.WoodCost}M {unit.BronzeCost}B)";
                     }
+
+                    TooltipTrigger tooltip = button.GetComponent<TooltipTrigger>();
+                    if (tooltip == null)
+                    {
+                        tooltip = button.gameObject.AddComponent<TooltipTrigger>();
+                    }
+
+                    tooltip.Configure(
+                        unit.DisplayName,
+                        UnitTooltipText.GetBody(unit));
 
                     UnitDefinition captured = unit;
                     button.onClick.AddListener(() => manager.Recruit(captured));
@@ -91,6 +140,44 @@ namespace ProjectoRTS.Buildings
             }
 
             RefreshAffordability();
+        }
+
+        private void DisableListLayout()
+        {
+            if (buttonContainer == null)
+            {
+                return;
+            }
+
+            LayoutGroup[] groups = buttonContainer.GetComponents<LayoutGroup>();
+            for (int i = 0; i < groups.Length; i++)
+            {
+                groups[i].enabled = false;
+            }
+        }
+
+        private static void PositionButton(RectTransform rect, int index, int total)
+        {
+            if (rect == null || total <= 0)
+            {
+                return;
+            }
+
+            int columns = Mathf.Min(GridColumns, total);
+            int rows = Mathf.CeilToInt(total / (float)columns);
+            int column = index % columns;
+            int row = index / columns;
+
+            float x = (column - (columns - 1) * 0.5f) *
+                (GridCellSize.x + GridSpacing.x);
+            float y = ((rows - 1) * 0.5f - row) *
+                (GridCellSize.y + GridSpacing.y);
+
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = GridCellSize;
+            rect.anchoredPosition = new Vector2(x, y);
         }
 
         public void Hide()
@@ -184,6 +271,7 @@ namespace ProjectoRTS.Buildings
             {
                 if (button != null)
                 {
+                    button.SetActive(false);
                     Destroy(button);
                 }
             }

@@ -20,6 +20,8 @@ namespace ProjectoRTS.Audio
         private const float UnitMaxDistance = 35f;
         private const float ConstructionMinDistance = 5f;
         private const float ConstructionMaxDistance = 40f;
+        // The clip opens with ~95 ms of silence before the hammer transient.
+        private const float ConstructionHitOffset = 0.095f;
 
         private static readonly List<AudioSource> Sources = new List<AudioSource>(MaxSources);
         private static readonly HashSet<string> MissingClips = new HashSet<string>();
@@ -31,9 +33,18 @@ namespace ProjectoRTS.Audio
         private static AudioClip _swordStrike;
         private static AudioClip _construction;
 
-        /// <summary>Loopable clip played by a building while it is under construction.</summary>
-        public static AudioClip ConstructionClip =>
-            LoadClip(ConstructionPath, ref _construction);
+        /// <summary>Plays one hammer strike at the given hit position.</summary>
+        public static void PlayConstructionHit(Vector3 position)
+        {
+            PlayOneShot(
+                LoadClip(ConstructionPath, ref _construction),
+                position,
+                0.55f,
+                Random.Range(0.94f, 1.06f),
+                ConstructionMinDistance,
+                ConstructionMaxDistance,
+                ConstructionHitOffset);
+        }
 
         /// <summary>Plays the bow/javelin release sound at the attacker.</summary>
         public static void PlayArrowRelease(Vector3 position)
@@ -75,36 +86,14 @@ namespace ProjectoRTS.Audio
                 Random.Range(0.92f, 1.08f));
         }
 
-        /// <summary>
-        /// Adds a looping, spatialized construction AudioSource to the supplied
-        /// building. Returns null when the clip is missing.
-        /// </summary>
-        public static AudioSource CreateConstructionSource(GameObject host)
-        {
-            AudioClip clip = ConstructionClip;
-
-            if (host == null || clip == null)
-            {
-                return null;
-            }
-
-            AudioSource source = host.AddComponent<AudioSource>();
-            source.clip = clip;
-            source.loop = true;
-            source.playOnAwake = false;
-            source.spatialBlend = 1f;
-            source.volume = 0.45f;
-            source.minDistance = ConstructionMinDistance;
-            source.maxDistance = ConstructionMaxDistance;
-            source.rolloffMode = AudioRolloffMode.Logarithmic;
-            return source;
-        }
-
         private static void PlayOneShot(
             AudioClip clip,
             Vector3 position,
             float volume,
-            float pitch)
+            float pitch,
+            float minDistance = UnitMinDistance,
+            float maxDistance = UnitMaxDistance,
+            float startTime = 0f)
         {
             if (clip == null)
             {
@@ -115,11 +104,12 @@ namespace ProjectoRTS.Audio
             source.transform.position = position;
             source.clip = clip;
             source.loop = false;
+            source.time = Mathf.Clamp(startTime, 0f, Mathf.Max(0f, clip.length - 0.01f));
             source.volume = volume;
             source.pitch = pitch;
             source.spatialBlend = 1f;
-            source.minDistance = UnitMinDistance;
-            source.maxDistance = UnitMaxDistance;
+            source.minDistance = minDistance;
+            source.maxDistance = maxDistance;
             source.rolloffMode = AudioRolloffMode.Logarithmic;
             source.Play();
         }

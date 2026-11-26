@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ProjectoRTS.Core;
 using ProjectoRTS.Economy;
+using ProjectoRTS.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -16,7 +17,10 @@ namespace ProjectoRTS.Buildings
     [DisallowMultipleComponent]
     public sealed class WorkerBuildPanel : MonoBehaviour
     {
-        private const int Columns = 3;
+        private const int Columns = 4;
+        private const float IconSize = 62f;
+        private const float IconStepX = 116f;
+        private const float IconStepY = 70f;
 
         private static WorkerBuildPanel _instance;
 
@@ -132,28 +136,75 @@ namespace ProjectoRTS.Buildings
                     continue;
                 }
 
-                int index = i;
-                Button button = _buttons[i].GetComponent<Button>();
-                if (button != null)
-                {
-                    button.onClick.RemoveAllListeners();
-                    button.onClick.AddListener(() => BeginPlacement(definitions[index]));
-                    button.interactable = PlayerEconomy.CanAfford(
-                        definitions[i].WoodCost,
-                        definitions[i].BronzeCost);
-                }
-
-                Text label = _buttons[i].GetComponentInChildren<Text>(true);
-                if (label != null)
-                {
-                    label.fontSize = 10;
-                    label.verticalOverflow = VerticalWrapMode.Overflow;
-                    label.horizontalOverflow = HorizontalWrapMode.Overflow;
-                    label.text =
-                        $"{definitions[i].DisplayName}\n" +
-                        $"{definitions[i].WoodCost}M {definitions[i].BronzeCost}B";
-                }
+                ConfigureButton(_buttons[i], definitions[i], i);
             }
+        }
+
+        private void ConfigureButton(
+            GameObject go,
+            BuildingDefinition definition,
+            int index)
+        {
+            Button button = go.GetComponent<Button>();
+            if (button == null)
+            {
+                return;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => BeginPlacement(definition));
+
+            Sprite sprite = UiIconCatalog.GetBuildingIcon(definition);
+
+            Transform iconTransform = go.transform.Find("Icon");
+            Image icon = iconTransform != null
+                ? iconTransform.GetComponent<Image>()
+                : null;
+            UiIconFactory.Apply(icon, sprite);
+
+            Image background = go.GetComponent<Image>();
+            if (background != null)
+            {
+                background.color = sprite != null
+                    ? new Color(0f, 0f, 0f, 0f)
+                    : new Color(0.24f, 0.3f, 0.38f, 1f);
+            }
+
+            button.targetGraphic = sprite != null && icon != null
+                ? icon
+                : background;
+
+            Transform fallbackTransform = go.transform.Find("Fallback");
+            Text fallback = fallbackTransform != null
+                ? fallbackTransform.GetComponent<Text>()
+                : null;
+            if (fallback != null)
+            {
+                fallback.gameObject.SetActive(sprite == null);
+                fallback.text = BuildingTooltipText.GetTitle(definition) + "\n" +
+                    definition.WoodCost + "M " + definition.BronzeCost + "B";
+            }
+
+            Transform hotkeyTransform = go.transform.Find("Hotkey");
+            Text hotkey = hotkeyTransform != null
+                ? hotkeyTransform.GetComponent<Text>()
+                : null;
+            if (hotkey != null)
+            {
+                hotkey.text = (index + 1).ToString();
+            }
+
+            TooltipTrigger tooltip = go.GetComponent<TooltipTrigger>();
+            if (tooltip != null)
+            {
+                tooltip.Configure(
+                    $"{BuildingTooltipText.GetTitle(definition)}  [{index + 1}]",
+                    BuildingTooltipText.GetBody(definition));
+            }
+
+            button.interactable = PlayerEconomy.CanAfford(
+                definition.WoodCost,
+                definition.BronzeCost);
         }
 
         private void BeginPlacement(BuildingDefinition definition)
@@ -206,7 +257,7 @@ namespace ProjectoRTS.Buildings
             _buttonRow.anchorMax = new Vector2(0f, 1f);
             _buttonRow.pivot = new Vector2(0f, 1f);
             _buttonRow.anchoredPosition = new Vector2(0f, -32f);
-            _buttonRow.sizeDelta = new Vector2(480f, 140f);
+            _buttonRow.sizeDelta = new Vector2(500f, 148f);
         }
 
         private GameObject CreateButton(int index)
@@ -221,44 +272,65 @@ namespace ProjectoRTS.Buildings
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(10f + column * 160f, -10f - rowIndex * 44f);
-            rect.sizeDelta = new Vector2(150f, 38f);
+            rect.anchoredPosition = new Vector2(
+                45f + column * IconStepX,
+                -4f - rowIndex * IconStepY);
+            rect.sizeDelta = new Vector2(IconSize, IconSize);
 
             Image image = go.AddComponent<Image>();
-            image.color = new Color(0.24f, 0.3f, 0.38f, 1f);
+            image.color = new Color(0f, 0f, 0f, 0f);
 
             Button button = go.AddComponent<Button>();
             button.targetGraphic = image;
+            button.colors = UiButtonStyle.CreateIconColors();
 
-            GameObject labelObject = new GameObject("Text");
+            Image icon = UiIconFactory.CreateIcon(go.transform, "Icon", null);
+            button.targetGraphic = icon;
+
+            GameObject labelObject = new GameObject("Fallback");
             labelObject.transform.SetParent(go.transform, false);
 
             RectTransform labelRect = labelObject.AddComponent<RectTransform>();
             labelRect.anchorMin = Vector2.zero;
             labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
+            labelRect.offsetMin = new Vector2(2f, 2f);
+            labelRect.offsetMax = new Vector2(-2f, -2f);
 
             Text label = labelObject.AddComponent<Text>();
             label.font = ResolveFont();
             label.text = "Edificio";
-            label.fontSize = 12;
+            label.fontSize = 9;
             label.alignment = TextAnchor.MiddleCenter;
             label.color = Color.white;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
             label.raycastTarget = false;
 
+            GameObject hotkeyObject = new GameObject("Hotkey");
+            hotkeyObject.transform.SetParent(go.transform, false);
+
+            RectTransform hotkeyRect = hotkeyObject.AddComponent<RectTransform>();
+            hotkeyRect.anchorMin = new Vector2(1f, 0f);
+            hotkeyRect.anchorMax = new Vector2(1f, 0f);
+            hotkeyRect.pivot = new Vector2(1f, 0f);
+            hotkeyRect.anchoredPosition = new Vector2(-3f, 2f);
+            hotkeyRect.sizeDelta = new Vector2(18f, 14f);
+
+            Text hotkey = hotkeyObject.AddComponent<Text>();
+            hotkey.font = ResolveFont();
+            hotkey.fontSize = 10;
+            hotkey.fontStyle = FontStyle.Bold;
+            hotkey.alignment = TextAnchor.MiddleRight;
+            hotkey.color = new Color(1f, 0.87f, 0.55f, 1f);
+            hotkey.raycastTarget = false;
+
+            go.AddComponent<TooltipTrigger>();
             return go;
         }
 
         private static Font ResolveFont()
         {
-            Font font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null)
-            {
-                font = UnityEngine.Resources.GetBuiltinResource<Font>("Arial.ttf");
-            }
-
-            return font;
+            return UiFonts.Default;
         }
 
         private static Text CreateLabel(Transform parent, Font font, string content)

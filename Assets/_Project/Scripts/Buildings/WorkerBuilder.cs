@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ProjectoRTS.Audio;
 using ProjectoRTS.Combat;
 using ProjectoRTS.Economy;
 using ProjectoRTS.Resources;
@@ -20,6 +21,9 @@ namespace ProjectoRTS.Buildings
     public sealed class WorkerBuilder : MonoBehaviour
     {
         private const float AutoAssignRange = 1000f;
+        private const float MinHammerFallSpeed = 0.5f;
+        private const float HammerHitSpeedFraction = 0.25f;
+        private const float MinHammerDrop = 0.08f;
 
         private static readonly List<WorkerBuilder> Workers = new List<WorkerBuilder>(16);
 
@@ -95,8 +99,18 @@ namespace ProjectoRTS.Buildings
         private bool _buildingSet;
 
         private Transform _cargoAnchor;
+        private Transform _hammerHead;
         private GameObject _cargoRoot;
         private GameObject _hammerVisual;
+        private bool _hammerTrackValid;
+        private bool _hammerDescending;
+        private bool _hammerFastFall;
+        private bool _hammerHitThisSwing;
+        private float _lastHammerY;
+        private float _hammerPeakY;
+        private float _hammerLowestY;
+        private float _hammerPeakFallSpeed;
+        private float _nextHammerHitTime;
         private GameObject _logsHolder;
         private GameObject _rockHolder;
         private readonly List<MeshRenderer> _oreRenderers = new List<MeshRenderer>(3);
@@ -416,7 +430,130 @@ namespace ProjectoRTS.Buildings
             }
 
             SetBuilding(true);
+            UpdateHammerHit();
             _site.AddProgress(Time.deltaTime * workMultiplier);
+        }
+
+        /// <summary>
+        /// Plays one construction hit when the hammer's fast downswing brakes
+        /// at the impact. The strike is read from the animated hammer itself,
+        /// so the sound stays in sync even if the clip is retimed or replaced.
+        /// </summary>
+        private void UpdateHammerHit()
+        {
+            Transform tracker = _hammerHead != null ? _hammerHead : _cargoAnchor;
+            if (tracker == null ||
+                _animator == null ||
+                !_buildingSet ||
+                _site == null ||
+                _site.IsComplete)
+            {
+                ResetHammerTracking();
+                return;
+            }
+
+            AnimatorStateInfo state = _animator.GetCurrentAnimatorStateInfo(0);
+            if (!state.IsName("Construir") || Mathf.Repeat(state.normalizedTime, 1f) < 0.15f)
+            {
+                ResetHammerTracking();
+                return;
+            }
+
+            float y = tracker.position.y;
+            if (!_hammerTrackValid)
+            {
+                _hammerTrackValid = true;
+                _lastHammerY = y;
+                _hammerPeakY = y;
+                _hammerLowestY = y;
+                return;
+            }
+
+            float delta = y - _lastHammerY;
+            _lastHammerY = y;
+            float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
+
+            if (!_hammerDescending)
+            {
+                if (delta < -0.002f)
+                {
+                    _hammerDescending = true;
+                    _hammerLowestY = y;
+                    _hammerFastFall = false;
+                    _hammerHitThisSwing = false;
+                    _hammerPeakFallSpeed = -delta / deltaTime;
+                }
+                else if (y > _hammerPeakY)
+                {
+                    _hammerPeakY = y;
+                }
+
+                return;
+            }
+
+            if (y < _hammerLowestY)
+            {
+                _hammerLowestY = y;
+            }
+
+            float fallSpeed = -delta / deltaTime;
+            if (fallSpeed > _hammerPeakFallSpeed)
+            {
+                _hammerPeakFallSpeed = fallSpeed;
+            }
+
+            if (!_hammerFastFall && _hammerPeakFallSpeed >= MinHammerFallSpeed)
+            {
+                _hammerFastFall = true;
+            }
+
+            // The swing hits when the fast fall suddenly brakes, not when the
+            // hammer finally reaches the very bottom of its slow drift.
+            if (_hammerFastFall &&
+                !_hammerHitThisSwing &&
+                fallSpeed <= _hammerPeakFallSpeed * HammerHitSpeedFraction)
+            {
+                TryPlayHammerHit();
+            }
+
+            if (delta > 0.002f)
+            {
+                // Abrupt stops can skip the braking check; fall back to the
+                // bottom of the swing so a hit is never lost.
+                if (!_hammerHitThisSwing)
+                {
+                    TryPlayHammerHit();
+                }
+
+                _hammerDescending = false;
+                _hammerPeakY = y;
+                _hammerLowestY = y;
+                _hammerFastFall = false;
+                _hammerPeakFallSpeed = 0f;
+            }
+        }
+
+        private void TryPlayHammerHit()
+        {
+            if (_hammerHitThisSwing ||
+                _hammerPeakY - _hammerLowestY < MinHammerDrop ||
+                Time.time < _nextHammerHitTime)
+            {
+                return;
+            }
+
+            _hammerHitThisSwing = true;
+            _nextHammerHitTime = Time.time + 0.4f;
+            GameAudio.PlayConstructionHit(_site.transform.position + Vector3.up * 0.5f);
+        }
+
+        private void ResetHammerTracking()
+        {
+            _hammerTrackValid = false;
+            _hammerDescending = false;
+            _hammerFastFall = false;
+            _hammerHitThisSwing = false;
+            _hammerPeakFallSpeed = 0f;
         }
 
         private void UpdateGathering()
@@ -1046,6 +1183,12 @@ namespace ProjectoRTS.Buildings
             }
 
             _hammerVisual = hammer.gameObject;
+            _hammerHead = FindDeepChild(hammer, "Hammer Head");
+            if (_hammerHead == null)
+            {
+                _hammerHead = hammer;
+            }
+
             CacheHammerRenderers(hammer);
 
             // Grip on the animated hand bone. The hammer node only serves as

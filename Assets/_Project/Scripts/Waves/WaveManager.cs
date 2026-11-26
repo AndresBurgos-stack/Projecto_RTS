@@ -44,6 +44,9 @@ namespace ProjectoRTS.Waves
         public bool IsRunning => _running;
         public bool IsGameOver => _gameOver;
 
+        /// <summary>True while a wave is on the field and has not been cleared.</summary>
+        public bool HasActiveWave => _activeWave != null;
+
         private void Awake()
         {
             if (calendar == null)
