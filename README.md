@@ -30,6 +30,15 @@ Prototipo de RTS 3D low-poly (griegos vs romanos) en Unity 6.
 - Escena de juego: `Assets/Scenes/Gameplay.unity` (recursos, oleadas y Panteón).
 - Edificios a escala de muralla: **implementado** (muro elevado a la altura de la torre, cuartel/casa/almacén/choza/puerta agrandados; la torre llena su huella para eliminar el hueco con el muro).
 - Construcción de edificios: **implementada** (obra translúcida, barra de porcentaje pegada a la cima y 1 obrero por obra; los obreros ya construyen bien los edificios rotados con `R`).
+- Menú de construcción con **tiers I / II** (pestañas en números romanos): **I = madera** (muro, puerta, torre de madera, casa, cuartel, fundición, almacén, choza) y **II = piedra** (torre de piedra). Los edificios se auto-registran desde `Resources/Buildings`.
+- Torres: **ya no disparan solas**; dan **bono de alcance** a los arqueros montados (muro +2, torre de madera +3, torre de piedra +5).
+- Casa ampliada: modelo escalado (~2.7×3.2 m) con huella 3×3 y collider calzado a la visual.
+- Unidades romanas enemigas: **auxiliar, legionario, príncipes, sagitario y centurión** (mini-jefe: 420 vida, espada desde el spawn, sin pilums). El sagitario es más débil que el psiloi.
+- Oleadas cada 3 días: **3, 6, 9, 12, 15, 18** (auxiliares → +legionarios → +príncipes → +sagitarios → +centuriones); las oleadas nuevas se auto-registran desde `Resources/Waves`.
+- Música: ambiente con 2 pistas aleatorias y **6 pistas de batalla** según oleada (romana, centurión, bárbara, no-muertos, gigante), con crossfade.
+- Sonido: muertes aleatorias (3 clips) y golpes de espada aleatorios (3 clips), además de golpe de martillo sincronizado con la animación.
+- Trabajadores: se acercan a la **pared real** del edificio (huella por colliders), con distancia mínima garantizada (radio del agente + margen) para que nunca den vueltas ni construyan lejos.
+- **MCP for Unity** (CoplayDev v10.0.0) instalado como paquete UPM; configuración de cliente OpenCode en `opencode.json` (servidor remoto `http://127.0.0.1:8080/mcp`).
 
 La primera importación puede tardar varios minutos porque UPM extrae URP, Shader Graph y sus dependencias. Las siguientes aperturas son mucho más rápidas.
 
@@ -252,9 +261,9 @@ Limitaciones actuales: no hay rotación de edificios, UI de construcción ni des
 2. [x] Edificios de desbloqueo + sistema de unidades (`UnitDefinition`, Hoplita arcadio, Psiloi y cuartel con reclutamiento).
 3. [x] Movimiento y pathfinding con NavMesh.
 4. [x] Combate básico unidad vs unidad.
-5. [ ] IA enemiga + spawn de romanos.
-6. [ ] Sistema de oleadas + calendario día/noche.
-7. [ ] Economía mínima (madera, trabajador y costes de construcción).
+5. [x] IA enemiga + spawn de romanos.
+6. [x] Sistema de oleadas + calendario día/noche.
+7. [x] Economía mínima (madera, trabajador y costes de construcción).
 8. [ ] Buff de formación (falange).
 
 ## Paso 5 rediseñado: spawner unico y avance grupal
@@ -423,8 +432,9 @@ La camara RTS es una vista angulada elevada, tipo isometrica, al estilo de *Dipl
 |---|---|---|---|---|
 | Muro | 1 | 10M 5B | 1×1 | 1 puesto de toxote, escalera; alta a la altura de la torre |
 | Puerta | 2 | 30M 20B | 3×1 | calza con la muralla, no rota |
-| Torre | 3 | 30M 40B | 2×2 | ataque a distancia automático, escalera orientable con `R` |
-| Casa | 4 | 50M 20B | 2×2 | decorativa |
+| Torre de madera | 8 | 50M | 2×2 | bono de alcance +3 a arqueros, escalera |
+| Torre de piedra | 9 | 30M 40B | 2×2 | bono de alcance +5 a arqueros, escalera orientable con `R` |
+| Casa | 4 | 50M 20B | 3×3 | +5 población |
 | Cuartel | 5 | 100M 50B | 5×5 | recluta hoplitas y toxotes |
 | Choza de obreros | 6 | 125M 75B | 4×4 | recluta trabajadores, punto de depósito |
 | Almacén | 7 | 75M 10B | 3×3 | punto de depósito de recursos |
@@ -501,8 +511,56 @@ Estado: los clips y controladores están preparados; la asignación del `Animato
 - La distribución evita el Panteón, el spawn romano, la montaña original, el lago, los nodos de recursos existentes y los edificios colocados, con márgenes de 4-6 unidades en montañas y bosques.
 - Aves sobrevolando: omitido por ahora — no hay ningún asset de ave ni mariposa en los packs importados y se prefirió no improvisar un sistema nuevo; queda pendiente si se consigue un asset simple de ambientación.
 
+## Tiers, oleadas romanas y sonido
+
+### Tiers de construcción (pestañas I / II)
+
+- El panel de construcción (esquina inferior izquierda) tiene pestañas en números romanos: **I = madera**, **II = piedra**. La pestaña activa se ilumina con su color.
+- Los edificios de `Resources/Buildings` se registran solos (`BuildingPlacementHotkeys` los fusiona y ordena por tier), sin tocar la escena.
+- Atajos: 1–8 para madera, 9 para la torre de piedra (los números se muestran en cada icono).
+
+| Torre | Tier | Coste | Vida | Bono de alcance (arqueros) | Notas |
+|---|---|---|---|---|---|
+| Torre de madera | I | 50 madera | 250 | +3 | 4 arqueros, no dispara sola |
+| Torre de piedra | II | 30 madera + 40 bronce | 400 | +5 | 4 arqueros, no dispara sola |
+
+### Unidades romanas (enemigas)
+
+| Unidad | Vida | Daño | Notas |
+|---|---|---|---|
+| Auxiliar | 110 | 10 | carne de cañón, presente en todas las oleadas |
+| Legionario | 150 | 13 | pilums |
+| Príncipes | 135 | 13 | pilums |
+| Sagitario | 60 | 8 (alcance 13) | más débil que el psiloi (75/10/15) |
+| Centurión | 420 | 28 | mini-jefe, reducción 35%, espada desde el spawn (sin pilums) |
+
+### Calendario de oleadas (una cada 3 días)
+
+| Día | Composición |
+|---|---|
+| 3 | 4 Auxiliares |
+| 6 | 8 Auxiliares |
+| 9 | 6 Auxiliares + 4 Legionarios |
+| 12 | 5 Auxiliares + 6 Legionarios + 3 Príncipes |
+| 15 | 6 Auxiliares + 5 Legionarios + 4 Príncipes + 3 Sagitarios |
+| 18 | 8 Auxiliares + 6 Legionarios + 5 Príncipes + 4 Sagitarios + 2 Centuriones |
+
+`WaveManager` fusiona las oleadas serializadas en la escena con las de `Resources/Waves` y las ordena por día.
+
+### Música y sonido
+
+- `GameplayMusic`: ambiente (elige al azar entre `Musica_Ambiente_1` y `Musica_Ambiente_2`) y batalla con crossfade al empezar/terminar una oleada. La pista de batalla se elige según la oleada (`OleadaCenturion` para centuriones, `OleadaRomana1/2` para las romanas; `OleadaBarbara`, `OleadaNomuertos` y `OleadaBarbarosGigante` quedan listas para futuras oleadas).
+- `GameAudio`: muertes con 3 clips aleatorios, golpes de espada con 3 clips aleatorios, golpe de martillo de construcción sincronizado con la animación (detecta la frenada del martillo), flechas, pilum e impactos.
+
+### MCP for Unity
+
+- Paquete UPM `com.coplaydev.unity-mcp` (git URL, release `v10.0.0`). El servidor se inicia desde `Window → MCP for Unity` (HTTP en `http://127.0.0.1:8080`; opcional "Auto-Start on Editor Load").
+- Configuración de cliente en `opencode.json` (servidor remoto `unityMCP` → `http://127.0.0.1:8080/mcp`).
+
 ## Siguiente paso
 
 1. Equilibrar oleadas y economía (población, límites, velocidades).
 2. Falange y mejoras de combate.
 3. Movimiento verdaderamente libre de arqueros sobre muros (pasarelas + pathfinding propio).
+
+

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.0.0",
     "com.unity.ai.navigation": "file:com.unity.ai.navigation",
     "com.unity.cinemachine": "3.1.7",
     "com.unity.inputsystem": "1.20.1",

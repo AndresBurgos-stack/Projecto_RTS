@@ -25,4 +25,4 @@ MonoBehaviour:
   attackDamage: 0
   attackRange: 0
   populationBonus: 5
-  buildApproachDistance: 0.3
+  buildApproachDistance: 0.5

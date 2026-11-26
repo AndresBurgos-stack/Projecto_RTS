@@ -2062,11 +2062,12 @@ namespace ProjectoRTS.Buildings
         }
 
         /// <summary>
-        /// Caches the XZ footprint of the current site. The grid footprint of
-        /// the placed definition is authoritative: some imported models carry
-        /// stray geometry far from the visible mesh (the house model spans
-        /// thousands of units), which would push workers absurdly far away.
-        /// Renderer bounds remain as a fallback for sites without a definition.
+        /// Caches the XZ footprint of the current site. The collider-based
+        /// footprint captured by the construction site is preferred: it hugs
+        /// the real visible walls, unlike the square grid footprint of the
+        /// definition (the house visual differs from its 3x3 cells, which
+        /// made workers hammer far from the wall). The definition footprint
+        /// and renderer bounds remain as fallbacks.
         /// </summary>
         private void CacheSiteFootprint()
         {
@@ -2075,6 +2076,13 @@ namespace ProjectoRTS.Buildings
 
             if (_site == null)
             {
+                return;
+            }
+
+            if (_site.HasFootprint)
+            {
+                _siteFootprintCenter = _site.FootprintCenterLocal;
+                _siteFootprintHalf = _site.FootprintHalfLocal;
                 return;
             }
 
@@ -2162,20 +2170,32 @@ namespace ProjectoRTS.Buildings
         /// Distance the worker keeps from the wall while building. Structures
         /// whose visible model is smaller or inset (the house) can override it
         /// with a per-definition value so the hammer lands on the real wall.
+        /// The result is always clamped to the agent's reachable minimum so
+        /// the destination can never sit inside the agent's own clearance
+        /// (that is what made workers circle the building forever).
         /// </summary>
         private float GetEffectiveApproachDistance()
         {
-            if (_site == null)
+            float distance = approachDistance;
+
+            if (_site != null)
             {
-                return approachDistance;
+                BuildingRuntime runtime = _site.GetComponent<BuildingRuntime>();
+                BuildingDefinition definition = runtime != null ? runtime.Definition : null;
+
+                if (definition != null && definition.BuildApproachDistance > 0f)
+                {
+                    distance = definition.BuildApproachDistance;
+                }
             }
 
-            BuildingRuntime runtime = _site.GetComponent<BuildingRuntime>();
-            BuildingDefinition definition = runtime != null ? runtime.Definition : null;
+            if (_agent == null)
+            {
+                _agent = GetComponent<NavMeshAgent>();
+            }
 
-            return definition != null && definition.BuildApproachDistance > 0f
-                ? definition.BuildApproachDistance
-                : approachDistance;
+            float minReachable = (_agent != null ? _agent.radius : 0.5f) + 0.05f;
+            return Mathf.Max(distance, minReachable);
         }
 
         /// <summary>
