@@ -60,6 +60,9 @@ namespace ProjectoRTS.Waves
         private bool _suppressNextWarning;
         private float _nextRepathTime;
         private Vector3 _destination;
+        private Transform _destinationTarget;
+        private Bounds _destinationBounds;
+        private bool _hasDestinationBounds;
 
         public int AliveCount => _alive.Count;
         public Transform SpawnPoint => spawnPoint;
@@ -186,7 +189,21 @@ namespace ProjectoRTS.Waves
                         entry.ai.SetHome(entry.runtime.transform.position, 5f);
                     }
 
-                    entry.movement.MoveTo(_destination);
+                    // Re-aim at the near face of the objective every refresh:
+                    // pathing to its center would put the agent inside the
+                    // temple's NavMeshObstacle and send it around the building.
+                    Vector3 from = entry.runtime != null
+                        ? entry.runtime.transform.position
+                        : entry.movement.transform.position;
+
+                    Vector3 destination = _hasDestinationBounds
+                        ? UnitMovement.GetApproachPoint(
+                            _destinationBounds,
+                            from,
+                            0.8f)
+                        : _destination;
+
+                    entry.movement.MoveTo(destination);
                 }
             }
         }
@@ -245,8 +262,15 @@ namespace ProjectoRTS.Waves
                 Destroy(marker);
             }
 
-            Vector3 destination = ResolveDestination();
+            Vector3 destination = ResolveDestination(origin, out _destinationTarget);
             _destination = destination;
+            _hasDestinationBounds = false;
+            if (_destinationTarget != null)
+            {
+                _hasDestinationBounds = UnitMovement.TryGetTargetBounds(
+                    _destinationTarget,
+                    out _destinationBounds);
+            }
             Vector3 forward = destination - origin;
             forward.y = 0f;
             if (forward.sqrMagnitude < 0.01f)
@@ -367,19 +391,22 @@ namespace ProjectoRTS.Waves
             return transform;
         }
 
-        private Vector3 ResolveDestination()
+        private Vector3 ResolveDestination(Vector3 origin, out Transform destinationTarget)
         {
             if (advanceTarget != null)
             {
+                destinationTarget = advanceTarget;
                 return advanceTarget.position;
             }
 
             PantheonObjective objective = FindFirstObjectByType<PantheonObjective>();
             if (objective != null)
             {
-                return objective.transform.position;
+                destinationTarget = objective.transform;
+                return UnitMovement.GetApproachPoint(objective.transform, origin, 0.8f);
             }
 
+            destinationTarget = null;
             return Vector3.zero;
         }
 

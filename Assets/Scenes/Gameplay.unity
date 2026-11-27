@@ -11937,7 +11937,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sun: {fileID: 1742188408}
-  dayLength: 60
+  dayLength: 120
   startDay: 1
   startTimeOfDay: 0.05
   paused: 0
@@ -14581,7 +14581,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 2.4, y: 2.8, z: 2.1}
+  m_Extents: {x: 2.22, y: 1.885, z: 1.785}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
@@ -70787,7 +70787,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 317944115831912086, guid: 9a91bc2b0a89c4748a0c5b940bd461a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 5.5
+      value: 3.87
       objectReference: {fileID: 0}
     - target: {fileID: 317944115831912086, guid: 9a91bc2b0a89c4748a0c5b940bd461a7, type: 3}
       propertyPath: m_LocalPosition.y
@@ -70795,7 +70795,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 317944115831912086, guid: 9a91bc2b0a89c4748a0c5b940bd461a7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 149.9
+      value: 91.66
       objectReference: {fileID: 0}
     - target: {fileID: 317944115831912086, guid: 9a91bc2b0a89c4748a0c5b940bd461a7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -89247,11 +89247,11 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 2.4, y: 2.8, z: 2.1}
+  m_Extents: {x: 1.805, y: 2.8, z: 1.41}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
-  m_Center: {x: 0.15, y: 2.8, z: -0.14}
+  m_Center: {x: 0.15, y: 2.8, z: 0.06}
   m_TimeToStationary: 0.5
 --- !u!1 &6700000000000002002 stripped
 GameObject:

@@ -43,6 +43,10 @@ namespace ProjectoRTS.Combat
         private UnitRuntime _target;
         private PantheonObjective _objectiveTarget;
         private BuildingRuntime _buildingTarget;
+        private Bounds _objectiveBounds;
+        private bool _hasObjectiveBounds;
+        private Bounds _buildingBounds;
+        private bool _hasBuildingBounds;
         private UnitRuntime _pendingUnitTarget;
         private BuildingRuntime _pendingBuildingTarget;
         private PantheonObjective _pendingObjectiveTarget;
@@ -324,6 +328,8 @@ namespace ProjectoRTS.Combat
             _target = target;
             _objectiveTarget = null;
             _buildingTarget = null;
+            _hasObjectiveBounds = false;
+            _hasBuildingBounds = false;
             _manualTarget = true;
             _autoTarget = false;
             _chasing = false;
@@ -383,6 +389,10 @@ namespace ProjectoRTS.Combat
             _target = null;
             _objectiveTarget = target;
             _buildingTarget = null;
+            _hasObjectiveBounds = UnitMovement.TryGetTargetBounds(
+                target.transform,
+                out _objectiveBounds);
+            _hasBuildingBounds = false;
             _manualTarget = true;
             _autoTarget = false;
             _chasing = false;
@@ -410,6 +420,10 @@ namespace ProjectoRTS.Combat
             _target = null;
             _objectiveTarget = null;
             _buildingTarget = target;
+            _hasObjectiveBounds = false;
+            _hasBuildingBounds = UnitMovement.TryGetTargetBounds(
+                target.transform,
+                out _buildingBounds);
             _manualTarget = true;
             _autoTarget = false;
             _chasing = false;
@@ -430,6 +444,8 @@ namespace ProjectoRTS.Combat
             _target = null;
             _objectiveTarget = null;
             _buildingTarget = null;
+            _hasObjectiveBounds = false;
+            _hasBuildingBounds = false;
             _manualTarget = false;
             _autoTarget = false;
             _chasing = false;
@@ -984,12 +1000,63 @@ namespace ProjectoRTS.Combat
             }
 
             Vector3 center = _buildingTarget.transform.position;
+
+            if (!_hasBuildingBounds)
+            {
+                _hasBuildingBounds = UnitMovement.TryGetTargetBounds(
+                    _buildingTarget.transform,
+                    out _buildingBounds);
+            }
+
+            if (_hasBuildingBounds)
+            {
+                Vector3 closest = UnitMovement.ClosestPointOnFootprint(
+                    _buildingBounds,
+                    transform.position);
+                float distance = HorizontalDistance(transform.position, closest);
+                float attackDistance = _attackRange + rangePadding;
+
+                if (distance > attackDistance)
+                {
+                    if (movement != null)
+                    {
+                        Vector3 approach = UnitMovement.GetApproachPoint(
+                            _buildingBounds,
+                            transform.position,
+                            GetApproachMargin());
+
+                        _lastChasePosition = center;
+                        _chasing = true;
+                        _chaseIssuedTime = Time.time;
+                        movement.MoveTo(approach);
+                    }
+
+                    return;
+                }
+
+                _chasing = false;
+
+                if (movement != null)
+                {
+                    movement.Stop();
+                    movement.FaceTowards(center);
+                }
+
+                if (Time.time >= _nextAttackTime)
+                {
+                    BeginAttack();
+                }
+
+                return;
+            }
+
+            // Fallback for targets without a collider or renderer footprint.
             Vector3 delta = center - transform.position;
             delta.y = 0f;
-            float distance = delta.magnitude;
-            float attackDistance = _attackRange + rangePadding + buildingReach;
+            float fallbackDistance = delta.magnitude;
+            float fallbackAttackDistance = _attackRange + rangePadding + buildingReach;
 
-            if (distance > attackDistance)
+            if (fallbackDistance > fallbackAttackDistance)
             {
                 if (movement != null)
                 {
@@ -1022,19 +1089,77 @@ namespace ProjectoRTS.Combat
 
         private void UpdateObjectiveAttack()
         {
-            Vector3 delta = _objectiveTarget.transform.position - transform.position;
-            delta.y = 0f;
-            float distance = delta.magnitude;
-            float attackDistance = _attackRange + rangePadding + 6f;
+            if (_objectiveTarget == null)
+            {
+                ClearTarget();
+                return;
+            }
 
-            if (distance > attackDistance)
+            Vector3 center = _objectiveTarget.transform.position;
+
+            if (!_hasObjectiveBounds)
+            {
+                _hasObjectiveBounds = UnitMovement.TryGetTargetBounds(
+                    _objectiveTarget.transform,
+                    out _objectiveBounds);
+            }
+
+            if (_hasObjectiveBounds)
+            {
+                Vector3 closest = UnitMovement.ClosestPointOnFootprint(
+                    _objectiveBounds,
+                    transform.position);
+                float distance = HorizontalDistance(transform.position, closest);
+                float attackDistance = _attackRange + rangePadding;
+
+                if (distance > attackDistance)
+                {
+                    if (movement != null)
+                    {
+                        Vector3 approach = UnitMovement.GetApproachPoint(
+                            _objectiveBounds,
+                            transform.position,
+                            GetApproachMargin());
+
+                        _lastChasePosition = center;
+                        _chasing = true;
+                        _chaseIssuedTime = Time.time;
+                        movement.MoveTo(approach);
+                    }
+
+                    return;
+                }
+
+                _chasing = false;
+
+                if (movement != null)
+                {
+                    movement.Stop();
+                    movement.FaceTowards(center);
+                }
+
+                if (Time.time >= _nextAttackTime)
+                {
+                    BeginAttack();
+                }
+
+                return;
+            }
+
+            // Fallback for an objective without a usable footprint.
+            Vector3 delta = center - transform.position;
+            delta.y = 0f;
+            float fallbackDistance = delta.magnitude;
+            float fallbackAttackDistance = _attackRange + rangePadding + 6f;
+
+            if (fallbackDistance > fallbackAttackDistance)
             {
                 if (movement != null)
                 {
-                    _lastChasePosition = _objectiveTarget.transform.position;
+                    _lastChasePosition = center;
                     _chasing = true;
                     _chaseIssuedTime = Time.time;
-                    movement.MoveTo(_objectiveTarget.transform.position);
+                    movement.MoveTo(center);
                 }
 
                 return;
@@ -1045,13 +1170,29 @@ namespace ProjectoRTS.Combat
             if (movement != null)
             {
                 movement.Stop();
-                movement.FaceTowards(_objectiveTarget.transform.position);
+                movement.FaceTowards(center);
             }
 
             if (Time.time >= _nextAttackTime)
             {
                 BeginAttack();
             }
+        }
+
+        private float GetApproachMargin()
+        {
+            float radius = movement != null && movement.Agent != null
+                ? movement.Agent.radius
+                : 0.4f;
+
+            return Mathf.Max(0.3f, radius + 0.3f);
+        }
+
+        private static float HorizontalDistance(Vector3 a, Vector3 b)
+        {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return Mathf.Sqrt(dx * dx + dz * dz);
         }
 
         private void ChaseTarget()

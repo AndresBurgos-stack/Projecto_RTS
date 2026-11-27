@@ -175,12 +175,11 @@ namespace ProjectoRTS.Units
                 return;
             }
 
-            if (!NavMesh.SamplePosition(destination, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            if (!TryResolveMoveDestination(destination, out Vector3 target))
             {
                 return;
             }
 
-            Vector3 target = hit.position;
             int count = _selected.Count;
 
             for (int i = 0; i < count; i++)
@@ -219,6 +218,65 @@ namespace ProjectoRTS.Units
                     unit.MoveTo(target);
                 }
             }
+        }
+
+        /// <summary>
+        /// Turns a click point into a walkable destination. If the point lands
+        /// inside a building (the Partenón's collider is easy to hit from a low
+        /// camera angle), it is pulled toward the selected units so they stop
+        /// on the near side instead of walking around to a far edge.
+        /// </summary>
+        private bool TryResolveMoveDestination(Vector3 destination, out Vector3 target)
+        {
+            target = destination;
+
+            if (NavMesh.SamplePosition(destination, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            {
+                target = hit.position;
+                return true;
+            }
+
+            Vector3 origin = AverageSelectedPosition();
+            Vector3 direction = origin - destination;
+            direction.y = 0f;
+            float distance = direction.magnitude;
+
+            if (distance > 0.01f)
+            {
+                direction /= distance;
+
+                for (float step = 1f; step <= distance; step += 1f)
+                {
+                    Vector3 candidate = destination + direction * step;
+                    if (NavMesh.SamplePosition(candidate, out hit, 1f, NavMesh.AllAreas))
+                    {
+                        target = hit.position;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private Vector3 AverageSelectedPosition()
+        {
+            Vector3 sum = Vector3.zero;
+            int count = 0;
+
+            for (int i = 0; i < _selected.Count; i++)
+            {
+                UnitMovement unit = _selected[i];
+                if (unit == null || !unit.IsAlive)
+                {
+                    continue;
+                }
+
+                sum += unit.transform.position;
+                count++;
+            }
+
+            return count > 0 ? sum / count : Vector3.zero;
         }
 
         private void HandleRightClick(Vector2 screenPosition)
@@ -480,25 +538,20 @@ namespace ProjectoRTS.Units
             }
 
             Ray ray = raycastCamera.ScreenPointToRay(screenPosition);
-            if (Physics.Raycast(
-                    ray,
-                    out RaycastHit hit,
-                    maxRayDistance,
-                    selectionMask,
-                    QueryTriggerInteraction.Ignore))
-            {
-                point = hit.point;
-                return true;
-            }
 
+            // Move orders always resolve against the ground plane. Raycasting
+            // against every collider made a low camera angle hit the Partenón
+            // (or a wall) instead of the ground, and that unwalkable hit sent
+            // the units around the building.
             Plane plane = new Plane(Vector3.up, Vector3.zero);
-            if (plane.Raycast(ray, out float distance))
+            if (!plane.Raycast(ray, out float distance) ||
+                distance > maxRayDistance)
             {
-                point = ray.GetPoint(distance);
-                return true;
+                return false;
             }
 
-            return false;
+            point = ray.GetPoint(distance);
+            return true;
         }
 
         private Vector3 FormationOffset(int index, int count)

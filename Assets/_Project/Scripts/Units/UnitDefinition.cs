@@ -58,6 +58,9 @@ namespace ProjectoRTS.Units
         [SerializeField] private bool usesSpearImpact;
         [SerializeField] private bool heavyImpactSound;
 
+        [Header("Health Bar")]
+        [SerializeField] private Material healthBarMaterial;
+
         [Header("Movement")]
         [SerializeField, Min(0f)] private float moveSpeed = 3.5f;
         [SerializeField, Min(0f)] private float turnSpeed = 720f;
@@ -85,6 +88,7 @@ namespace ProjectoRTS.Units
         public int WeaponVariant => weaponVariant;
         public bool UsesSpearImpact => usesSpearImpact;
         public bool HeavyImpactSound => heavyImpactSound;
+        public Material HealthBarMaterial => healthBarMaterial;
 
         public float MaxHealth => maxHealth;
         public float AttackDamage => attackDamage;

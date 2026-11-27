@@ -67,26 +67,37 @@ namespace ProjectoRTS.Combat
         }
 
         /// <summary>
-        /// Roman enemies get a red fill (#c0392b) so they read as hostile at a
-        /// glance; the material swap only touches this renderer and leaves the
-        /// shared green fill of the Greek units untouched.
+        /// Enemy units use a red fill (#c0392b) so they read as hostile at a
+        /// glance. Barbarians override it through their unit definition with
+        /// their own orange-brown fill (#b06a2a). The material swap only
+        /// touches this renderer and leaves the shared green fill of the
+        /// Greek units untouched.
         /// </summary>
         private void ApplyFactionColor()
         {
-            if (runtime == null || fill == null || runtime.Faction != Faction.Roman)
+            if (runtime == null || fill == null)
             {
                 return;
             }
 
-            if (_romanBarMaterial == null)
+            Material overrideMaterial = runtime.Definition != null
+                ? runtime.Definition.HealthBarMaterial
+                : null;
+
+            if (overrideMaterial == null && runtime.Faction == Faction.Roman)
             {
-                _romanBarMaterial = UnityEngine.Resources.Load<Material>(RomanBarMaterialPath);
+                if (_romanBarMaterial == null)
+                {
+                    _romanBarMaterial = UnityEngine.Resources.Load<Material>(RomanBarMaterialPath);
+                }
+
+                overrideMaterial = _romanBarMaterial;
             }
 
             Renderer fillRenderer = fill.GetComponent<Renderer>();
-            if (_romanBarMaterial != null && fillRenderer != null)
+            if (overrideMaterial != null && fillRenderer != null)
             {
-                fillRenderer.sharedMaterial = _romanBarMaterial;
+                fillRenderer.sharedMaterial = overrideMaterial;
             }
         }
 

@@ -24,6 +24,7 @@ MonoBehaviour:
   drawSwordOnFirstMelee: 0
   startWithSwordDrawn: 0
   weaponVariant: 0
+  healthBarMaterial: {fileID: 2100000, guid: b4dd227d0df146c8b5ca148137580097, type: 2}
   moveSpeed: 3.2
   turnSpeed: 720
   stoppingDistance: 0.5

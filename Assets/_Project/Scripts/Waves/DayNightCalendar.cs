@@ -23,7 +23,7 @@ namespace ProjectoRTS.Waves
         [SerializeField] private Light sun;
 
         [Header("Cycle")]
-        [SerializeField, Min(5f)] private float dayLength = 60f;
+        [SerializeField, Min(5f)] private float dayLength = 120f;
         [SerializeField, Min(1)] private int startDay = 1;
         [SerializeField, Range(0f, 1f)] private float startTimeOfDay = 0.05f;
         [SerializeField] private bool paused;

@@ -89,6 +89,7 @@ namespace ProjectoRTS.Buildings
         private float _gatherTimer;
         private float _resourceRepathTimer;
         private float _outOfRangeTimer;
+        private Vector3 _lastWalkPosition;
 
         private Vector3 _siteFootprintCenter;
         private Vector2 _siteFootprintHalf;
@@ -415,10 +416,24 @@ namespace ProjectoRTS.Buildings
                 if (walking)
                 {
                     // Keep walking until the agent reaches the approach spot.
-                    // Stopping as soon as the footprint was in range used to
-                    // freeze the worker up to workRange away from the wall.
+                    // A long march is not a stuck agent: only accumulate the
+                    // timeout while the worker stops making progress. Counting
+                    // the whole walk made distant workers give up and build
+                    // from wherever they were after a few seconds.
                     SetBuilding(false);
-                    _outOfRangeTimer += Time.deltaTime;
+
+                    Vector3 currentPosition = transform.position;
+                    float movedSqr = (currentPosition - _lastWalkPosition).sqrMagnitude;
+
+                    if (movedSqr >= 0.04f)
+                    {
+                        _lastWalkPosition = currentPosition;
+                        _outOfRangeTimer = 0f;
+                    }
+                    else
+                    {
+                        _outOfRangeTimer += Time.deltaTime;
+                    }
 
                     if (_outOfRangeTimer >= stuckRepathTimeout)
                     {
@@ -1924,6 +1939,8 @@ namespace ProjectoRTS.Buildings
             }
 
             SetGathering(false);
+            _lastWalkPosition = transform.position;
+            _outOfRangeTimer = 0f;
             TryWalkTo(GetSiteApproachPoint());
         }
 

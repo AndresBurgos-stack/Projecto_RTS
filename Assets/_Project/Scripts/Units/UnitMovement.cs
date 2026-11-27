@@ -274,6 +274,178 @@ namespace ProjectoRTS.Units
             agent.ResetPath();
         }
 
+        /// <summary>
+        /// Horizontal bounds of a target's solid colliders (or its renderers
+        /// when it has none). Buildings are much larger than their transform
+        /// origin, so combat needs the real footprint to find an approach.
+        /// </summary>
+        public static bool TryGetTargetBounds(Transform target, out Bounds bounds)
+        {
+            bounds = default;
+
+            if (target == null)
+            {
+                return false;
+            }
+
+            bool hasBounds = false;
+            Collider[] colliders = target.GetComponentsInChildren<Collider>(true);
+
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Collider collider = colliders[i];
+
+                if (collider == null || collider.isTrigger || !collider.enabled)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = collider.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(collider.bounds);
+                }
+            }
+
+            if (hasBounds)
+            {
+                return true;
+            }
+
+            Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+
+                if (renderer == null ||
+                    renderer is ParticleSystemRenderer ||
+                    renderer is TrailRenderer ||
+                    renderer is LineRenderer)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return hasBounds;
+        }
+
+        /// <summary>Closest point on the target's horizontal footprint.</summary>
+        public static Vector3 ClosestPointOnFootprint(Bounds bounds, Vector3 from)
+        {
+            Vector3 probe = new Vector3(from.x, bounds.center.y, from.z);
+            Vector3 closest = bounds.ClosestPoint(probe);
+
+            // A point inside the footprint must be pushed to the nearest face,
+            // otherwise the agent receives a destination it cannot stand on.
+            if (Mathf.Abs(from.x - closest.x) < 0.001f &&
+                Mathf.Abs(from.z - closest.z) < 0.001f)
+            {
+                float dx = bounds.extents.x - Mathf.Abs(from.x - bounds.center.x);
+                float dz = bounds.extents.z - Mathf.Abs(from.z - bounds.center.z);
+
+                if (dx < dz)
+                {
+                    closest.x = bounds.center.x +
+                        Mathf.Sign(from.x - bounds.center.x) * bounds.extents.x;
+                }
+                else
+                {
+                    closest.z = bounds.center.z +
+                        Mathf.Sign(from.z - bounds.center.z) * bounds.extents.z;
+                }
+            }
+
+            closest.y = 0f;
+            return closest;
+        }
+
+        /// <summary>
+        /// Point just outside the target's footprint on the side facing
+        /// <paramref name="from"/>, snapped to the NavMesh. Agents path to the
+        /// near face instead of the unwalkable center of a large building.
+        /// </summary>
+        public static Vector3 GetApproachPoint(Transform target, Vector3 from, float margin)
+        {
+            if (target == null)
+            {
+                return from;
+            }
+
+            if (!TryGetTargetBounds(target, out Bounds bounds))
+            {
+                return target.position;
+            }
+
+            return GetApproachPoint(bounds, from, margin);
+        }
+
+        /// <summary>
+        /// Same as <see cref="GetApproachPoint(Transform, Vector3, float)"/> but
+        /// reuses bounds already cached by the caller.
+        /// </summary>
+        public static Vector3 GetApproachPoint(Bounds bounds, Vector3 from, float margin)
+        {
+            Vector3 center = new Vector3(bounds.center.x, 0f, bounds.center.z);
+            Vector3 closest = ClosestPointOnFootprint(bounds, from);
+            Vector3 outward = closest - center;
+            outward.y = 0f;
+
+            if (outward.sqrMagnitude < 0.0001f)
+            {
+                outward = from - center;
+                outward.y = 0f;
+            }
+
+            if (outward.sqrMagnitude < 0.0001f)
+            {
+                outward = Vector3.forward;
+            }
+
+            outward.Normalize();
+            float baseMargin = Mathf.Max(0.2f, margin);
+
+            // The carved NavMesh hole can be a little larger than the collider,
+            // so try progressively farther points until one is walkable.
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 candidate = closest + outward * (baseMargin + i * 0.5f);
+
+                if (!NavMesh.SamplePosition(
+                        candidate,
+                        out NavMeshHit hit,
+                        1.5f,
+                        NavMesh.AllAreas))
+                {
+                    continue;
+                }
+
+                Vector3 hitXZ = new Vector3(hit.position.x, 0f, hit.position.z);
+                Vector3 hitClosest = ClosestPointOnFootprint(bounds, hitXZ);
+
+                if ((hitXZ - hitClosest).sqrMagnitude >= 0.0025f)
+                {
+                    return hit.position;
+                }
+            }
+
+            return closest + outward * baseMargin;
+        }
+
         /// <summary>Turns the unit toward a world position without moving it.</summary>
         public void FaceTowards(Vector3 worldPosition)
         {
