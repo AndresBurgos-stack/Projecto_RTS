@@ -91,12 +91,22 @@ namespace ProjectoRTS.Units
         /// <summary>Applies damage after the unit's damage reduction.</summary>
         public void ApplyDamage(float amount)
         {
+            ApplyDamage(amount, 0f);
+        }
+
+        /// <summary>
+        /// Applies damage after armor: the effective armor is scaled down by
+        /// the attacker's armor penetration (0 = full armor, 1 = ignores it).
+        /// </summary>
+        public void ApplyDamage(float amount, float armorPenetration)
+        {
             if (!IsAlive || amount <= 0f)
             {
                 return;
             }
 
             float reduction = definition != null ? definition.DamageReduction : 0f;
+            reduction *= Mathf.Clamp01(1f - Mathf.Clamp01(armorPenetration));
             float applied = amount * (1f - reduction);
             currentHealth = Mathf.Max(0f, currentHealth - applied);
 
@@ -121,7 +131,11 @@ namespace ProjectoRTS.Units
                 return;
             }
 
-            ApplyDamage(amount);
+            float penetration = attacker != null && attacker.Definition != null
+                ? attacker.Definition.ArmorPenetration
+                : 0f;
+
+            ApplyDamage(amount, penetration);
 
             if (attacker != null && IsAlive)
             {

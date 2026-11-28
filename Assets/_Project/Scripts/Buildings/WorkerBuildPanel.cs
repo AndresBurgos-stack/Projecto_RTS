@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ProjectoRTS.Core;
 using ProjectoRTS.Economy;
 using ProjectoRTS.UI;
+using ProjectoRTS.Units;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -38,6 +39,7 @@ namespace ProjectoRTS.Buildings
         private BuildingPlacementController _placement;
         private BuildingPlacementHotkeys _hotkeys;
         private RecruitmentManager _recruitment;
+        private UnitSelectionController _selection;
         private GameObject _root;
         private RectTransform _panelRect;
         private RectTransform _buttonRow;
@@ -98,16 +100,26 @@ namespace ProjectoRTS.Buildings
                 _recruitment = FindFirstObjectByType<RecruitmentManager>();
             }
 
+            if (_selection == null)
+            {
+                _selection = FindFirstObjectByType<UnitSelectionController>();
+            }
+
             // While a barracks or the town hall is selected the recruitment
             // panel takes this corner, so the build menu steps aside.
             bool barracksSelected = _recruitment != null && _recruitment.ActiveBarracks != null;
 
-            if (_root != null && _root.activeSelf == barracksSelected)
+            // With friendly units selected the unit info card takes this
+            // corner instead of the build menu.
+            bool unitsSelected = _selection != null && _selection.SelectedUnits.Count > 0;
+            bool panelHidden = barracksSelected || unitsSelected;
+
+            if (_root != null && _root.activeSelf == panelHidden)
             {
-                _root.SetActive(!barracksSelected);
+                _root.SetActive(!panelHidden);
             }
 
-            if (_hotkeys == null || barracksSelected)
+            if (_hotkeys == null || panelHidden)
             {
                 return;
             }

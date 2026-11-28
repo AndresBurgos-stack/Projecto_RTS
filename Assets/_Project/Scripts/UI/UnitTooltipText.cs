@@ -29,6 +29,14 @@ namespace ProjectoRTS.UI
             builder.Append("\nEntrenamiento: ");
             builder.Append(definition.TrainTime.ToString("0.#"));
             builder.Append(" s");
+
+            if (definition.ArmorPenetration > 0f)
+            {
+                builder.Append("\nPenetración de armadura: ");
+                builder.Append((definition.ArmorPenetration * 100f).ToString("0"));
+                builder.Append("%");
+            }
+
             return builder.ToString();
         }
 

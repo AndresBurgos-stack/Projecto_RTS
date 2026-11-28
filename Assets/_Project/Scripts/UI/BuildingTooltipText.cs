@@ -82,7 +82,7 @@ namespace ProjectoRTS.UI
                 case "GreekHouse":
                     return "Casa. Aumenta la población máxima de la aldea.";
                 case "GreekSmelter":
-                    return "Fundición. Funde cobre y estaño para producir bronce.";
+                    return "Fundición. Convierte cobre y estaño en 2 de bronce. Admite hasta 2 trabajadores; con los dos funde al doble de velocidad. Sin trabajadores no produce.";
                 case "GreekStorage":
                     return "Almacén. Los trabajadores depositan aquí los recursos recogidos.";
                 case "GreekTower":

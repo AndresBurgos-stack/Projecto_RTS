@@ -88,8 +88,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   copperPerSmelt: 2
   tinPerSmelt: 1
-  bronzePerSmelt: 1
+  bronzePerSmelt: 2
   smeltInterval: 7
+  maxWorkers: 2
   fireGlow: {fileID: 0}
   firePulseSpeed: 0
 --- !u!33 &3191648988035670519

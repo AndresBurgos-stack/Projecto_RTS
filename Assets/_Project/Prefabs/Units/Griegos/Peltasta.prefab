@@ -299,6 +299,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: 7a7a934850d9452d8e0fc0ae5d1a9827, type: 2}
   currentHealth: 0
   destroyOnDeath: 1
+  deathLingerDuration: 4.2
   corpseDuration: 1.1
 --- !u!195 &2101728868658699352
 NavMeshAgent:
@@ -361,6 +362,12 @@ MonoBehaviour:
   buildingReach: 2.5
   aggroRadius: 9
   autoAcquire: 1
+  pilumHandVisual: {fileID: 0}
+  pilumBackVisuals: []
+  gladiusVisual: {fileID: 0}
+  gladiusHandBone: {fileID: 0}
+  gladiusHandLocalPosition: {x: 0.02, y: 0.081, z: -0.003}
+  gladiusHandLocalEuler: {x: 0, y: 0, z: -90}
 --- !u!114 &6253351117826918364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1124,15 +1131,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 60c051693b4299e4da562d6b387a32c2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.999e-10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 60c051693b4299e4da562d6b387a32c2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.4192
+      value: -1.419
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 60c051693b4299e4da562d6b387a32c2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.072104
+      value: -0.077
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 60c051693b4299e4da562d6b387a32c2, type: 3}
       propertyPath: m_LocalRotation.w

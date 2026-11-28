@@ -138,6 +138,9 @@ namespace ProjectoRTS.Buildings
         /// <summary>True while the worker carries harvested resources.</summary>
         public bool HasCargo => _cargoAmount > 0;
 
+        /// <summary>Fundicion a la que esta asignado el repartidor, o null.</summary>
+        public SmeltingForge AssignedForge => _forge;
+
         /// <summary>
         /// Resource the worker must collect, or None while the worker has no
         /// gathering job (it stays idle). Changing it cancels the current
@@ -149,16 +152,16 @@ namespace ProjectoRTS.Buildings
             get => _preferredResource;
             set
             {
-                if (_preferredResource == value)
+                if (_preferredResource == value && !_haulForForge)
                 {
                     return;
                 }
 
+                ReleaseForgeAssignment();
                 _preferredResource = value;
                 _nextGatherType = value;
                 _haulForForge = false;
                 _haulPickupTimer = 0f;
-                _forge = null;
 
                 if (_cargoAmount <= 0)
                 {
@@ -173,22 +176,50 @@ namespace ProjectoRTS.Buildings
 
         /// <summary>
         /// True cuando el trabajador es un repartidor de la fundicion:
-        /// retira cobre/estano del banco y lo acarrea al horno.
+        /// retira cobre/estano del banco y lo acarrea al horno. Cada
+        /// fundicion admite como maximo dos repartidores.
         /// </summary>
         public bool HaulForForge
         {
             get => _haulForForge;
             set
             {
-                if (_haulForForge == value)
+                if (value)
                 {
-                    return;
-                }
+                    if (_haulForForge)
+                    {
+                        return;
+                    }
 
-                _haulForForge = value;
-                _haulPickupTimer = 0f;
-                _forge = null;
-                _dropOff = null;
+                    if (!TryClaimForgeSlot())
+                    {
+                        return;
+                    }
+
+                    _haulForForge = true;
+                    _haulPickupTimer = 0f;
+                    _dropOff = null;
+
+                    // Un repartidor no puede seguir clavado en una obra:
+                    // libera el puesto para que otro trabajador lo tome.
+                    _site = null;
+                    _stoppedAtSite = false;
+                    _approachAttempts = 0;
+                    _repathTimer = 0f;
+                    SetBuilding(false);
+                }
+                else
+                {
+                    if (!_haulForForge)
+                    {
+                        return;
+                    }
+
+                    _haulForForge = false;
+                    ReleaseForgeAssignment();
+                    _haulPickupTimer = 0f;
+                    _dropOff = null;
+                }
 
                 if (_cargoAmount <= 0)
                 {
@@ -199,6 +230,51 @@ namespace ProjectoRTS.Buildings
                     _resourceRepathTimer = 0f;
                     _outOfRangeTimer = 0f;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Intenta convertir al trabajador en repartidor de la fundicion.
+        /// Si no hay fundicion o todas sus plazas estan ocupadas, conserva
+        /// su trabajo actual y devuelve false.
+        /// </summary>
+        public bool TrySetHaulForForge()
+        {
+            if (_haulForForge)
+            {
+                if (_forge == null)
+                {
+                    TryClaimForgeSlot();
+                }
+
+                _preferredResource = ResourceType.None;
+                _nextGatherType = ResourceType.None;
+                return true;
+            }
+
+            HaulForForge = true;
+
+            if (!_haulForForge)
+            {
+                return false;
+            }
+
+            _preferredResource = ResourceType.None;
+            _nextGatherType = ResourceType.None;
+            return true;
+        }
+
+        /// <summary>
+        /// La fundicion asignada desaparecio: se libera la referencia para
+        /// que el trabajador busque otra con plaza libre.
+        /// </summary>
+        public void NotifyForgeUnavailable(SmeltingForge forge)
+        {
+            if (_forge == forge)
+            {
+                _forge = null;
+                _resourceRepathTimer = 0f;
+                _outOfRangeTimer = 0f;
             }
         }
 
@@ -298,11 +374,13 @@ namespace ProjectoRTS.Buildings
         {
             Workers.Remove(this);
             ReleaseNodeClaim();
+            ReleaseForgeAssignment();
         }
 
         private void OnDestroy()
         {
             ReleaseNodeClaim();
+            ReleaseForgeAssignment();
         }
 
         /// <summary>
@@ -310,6 +388,12 @@ namespace ProjectoRTS.Buildings
         /// </summary>
         public void AssignSite(ConstructionSite site)
         {
+            if (site != null)
+            {
+                _haulForForge = false;
+                ReleaseForgeAssignment();
+            }
+
             _site = site;
             _stoppedAtSite = false;
             _approachAttempts = 0;
@@ -712,7 +796,16 @@ namespace ProjectoRTS.Buildings
             {
                 if (_forge == null || !_forge.isActiveAndEnabled)
                 {
-                    _forge = SmeltingForge.FindNearest(transform.position, AutoAssignRange);
+                    _forge = SmeltingForge.FindNearestWithFreeSlot(
+                        transform.position,
+                        AutoAssignRange);
+
+                    if (_forge == null)
+                    {
+                        _forge = SmeltingForge.FindNearest(
+                            transform.position,
+                            AutoAssignRange);
+                    }
                 }
 
                 if (_forge != null)
@@ -770,6 +863,54 @@ namespace ProjectoRTS.Buildings
             CompleteDeposit();
         }
 
+        private bool TryClaimForgeSlot()
+        {
+            if (_forge != null)
+            {
+                if (_forge.isActiveAndEnabled && _forge.IsWorkerAssigned(this))
+                {
+                    return true;
+                }
+
+                _forge = null;
+            }
+
+            SmeltingForge forge = SmeltingForge.FindNearestWithFreeSlot(
+                transform.position,
+                AutoAssignRange);
+
+            if (forge == null || !forge.TryAssignWorker(this))
+            {
+                return false;
+            }
+
+            _forge = forge;
+            return true;
+        }
+
+        private bool EnsureForgeAssignment()
+        {
+            if (_forge != null &&
+                _forge.isActiveAndEnabled &&
+                _forge.IsWorkerAssigned(this))
+            {
+                return true;
+            }
+
+            return TryClaimForgeSlot();
+        }
+
+        private void ReleaseForgeAssignment()
+        {
+            if (_forge == null)
+            {
+                return;
+            }
+
+            _forge.UnassignWorker(this);
+            _forge = null;
+        }
+
         /// <summary>
         /// Repartidor: retira cobre/estano del almacen y lo lleva a la
         /// fundicion. Sin carga busca el almacen mas cercano; con carga,
@@ -777,20 +918,20 @@ namespace ProjectoRTS.Buildings
         /// </summary>
         private void UpdateHaul()
         {
-            if (_cargoAmount <= 0)
+            if (!EnsureForgeAssignment())
             {
-                UpdateHaulPickup();
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                    _agent.ResetPath();
+                }
+
                 return;
             }
 
-            if (_forge == null || !_forge.isActiveAndEnabled)
+            if (_cargoAmount <= 0)
             {
-                _forge = SmeltingForge.FindNearest(transform.position, AutoAssignRange);
-            }
-
-            if (_forge == null)
-            {
-                UpdateDeposit();
+                UpdateHaulPickup();
                 return;
             }
 
@@ -860,7 +1001,6 @@ namespace ProjectoRTS.Buildings
             }
 
             _haulPickupTimer = 0.6f;
-            _forge = null;
             _resourceRepathTimer = 0f;
         }
 
@@ -870,13 +1010,8 @@ namespace ProjectoRTS.Buildings
         /// </summary>
         private bool TryTakeOreFromBank()
         {
-            if (_forge == null || !_forge.isActiveAndEnabled)
-            {
-                _forge = SmeltingForge.FindNearest(transform.position, AutoAssignRange);
-            }
-
-            // Sin fundicion construida no tiene sentido acarrear mineral.
-            if (_forge == null)
+            // Sin una fundicion con plaza libre no tiene sentido acarrear.
+            if (!EnsureForgeAssignment())
             {
                 return false;
             }
@@ -956,7 +1091,7 @@ namespace ProjectoRTS.Buildings
             ReleaseNodeClaim();
             _resourceNode = null;
             _dropOff = null;
-            _forge = null;
+            ReleaseForgeAssignment();
             Resume();
         }
 
@@ -964,7 +1099,13 @@ namespace ProjectoRTS.Buildings
         {
             _cargoAmount = 0;
             _dropOff = null;
-            _forge = null;
+
+            // El repartidor conserva su plaza en la fundicion entre viajes.
+            if (!_haulForForge)
+            {
+                ReleaseForgeAssignment();
+            }
+
             _resourceRepathTimer = 0f;
             _nextGatherType = _preferredResource;
             Resume();

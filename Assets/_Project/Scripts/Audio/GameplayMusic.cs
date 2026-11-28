@@ -14,12 +14,14 @@ namespace ProjectoRTS.Audio
     /// </summary>
     public sealed class GameplayMusic : MonoBehaviour
     {
+        // Anade aqui cualquier pista nueva de ambiente que este en Resources.
         private static readonly string[] AmbientPaths =
         {
             "Musica_Ambiente_1",
-            "Musica_Ambiente_2"
+            "Musica_Ambiente_2",
+            "Musica_Ambiente_3",
+            "Musica_Ambiente_4"
         };
-
         private const float AmbientVolume = 0.35f;
         private const float BattleVolume = 0.5f;
         private const float CrossfadeDuration = 1.2f;
@@ -31,6 +33,9 @@ namespace ProjectoRTS.Audio
         private Coroutine _fadeRoutine;
         private WaveManager _waves;
         private bool _battleActive;
+        private int _lastAmbientIndex = -1;
+        private bool _alertActive;
+        private Coroutine _alertRoutine;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -78,6 +83,7 @@ namespace ProjectoRTS.Audio
                 return;
             }
 
+            _waves.WaveWarning += HandleWaveWarning;
             _waves.WaveStarted += HandleWaveStarted;
             _waves.WaveCleared += HandleWaveCleared;
             _waves.GameOver += HandleGameOver;
@@ -89,6 +95,7 @@ namespace ProjectoRTS.Audio
 
             if (_waves != null)
             {
+                _waves.WaveWarning -= HandleWaveWarning;
                 _waves.WaveStarted -= HandleWaveStarted;
                 _waves.WaveCleared -= HandleWaveCleared;
                 _waves.GameOver -= HandleGameOver;
@@ -111,6 +118,74 @@ namespace ProjectoRTS.Audio
             return source;
         }
 
+        private void HandleWaveWarning(WaveDefinition wave)
+        {
+            float duration = GameAudio.PlayWaveAlert();
+            if (duration <= 0f)
+            {
+                return;
+            }
+
+            // La alarma tapa la musica: se corta y vuelve al terminar.
+            if (_alertRoutine != null)
+            {
+                StopCoroutine(_alertRoutine);
+            }
+
+            _alertRoutine = StartCoroutine(AlertRoutine(duration));
+        }
+
+        private IEnumerator AlertRoutine(float duration)
+        {
+            _alertActive = true;
+
+            if (_fadeRoutine != null)
+            {
+                StopCoroutine(_fadeRoutine);
+                _fadeRoutine = null;
+            }
+
+            // Corte rapido (sin click) de ambas pistas de musica.
+            const float cutTime = 0.4f;
+            float ambientStart = _ambientSource != null ? _ambientSource.volume : 0f;
+            float battleStart = _battleSource != null ? _battleSource.volume : 0f;
+            float elapsed = 0f;
+
+            while (elapsed < cutTime)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = 1f - Mathf.Clamp01(elapsed / cutTime);
+
+                if (_ambientSource != null)
+                {
+                    _ambientSource.volume = ambientStart * t;
+                }
+
+                if (_battleSource != null)
+                {
+                    _battleSource.volume = battleStart * t;
+                }
+
+                yield return null;
+            }
+
+            if (_ambientSource != null)
+            {
+                _ambientSource.volume = 0f;
+            }
+
+            if (_battleSource != null)
+            {
+                _battleSource.volume = 0f;
+            }
+
+            yield return new WaitForSecondsRealtime(Mathf.Max(0f, duration - cutTime));
+
+            _alertActive = false;
+            _alertRoutine = null;
+            ApplyTargets();
+        }
+
         private void HandleWaveStarted(WaveDefinition wave)
         {
             AudioClip clip = ResolveBattleClip(wave);
@@ -119,10 +194,11 @@ namespace ProjectoRTS.Audio
                 return;
             }
 
+            bool clipChanged = _battleSource.clip != clip;
             _battleSource.clip = clip;
             _battleSource.loop = true;
 
-            if (!_battleSource.isPlaying)
+            if (clipChanged || !_battleSource.isPlaying)
             {
                 _battleSource.Play();
             }
@@ -157,6 +233,14 @@ namespace ProjectoRTS.Audio
                 return;
             }
 
+            // Con la alarma sonando, el slider no debe resucitar la musica.
+            if (_alertActive)
+            {
+                _ambientSource.volume = 0f;
+                _battleSource.volume = 0f;
+                return;
+            }
+
             if (_battleActive)
             {
                 _battleSource.volume = BattleVolume * GameSettings.MusicVolume;
@@ -177,6 +261,14 @@ namespace ProjectoRTS.Audio
                 return;
             }
 
+            // Mientras suena la alarma la musica se mantiene en silencio,
+            // incluso si una oleada arranca en medio del aviso.
+            if (_alertActive)
+            {
+                RestartFade(_battleSource, 0f, _ambientSource, 0f);
+                return;
+            }
+
             if (_battleActive)
             {
                 RestartFade(_battleSource, BattleVolume * GameSettings.MusicVolume, _ambientSource, 0f);
@@ -192,17 +284,26 @@ namespace ProjectoRTS.Audio
         {
             _battleActive = false;
 
-            AudioClip clip = UnityEngine.Resources.Load<AudioClip>(
-                AmbientPaths[Random.Range(0, AmbientPaths.Length)]);
+            // Con dos o mas pistas, evita repetir la misma cancion seguida.
+            int index = Random.Range(0, AmbientPaths.Length);
+            if (AmbientPaths.Length > 1 && index == _lastAmbientIndex)
+            {
+                index = (index + 1) % AmbientPaths.Length;
+            }
+
+            _lastAmbientIndex = index;
+
+            AudioClip clip = UnityEngine.Resources.Load<AudioClip>(AmbientPaths[index]);
             if (clip == null)
             {
                 Debug.LogWarning("[GameplayMusic] No se encontro un clip de ambiente en Resources.");
                 return;
             }
 
+            bool clipChanged = _ambientSource.clip != clip;
             _ambientSource.clip = clip;
 
-            if (!_ambientSource.isPlaying)
+            if (clipChanged || !_ambientSource.isPlaying)
             {
                 _ambientSource.Play();
             }

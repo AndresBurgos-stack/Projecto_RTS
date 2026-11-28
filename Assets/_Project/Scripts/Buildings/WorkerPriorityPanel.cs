@@ -320,8 +320,9 @@ namespace ProjectoRTS.Buildings
 
                 if (worker != null)
                 {
-                    worker.PreferredResource = ResourceType.None;
-                    worker.HaulForForge = true;
+                    // Solo se convierte en repartidor si hay una fundicion
+                    // con plaza libre; si no, conserva su trabajo actual.
+                    worker.TrySetHaulForForge();
                 }
             }
 

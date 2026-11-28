@@ -40,6 +40,10 @@ namespace ProjectoRTS.Units
         [SerializeField, Min(0.05f)] private float attackInterval = 1f;
         [SerializeField, Range(0f, 0.95f)] private float damageReduction;
 
+        [Header("Penetración de armadura")]
+        [Tooltip("Fracción de la armadura enemiga que este atacante ignora (0 = nada, 1 = toda).")]
+        [SerializeField, Range(0f, 1f)] private float armorPenetration;
+
         [Header("Projectile")]
         [SerializeField] private GameObject projectilePrefab;
 
@@ -95,6 +99,7 @@ namespace ProjectoRTS.Units
         public float AttackRange => attackRange;
         public float AttackInterval => attackInterval;
         public float DamageReduction => damageReduction;
+        public float ArmorPenetration => armorPenetration;
 
         public float MoveSpeed => moveSpeed;
         public float TurnSpeed => turnSpeed;

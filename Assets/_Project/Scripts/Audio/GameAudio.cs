@@ -19,6 +19,8 @@ namespace ProjectoRTS.Audio
         private const string DeathPath1 = "SFX/Death-Sound-1";
         private const string DeathPath2 = "SFX/Death-Sound-2";
         private const string DeathPath3 = "SFX/Death-Sound-3";
+        private const string DeathPath4 = "SFX/Death-Sound-4";
+        private const string WaveAlertPath = "AlertaOleada";
 
         private const int MaxSources = 32;
         private const float UnitMinDistance = 4f;
@@ -42,6 +44,8 @@ namespace ProjectoRTS.Audio
         private static AudioClip _death1;
         private static AudioClip _death2;
         private static AudioClip _death3;
+        private static AudioClip _death4;
+        private static AudioClip _waveAlert;
 
         /// <summary>Plays one hammer strike at the given hit position.</summary>
         public static void PlayConstructionHit(Vector3 position)
@@ -133,13 +137,20 @@ namespace ProjectoRTS.Audio
         public static void PlayDeath(Vector3 position)
         {
             AudioClip clip;
-            switch (Random.Range(0, 3))
+            float volume = 0.65f;
+
+            switch (Random.Range(0, 4))
             {
                 case 1:
                     clip = LoadClip(DeathPath2, ref _death2);
                     break;
                 case 2:
                     clip = LoadClip(DeathPath3, ref _death3);
+                    break;
+                case 3:
+                    clip = LoadClip(DeathPath4, ref _death4);
+                    // Este gemido viene mas bajo en la mezcla: se sube un poco.
+                    volume = 0.8f;
                     break;
                 default:
                     clip = LoadClip(DeathPath1, ref _death1);
@@ -149,10 +160,27 @@ namespace ProjectoRTS.Audio
             PlayOneShot(
                 clip,
                 position,
-                0.65f,
+                volume,
                 Random.Range(0.9f, 1.1f),
                 UnitMinDistance,
                 UnitMaxDistance);
+        }
+
+        /// <summary>
+        /// Plays the wave warning horn as a non-positional alert and returns
+        /// its length in seconds so callers can duck the music meanwhile.
+        /// </summary>
+        public static float PlayWaveAlert()
+        {
+            AudioClip clip = LoadClip(WaveAlertPath, ref _waveAlert);
+            PlayOneShot(
+                clip,
+                Vector3.zero,
+                0.7f,
+                1f,
+                spatialBlend: 0f);
+
+            return clip != null ? clip.length : 0f;
         }
 
         private static void PlayOneShot(
@@ -162,7 +190,8 @@ namespace ProjectoRTS.Audio
             float pitch,
             float minDistance = UnitMinDistance,
             float maxDistance = UnitMaxDistance,
-            float startTime = 0f)
+            float startTime = 0f,
+            float spatialBlend = 1f)
         {
             if (clip == null)
             {
@@ -176,7 +205,7 @@ namespace ProjectoRTS.Audio
             source.time = Mathf.Clamp(startTime, 0f, Mathf.Max(0f, clip.length - 0.01f));
             source.volume = volume * GameSettings.SfxVolume;
             source.pitch = pitch;
-            source.spatialBlend = 1f;
+            source.spatialBlend = spatialBlend;
             source.minDistance = minDistance;
             source.maxDistance = maxDistance;
             source.rolloffMode = AudioRolloffMode.Logarithmic;

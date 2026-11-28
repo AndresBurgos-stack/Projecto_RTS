@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ProjectoRTS.Buildings;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace ProjectoRTS.Resources
 {
@@ -92,6 +93,49 @@ namespace ProjectoRTS.Resources
         private void Awake()
         {
             RefreshGatherFocus();
+            EnsureObstacle();
+        }
+
+        /// <summary>
+        /// Adds a carving obstacle so units walk around the tree or rock
+        /// instead of through it. Several resource prefabs keep their
+        /// colliders disabled (they were only used to measure the mesh), and
+        /// NavMeshAgents ignore colliders anyway, so a NavMeshObstacle is what
+        /// actually keeps paths outside the resource.
+        /// </summary>
+        private void EnsureObstacle()
+        {
+            if (GetComponent<NavMeshObstacle>() != null ||
+                GetComponentInChildren<NavMeshObstacle>(true) != null)
+            {
+                return;
+            }
+
+            NavMeshObstacle obstacle = gameObject.AddComponent<NavMeshObstacle>();
+            obstacle.shape = NavMeshObstacleShape.Box;
+            obstacle.carving = true;
+            obstacle.carveOnlyStationary = true;
+
+            // Trees keep a small trunk footprint; ore and stone use the
+            // radius measured from the visible rock.
+            float radius = Mathf.Max(0.45f, _gatherRadius);
+            const float height = 2.5f;
+
+            Vector3 scale = transform.lossyScale;
+            scale = new Vector3(
+                Mathf.Max(0.01f, Mathf.Abs(scale.x)),
+                Mathf.Max(0.01f, Mathf.Abs(scale.y)),
+                Mathf.Max(0.01f, Mathf.Abs(scale.z)));
+
+            Vector3 localGather = transform.InverseTransformPoint(_gatherPoint);
+            obstacle.center = new Vector3(
+                localGather.x,
+                height * 0.5f / scale.y,
+                localGather.z);
+            obstacle.size = new Vector3(
+                radius * 2f / scale.x,
+                height / scale.y,
+                radius * 2f / scale.z);
         }
 
         private void OnValidate()
